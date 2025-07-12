@@ -119,6 +119,16 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string | null;
+  dateOfBirth?: string | null;
+  educationLevel?: ('primary' | 'secondary' | 'highschool' | 'university') | null;
+  isActive?: boolean | null;
+  referralCode?: string | null;
+  referredBy?: (string | null) | User;
+  totalReferrals?: number | null;
+  lastActiveAt?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -218,6 +228,16 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  firstName?: T;
+  lastName?: T;
+  phoneNumber?: T;
+  dateOfBirth?: T;
+  educationLevel?: T;
+  isActive?: T;
+  referralCode?: T;
+  referredBy?: T;
+  totalReferrals?: T;
+  lastActiveAt?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
