@@ -129,6 +129,7 @@ export interface User {
   referredBy?: (string | null) | User;
   totalReferrals?: number | null;
   lastActiveAt?: string | null;
+  role?: ('superadmin' | 'contentmanager' | 'support' | 'user') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -238,6 +239,7 @@ export interface UsersSelect<T extends boolean = true> {
   referredBy?: T;
   totalReferrals?: T;
   lastActiveAt?: T;
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
