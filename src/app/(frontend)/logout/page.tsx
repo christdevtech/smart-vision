@@ -9,7 +9,7 @@ export default function LogoutPage() {
   useEffect(() => {
     const handleLogout = async () => {
       try {
-        // Call the logout API
+        // Call the Payload CMS logout API
         const response = await fetch('/api/users/logout', {
           method: 'POST',
           headers: {

@@ -21,9 +21,11 @@ This directory contains all custom API endpoints for the SmartVision application
 ## Available Endpoints
 
 ### Example Endpoint
+
 - **GET** `/api/custom/example` - Example custom route demonstrating Payload integration
 
 ### Referral System
+
 - **GET** `/api/custom/referral/generate` - Generate referral link for authenticated user
 - **POST** `/api/custom/referral/generate` - Generate referral link by email (admin)
 - **GET** `/api/custom/referral/redirect/[code]` - Handle referral link redirects and set tracking cookies
@@ -49,16 +51,13 @@ import config from '@/payload.config'
 export async function GET(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
-    
+
     // Your custom logic here
-    
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error in custom endpoint:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 ```
