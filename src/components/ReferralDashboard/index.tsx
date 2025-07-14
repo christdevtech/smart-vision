@@ -34,11 +34,11 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
     try {
       setLoading(true)
       const response = await fetch('/api/custom/referral/stats')
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch referral stats')
       }
-      
+
       const data = await response.json()
       setStats(data)
     } catch (err) {
@@ -50,7 +50,7 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
 
   const copyToClipboard = async () => {
     if (!stats?.referralLink) return
-    
+
     try {
       await navigator.clipboard.writeText(stats.referralLink)
       setCopied(true)
@@ -76,7 +76,7 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
     return (
       <div className={`bg-red-500/10 border border-red-500/20 rounded-xl p-6 ${className}`}>
         <p className="text-red-400">Error: {error}</p>
-        <button 
+        <button
           onClick={fetchReferralStats}
           className="mt-2 px-4 py-2 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors"
         >
@@ -91,7 +91,7 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
   return (
     <div className={`bg-white/5 border border-white/10 rounded-xl p-6 ${className}`}>
       <h3 className="text-xl font-semibold text-white mb-4">🎯 Referral Dashboard</h3>
-      
+
       {/* Referral Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white/5 rounded-lg p-4 text-center">
@@ -110,9 +110,7 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
 
       {/* Referral Link */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-white/80 mb-2">
-          Your Referral Link
-        </label>
+        <label className="block text-sm font-medium text-white/80 mb-2">Your Referral Link</label>
         <div className="flex gap-2">
           <input
             type="text"
@@ -123,8 +121,8 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
           <button
             onClick={copyToClipboard}
             className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-              copied 
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+              copied
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                 : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/30'
             }`}
           >
@@ -139,13 +137,15 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
           <h4 className="text-lg font-medium text-white mb-3">Recent Referrals</h4>
           <div className="space-y-2 max-h-40 overflow-y-auto">
             {stats.referredUsers.slice(0, 5).map((user) => (
-              <div key={user.id} className="bg-white/5 rounded-lg p-3 flex justify-between items-center">
+              <div
+                key={user.id}
+                className="bg-white/5 rounded-lg p-3 flex justify-between items-center"
+              >
                 <div>
                   <div className="text-white font-medium">
-                    {user.firstName && user.lastName 
-                      ? `${user.firstName} ${user.lastName}` 
-                      : user.email
-                    }
+                    {user.firstName && user.lastName
+                      ? `${user.firstName} ${user.lastName}`
+                      : user.email}
                   </div>
                   <div className="text-xs text-white/60">
                     {new Date(user.createdAt).toLocaleDateString()}

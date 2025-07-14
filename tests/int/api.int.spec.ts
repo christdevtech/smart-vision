@@ -171,7 +171,7 @@ describe('API', () => {
     it('generates correct referral links', () => {
       const code = '1234567'
       const link = generateReferralLink(code, 'https://example.com')
-      expect(link).toBe('https://example.com/api/custom/referral/redirect/1234567')
+      expect(link).toBe('https://example.com/referral/1234567')
     })
 
     it('validates referral timestamps correctly', () => {

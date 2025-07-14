@@ -6,10 +6,10 @@ export async function GET(request: NextRequest) {
   try {
     // Get payload instance
     const payload = await getPayload({ config })
-
+    
     // Get user from authentication
     const { user } = await payload.auth({ headers: request.headers })
-
+    
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     // Generate referral link
     const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
     const referralLink = `${baseUrl}/referral/${user.referralCode}`
-
+    
     return NextResponse.json({
       referralCode: user.referralCode,
       referralLink,

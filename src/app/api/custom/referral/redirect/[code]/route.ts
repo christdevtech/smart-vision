@@ -6,7 +6,7 @@ import { REFERRAL_CONSTANTS, getReferralCookieOptions } from '@/utilities/referr
 export async function GET(request: NextRequest, { params }: { params: { code: string } }) {
   try {
     const { code } = params
-
+    
     if (!code) {
       return NextResponse.json({ error: 'Referral code is required' }, { status: 400 })
     }
@@ -33,17 +33,13 @@ export async function GET(request: NextRequest, { params }: { params: { code: st
 
     // Create response and set HTTP-only cookie
     const response = NextResponse.redirect(new URL('/', request.url))
-
+    
     // Set HTTP-only cookie with referral information
-    response.cookies.set(
-      REFERRAL_CONSTANTS.COOKIE_NAME,
-      JSON.stringify({
-        referrerId: referrer.id,
-        referralCode: code,
-        timestamp: Date.now(),
-      }),
-      getReferralCookieOptions(),
-    )
+    response.cookies.set(REFERRAL_CONSTANTS.COOKIE_NAME, JSON.stringify({
+      referrerId: referrer.id,
+      referralCode: code,
+      timestamp: Date.now()
+    }), getReferralCookieOptions())
 
     return response
   } catch (error) {

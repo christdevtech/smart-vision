@@ -10,7 +10,7 @@
  */
 export function generateReferralLink(referralCode: string, baseUrl?: string): string {
   const url = baseUrl || process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
-  return `${url}/api/custom/referral/redirect/${referralCode}`
+  return `${url}/referral/${referralCode}`
 }
 
 /**
