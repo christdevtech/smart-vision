@@ -1,8 +1,15 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 
+import redirects from './redirects.js'
+
+const NEXT_PUBLIC_SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL
+  ? process.env.NEXT_PUBLIC_SERVER_URL
+  : 'https://dev.gscengland.org'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Your Next.js config here
+
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],
@@ -12,6 +19,26 @@ const nextConfig = {
 
     return webpackConfig
   },
+  images: {
+    remotePatterns: [
+      ...[NEXT_PUBLIC_SERVER_URL /* 'https://example.com' */].map((item) => {
+        const url = new URL(item)
+
+        return {
+          hostname: url.hostname,
+          protocol: url.protocol.replace(':', ''),
+          pathname: '/api/media/file/**',
+        }
+      }),
+    ],
+    // Add this to handle dynamic query parameters
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+  reactStrictMode: true,
+  redirects,
+  output: 'standalone',
 }
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })

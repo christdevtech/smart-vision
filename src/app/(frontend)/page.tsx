@@ -15,12 +15,12 @@ export default async function HomePage() {
 
   // Redirect logged-in users to dashboard
   if (user) {
-    redirect('/dashboard')
+    // redirect('/dashboard')
   }
 
   return (
-    <div className="flex flex-col justify-between items-center min-h-screen bg-black text-white px-11 py-11 max-w-4xl mx-auto overflow-hidden md:px-6">
-      <div className="flex flex-col items-center justify-center flex-grow text-center max-w-5xl w-full">
+    <div className="flex overflow-hidden flex-col justify-between items-center px-11 py-11 mx-auto max-w-4xl min-h-screen text-white bg-black md:px-6">
+      <div className="flex flex-col flex-grow justify-center items-center w-full max-w-5xl text-center">
         <div className="mb-5">
           <svg
             width="80"
@@ -40,95 +40,101 @@ export default async function HomePage() {
         <h1 className="xl:text-6xl lg:text-4xl md:text-4xl text-3xl font-bold bg-gradient-to-br from-indigo-500 to-emerald-500 bg-clip-text text-transparent mb-2.5 mt-5">
           SmartVision
         </h1>
-        <p className="text-xl md:text-base text-white/80 mb-10 md:mb-7 max-w-2xl">
+        <p className="mb-10 max-w-2xl text-xl md:text-base text-white/80 md:mb-7">
           Comprehensive Mobile Learning Platform for Secondary Education
         </p>
 
         <div className="my-10 w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <h3 className="pb-8 text-2xl font-bold">Features Coming Soon!</h3>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 md:gap-6">
             <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-left transition-all duration-300 hover:bg-white/8 hover:border-indigo-500/30 hover:-translate-y-0.5">
-              <h3 className="text-lg font-medium text-white mb-3">📚 Personalized Learning</h3>
-              <p className="text-sm text-white/70 leading-relaxed m-0">
+              <h3 className="mb-3 text-lg font-medium text-white">📚 Personalized Learning</h3>
+              <p className="m-0 text-sm leading-relaxed text-white/70">
                 Customized study programs and timetables based on your goals
               </p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-left transition-all duration-300 hover:bg-white/8 hover:border-indigo-500/30 hover:-translate-y-0.5">
-              <h3 className="text-lg font-medium text-white mb-3">📱 Interactive Testing</h3>
-              <p className="text-sm text-white/70 leading-relaxed m-0">
+              <h3 className="mb-3 text-lg font-medium text-white">📱 Interactive Testing</h3>
+              <p className="m-0 text-sm leading-relaxed text-white/70">
                 MCQ testing with performance tracking and comprehensive question banks
               </p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-left transition-all duration-300 hover:bg-white/8 hover:border-indigo-500/30 hover:-translate-y-0.5">
-              <h3 className="text-lg font-medium text-white mb-3">🎥 Tutorial Videos</h3>
-              <p className="text-sm text-white/70 leading-relaxed m-0">
+              <h3 className="mb-3 text-lg font-medium text-white">🎥 Tutorial Videos</h3>
+              <p className="m-0 text-sm leading-relaxed text-white/70">
                 Extensive video library with offline viewing capability
               </p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-left transition-all duration-300 hover:bg-white/8 hover:border-indigo-500/30 hover:-translate-y-0.5">
-              <h3 className="text-lg font-medium text-white mb-3">📖 Digital Library</h3>
-              <p className="text-sm text-white/70 leading-relaxed m-0">
+              <h3 className="mb-3 text-lg font-medium text-white">📖 Digital Library</h3>
+              <p className="m-0 text-sm leading-relaxed text-white/70">
                 Downloadable PDF books with secure in-app reading
               </p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-left transition-all duration-300 hover:bg-white/8 hover:border-indigo-500/30 hover:-translate-y-0.5">
-              <h3 className="text-lg font-medium text-white mb-3">📴 Offline Access</h3>
-              <p className="text-sm text-white/70 leading-relaxed m-0">
+              <h3 className="mb-3 text-lg font-medium text-white">📴 Offline Access</h3>
+              <p className="m-0 text-sm leading-relaxed text-white/70">
                 Complete offline functionality after initial download
               </p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-left transition-all duration-300 hover:bg-white/8 hover:border-indigo-500/30 hover:-translate-y-0.5">
-              <h3 className="text-lg font-medium text-white mb-3">🔒 Content Security</h3>
-              <p className="text-sm text-white/70 leading-relaxed m-0">
+              <h3 className="mb-3 text-lg font-medium text-white">🔒 Content Security</h3>
+              <p className="m-0 text-sm leading-relaxed text-white/70">
                 Advanced protection with encrypted local storage
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex gap-10 md:gap-5 md:flex-wrap md:justify-center my-10">
+        <div className="flex gap-10 my-10 md:gap-5 md:flex-wrap md:justify-center">
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-emerald-500 mb-1">99.5%</span>
-            <span className="text-xs text-white/60 uppercase tracking-wider">Uptime</span>
+            <span className="mb-1 text-2xl font-bold text-emerald-500">99.5%</span>
+            <span className="text-xs tracking-wider uppercase text-white/60">Uptime</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-emerald-500 mb-1">iOS 12.0+</span>
-            <span className="text-xs text-white/60 uppercase tracking-wider">& Android 9.0+</span>
+            <span className="mb-1 text-2xl font-bold text-emerald-500">iOS 12.0+</span>
+            <span className="text-xs tracking-wider uppercase text-white/60">& Android 9.0+</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-emerald-500 mb-1">2GB</span>
-            <span className="text-xs text-white/60 uppercase tracking-wider">Min Storage</span>
+            <span className="mb-1 text-2xl font-bold text-emerald-500">2GB</span>
+            <span className="text-xs tracking-wider uppercase text-white/60">Min Storage</span>
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-4 mt-10 md:gap-3">
+        <div className="flex flex-col gap-4 items-center mt-10 md:gap-3">
           {user ? (
-            <>{/* - */}</>
+            <>
+              <Link
+                className="text-white bg-gradient-to-br from-indigo-500 to-emerald-500 no-underline px-6 py-3 rounded-lg font-medium transition-all duration-300 min-w-40 text-center text-base hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)] md:w-full md:max-w-70"
+                href="/dashboard"
+              >
+                Dashboard
+              </Link>
+            </>
           ) : (
             <>
               <Link
                 className="text-white bg-gradient-to-br from-indigo-500 to-emerald-500 no-underline px-6 py-3 rounded-lg font-medium transition-all duration-300 min-w-40 text-center text-base hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)] md:w-full md:max-w-70"
-                href="#download"
+                href="/auth/register"
               >
-                App Coming soon!
+                Get Started
               </Link>
               <Link
-                className="text-white bg-white/10 border border-white/20 no-underline px-6 py-3 rounded-lg font-medium transition-all duration-300 min-w-40 text-center hover:bg-white/15 hover:border-white/30 md:w-full md:max-w-70"
-                href={payloadConfig.routes.admin}
-                rel="noopener noreferrer"
-                target="_blank"
+                className="px-6 py-3 font-medium text-center text-white no-underline rounded-lg border transition-all duration-300 bg-white/10 border-white/20 min-w-40 hover:bg-white/15 hover:border-white/30 md:w-full md:max-w-70"
+                href="/auth/login"
               >
-                Admin Login
+                Sign In
               </Link>
             </>
           )}
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-2 pt-5 border-t border-white/10">
-        <p className="m-0 text-white/60 text-sm">
+      <div className="flex flex-col gap-2 items-center pt-5 mt-8 border-t border-white/10">
+        <p className="m-0 text-sm text-white/60">
           © 2024 SmartVision - Empowering Secondary Education
         </p>
-        <div className="flex items-center gap-2 text-xs text-white/50 md:flex-col md:gap-1">
+        <div className="flex gap-2 items-center text-xs text-white/50 md:flex-col md:gap-1">
           <span>Supports MTN & Orange Money</span>
           <span className="md:hidden">•</span>
           <span>Referral Rewards Available</span>

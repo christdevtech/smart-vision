@@ -82,9 +82,11 @@ export const REFERRAL_CONSTANTS = {
 export function getReferralCookieOptions(isProduction: boolean = process.env.NODE_ENV === 'production') {
   return {
     httpOnly: true,
-    secure: isProduction,
+    secure: isProduction, // Only secure in production (HTTPS)
     sameSite: 'lax' as const,
     maxAge: REFERRAL_CONSTANTS.COOKIE_MAX_AGE,
-    path: '/'
+    path: '/',
+    // Ensure cookie works in development
+    domain: isProduction ? undefined : undefined // Let browser handle domain
   }
 }

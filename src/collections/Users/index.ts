@@ -1,10 +1,20 @@
 import type { CollectionConfig } from 'payload'
 import { beforeChangeUser } from './hooks'
+import { anyone } from '@/access/anyone'
+import { authenticated } from '@/access/authenticated'
+import { selfOrAdmin } from '@/access/selfOrAdmin'
+import { admin } from '@/access/admin'
 
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
-    useAsTitle: 'email',
+    useAsTitle: 'firstName',
+  },
+  access: {
+    create: anyone,
+    read: authenticated,
+    update: selfOrAdmin,
+    delete: () => true,
   },
   auth: true,
   fields: [
@@ -29,21 +39,10 @@ export const Users: CollectionConfig = {
       type: 'date',
     },
     {
-      name: 'educationLevel',
-      type: 'select',
-      options: [
-        { label: 'Primary', value: 'primary' },
-        { label: 'Secondary', value: 'secondary' },
-        { label: 'High School', value: 'highschool' },
-        { label: 'University', value: 'university' },
-      ],
+      name: 'academicLevel',
+      type: 'relationship',
+      relationTo: 'academicLevels',
     },
-    // {
-    //   name: 'preferredSubjects',
-    //   type: 'relationship',
-    //   relationTo: 'subjects',
-    //   hasMany: true,
-    // },
     {
       name: 'isActive',
       type: 'checkbox',
@@ -83,6 +82,7 @@ export const Users: CollectionConfig = {
       type: 'select',
       options: [
         { label: 'Super Admin', value: 'superadmin' },
+        { label: 'Admin', value: 'admin' },
         { label: 'Content Manager', value: 'contentmanager' },
         { label: 'Support', value: 'support' },
         { label: 'User', value: 'user' },
@@ -90,7 +90,25 @@ export const Users: CollectionConfig = {
       admin: {
         position: 'sidebar',
       },
+      access: {
+        create: () => true,
+        read: () => true,
+        update: ({ req: { user } }) => {
+          if (user) {
+            return Boolean(['admin', 'superadmin'].includes(user?.role))
+          } else return false
+        },
+      },
       defaultValue: 'user',
+      required: true,
+    },
+    {
+      name: 'profilePic',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        position: 'sidebar',
+      },
     },
   ],
   hooks: {

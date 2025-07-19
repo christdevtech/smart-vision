@@ -1,47 +1,54 @@
-import { headers as getHeaders } from 'next/headers.js'
-import { redirect } from 'next/navigation'
-import { getPayload } from 'payload'
-import config from '@/payload.config'
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface ReferralPageProps {
-  params: {
+  params: Promise<{
     code: string
-  }
+  }>
 }
 
-export default async function ReferralPage({ params }: ReferralPageProps) {
-  const { code } = params
+export default function ReferralPage({ params }: ReferralPageProps) {
+  const router = useRouter()
   
-  if (!code) {
-    redirect('/')
-  }
+  useEffect(() => {
+    async function processReferral() {
+      try {
+        const { code } = await params
+        
+        if (!code) {
+          router.push('/')
+          return
+        }
 
-  try {
-    const headers = await getHeaders()
-    const payloadConfig = await config
-    const payload = await getPayload({ config: payloadConfig })
-    
-    // Find user with the referral code to validate it exists
-    const result = await payload.find({
-      collection: 'users',
-      where: {
-        referralCode: {
-          equals: code,
-        },
-      },
-      limit: 1,
-    })
-
-    if (result.docs.length === 0) {
-      // Invalid referral code, redirect to home
-      redirect('/')
+        // Call the API endpoint to set the cookie
+        const response = await fetch(`/api/custom/referral/redirect/${code}`)
+        const data = await response.json()
+        
+        if (response.ok && data.success) {
+          // Cookie was set successfully, redirect to home
+          router.push(data.redirectUrl || '/')
+        } else {
+          // Invalid referral code or error, redirect to home
+          router.push('/')
+        }
+      } catch (error) {
+        console.error('Error processing referral:', error)
+        // On error, redirect to home
+        router.push('/')
+      }
     }
-
-    // Valid referral code, redirect to the API endpoint that sets the cookie
-    redirect(`/api/custom/referral/redirect/${code}`)
-  } catch (error) {
-    console.error('Error processing referral:', error)
-    // On error, redirect to home
-    redirect('/')
-  }
+    
+    processReferral()
+  }, [params, router])
+  
+  return (
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p className="text-gray-300">Processing referral...</p>
+      </div>
+    </div>
+  )
 }

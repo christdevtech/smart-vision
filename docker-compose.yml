@@ -27,6 +27,7 @@ services:
       - data:/data/db
     logging:
       driver: none
+    restart: always
 
   # Uncomment the following to use postgres
   # postgres:
