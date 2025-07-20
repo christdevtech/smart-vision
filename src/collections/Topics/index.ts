@@ -3,8 +3,12 @@ import { anyone } from '@/access/anyone'
 import { slugField } from '@/fields/slug'
 import { CollectionConfig } from 'payload'
 
-export const Subjects: CollectionConfig = {
-  slug: 'subjects',
+export const Topics: CollectionConfig = {
+  slug: 'topics',
+  labels: {
+    singular: 'Topic',
+    plural: 'Topics',
+  },
   admin: {
     useAsTitle: 'name',
   },
@@ -18,6 +22,14 @@ export const Subjects: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
+      required: true,
+      unique: true,
+    },
+    {
+      name: 'subjects',
+      type: 'relationship',
+      relationTo: 'subjects',
+      hasMany: true,
       required: true,
     },
     ...slugField('name'),

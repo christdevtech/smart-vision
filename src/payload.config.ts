@@ -12,6 +12,15 @@ import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { AcademicLevels } from './collections/AcademicLevels'
 import { Subjects } from './collections/Subjects'
+import { ExamPapers } from './collections/ExamPapers'
+import { MCQuestions } from './collections/MCQuestions'
+import { Videos } from './collections/Videos'
+import { Books } from './collections/Books'
+import { Subscriptions } from './collections/Subscriptions'
+import { StudyPlans } from './collections/StudyPlans'
+import { Categories } from './collections/Category'
+import { Transactions } from './collections/Transactions'
+import { Topics } from './collections/Topics'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -27,7 +36,21 @@ export default buildConfig({
       beforeDashboard: ['@/components/BeforeAdminDashboard'],
     },
   },
-  collections: [Users, Media, AcademicLevels, Subjects],
+  collections: [
+    Users,
+    AcademicLevels,
+    Subjects,
+    ExamPapers,
+    MCQuestions,
+    Videos,
+    Books,
+    Subscriptions,
+    Media,
+    StudyPlans,
+    Categories,
+    Transactions,
+    Topics,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

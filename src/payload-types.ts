@@ -68,9 +68,18 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
-    media: Media;
     academicLevels: AcademicLevel;
     subjects: Subject;
+    'exam-papers': ExamPaper;
+    mcq: Mcq;
+    videos: Video;
+    books: Book;
+    subscriptions: Subscription;
+    media: Media;
+    'study-plans': StudyPlan;
+    categories: Category;
+    transactions: Transaction;
+    topics: Topic;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -78,9 +87,18 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
     academicLevels: AcademicLevelsSelect<false> | AcademicLevelsSelect<true>;
     subjects: SubjectsSelect<false> | SubjectsSelect<true>;
+    'exam-papers': ExamPapersSelect<false> | ExamPapersSelect<true>;
+    mcq: McqSelect<false> | McqSelect<true>;
+    videos: VideosSelect<false> | VideosSelect<true>;
+    books: BooksSelect<false> | BooksSelect<true>;
+    subscriptions: SubscriptionsSelect<false> | SubscriptionsSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
+    'study-plans': StudyPlansSelect<false> | StudyPlansSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    transactions: TransactionsSelect<false> | TransactionsSelect<true>;
+    topics: TopicsSelect<false> | TopicsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -271,6 +289,199 @@ export interface Subject {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exam-papers".
+ */
+export interface ExamPaper {
+  id: string;
+  title: string;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  academicLevel: string | AcademicLevel;
+  subject: string | Subject;
+  year: number;
+  paperType: '1' | '2' | '3';
+  pdf: string | Media;
+  categories?: (string | null) | Category;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  title: string;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcq".
+ */
+export interface Mcq {
+  id: string;
+  question: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  options: {
+    text: string;
+    isCorrect?: boolean | null;
+    id?: string | null;
+  }[];
+  academicLevel: string | AcademicLevel;
+  subject: string | Subject;
+  difficulty?: ('easy' | 'medium' | 'hard') | null;
+  topic?: (string | Topic)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "topics".
+ */
+export interface Topic {
+  id: string;
+  name: string;
+  subjects: (string | Subject)[];
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "videos".
+ */
+export interface Video {
+  id: string;
+  title: string;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  subject: string | Subject;
+  chapter: string;
+  video: string | Media;
+  /**
+   * Duration in seconds
+   */
+  duration?: number | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  topic?: (string | Topic)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "books".
+ */
+export interface Book {
+  id: string;
+  title: string;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  academicLevel: string | AcademicLevel;
+  subject: string | Subject;
+  category?: (string | null) | Category;
+  pdf: string | Media;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions".
+ */
+export interface Subscription {
+  id: string;
+  user: string | User;
+  plan: 'free' | 'monthly' | 'annual';
+  startDate: string;
+  endDate: string;
+  paymentStatus?: ('pending' | 'paid' | 'failed' | 'expired') | null;
+  transactions?: (string | Transaction)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: string;
+  user: string | User;
+  subscription: string | Subscription;
+  transactionId: string;
+  amount: number;
+  status?: ('pending' | 'paid' | 'failed' | 'refunded') | null;
+  date: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "study-plans".
+ */
+export interface StudyPlan {
+  id: string;
+  user: string | User;
+  goals?: string | null;
+  subjects?: (string | Subject)[] | null;
+  timetable?:
+    | {
+        day?: string | null;
+        session?: string | null;
+        subject?: (string | null) | Subject;
+        id?: string | null;
+      }[]
+    | null;
+  progress?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -281,16 +492,52 @@ export interface PayloadLockedDocument {
         value: string | User;
       } | null)
     | ({
-        relationTo: 'media';
-        value: string | Media;
-      } | null)
-    | ({
         relationTo: 'academicLevels';
         value: string | AcademicLevel;
       } | null)
     | ({
         relationTo: 'subjects';
         value: string | Subject;
+      } | null)
+    | ({
+        relationTo: 'exam-papers';
+        value: string | ExamPaper;
+      } | null)
+    | ({
+        relationTo: 'mcq';
+        value: string | Mcq;
+      } | null)
+    | ({
+        relationTo: 'videos';
+        value: string | Video;
+      } | null)
+    | ({
+        relationTo: 'books';
+        value: string | Book;
+      } | null)
+    | ({
+        relationTo: 'subscriptions';
+        value: string | Subscription;
+      } | null)
+    | ({
+        relationTo: 'media';
+        value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'study-plans';
+        value: string | StudyPlan;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: string | Category;
+      } | null)
+    | ({
+        relationTo: 'transactions';
+        value: string | Transaction;
+      } | null)
+    | ({
+        relationTo: 'topics';
+        value: string | Topic;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -367,6 +614,112 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "academicLevels_select".
+ */
+export interface AcademicLevelsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subjects_select".
+ */
+export interface SubjectsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exam-papers_select".
+ */
+export interface ExamPapersSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  slugLock?: T;
+  academicLevel?: T;
+  subject?: T;
+  year?: T;
+  paperType?: T;
+  pdf?: T;
+  categories?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcq_select".
+ */
+export interface McqSelect<T extends boolean = true> {
+  question?: T;
+  options?:
+    | T
+    | {
+        text?: T;
+        isCorrect?: T;
+        id?: T;
+      };
+  academicLevel?: T;
+  subject?: T;
+  difficulty?: T;
+  topic?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "videos_select".
+ */
+export interface VideosSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  slugLock?: T;
+  subject?: T;
+  chapter?: T;
+  video?: T;
+  duration?: T;
+  description?: T;
+  topic?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "books_select".
+ */
+export interface BooksSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  slugLock?: T;
+  academicLevel?: T;
+  subject?: T;
+  category?: T;
+  pdf?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions_select".
+ */
+export interface SubscriptionsSelect<T extends boolean = true> {
+  user?: T;
+  plan?: T;
+  startDate?: T;
+  endDate?: T;
+  paymentStatus?: T;
+  transactions?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -463,10 +816,30 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "academicLevels_select".
+ * via the `definition` "study-plans_select".
  */
-export interface AcademicLevelsSelect<T extends boolean = true> {
-  name?: T;
+export interface StudyPlansSelect<T extends boolean = true> {
+  user?: T;
+  goals?: T;
+  subjects?: T;
+  timetable?:
+    | T
+    | {
+        day?: T;
+        session?: T;
+        subject?: T;
+        id?: T;
+      };
+  progress?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  title?: T;
   slug?: T;
   slugLock?: T;
   updatedAt?: T;
@@ -474,10 +847,25 @@ export interface AcademicLevelsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "subjects_select".
+ * via the `definition` "transactions_select".
  */
-export interface SubjectsSelect<T extends boolean = true> {
+export interface TransactionsSelect<T extends boolean = true> {
+  user?: T;
+  subscription?: T;
+  transactionId?: T;
+  amount?: T;
+  status?: T;
+  date?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "topics_select".
+ */
+export interface TopicsSelect<T extends boolean = true> {
   name?: T;
+  subjects?: T;
   slug?: T;
   slugLock?: T;
   updatedAt?: T;
