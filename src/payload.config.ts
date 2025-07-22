@@ -21,6 +21,7 @@ import { StudyPlans } from './collections/StudyPlans'
 import { Categories } from './collections/Category'
 import { Transactions } from './collections/Transactions'
 import { Topics } from './collections/Topics'
+import { Settings } from './Settings/config'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -51,6 +52,7 @@ export default buildConfig({
     Transactions,
     Topics,
   ],
+  globals: [Settings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -77,6 +79,9 @@ export default buildConfig({
     payloadCloudPlugin(),
     // storage-adapter-placeholder
   ],
+  onInit: async (payload) => {
+    payload.logger.info('Payload initialized successfully')
+  },
   jobs: {
     access: {
       run: ({ req }: { req: PayloadRequest }): boolean => {
@@ -91,5 +96,6 @@ export default buildConfig({
       },
     },
     tasks: [],
+    workflows: [],
   },
 })

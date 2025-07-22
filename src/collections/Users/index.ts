@@ -4,6 +4,7 @@ import { anyone } from '@/access/anyone'
 import { authenticated } from '@/access/authenticated'
 import { selfOrAdmin } from '@/access/selfOrAdmin'
 import { admin } from '@/access/admin'
+import { deleteUser, readUser, updateUser, userCreate } from '@/access/userAccess'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -11,10 +12,10 @@ export const Users: CollectionConfig = {
     useAsTitle: 'firstName',
   },
   access: {
-    create: anyone,
-    read: authenticated,
-    update: selfOrAdmin,
-    delete: () => true,
+    create: userCreate,
+    read: readUser,
+    update: updateUser,
+    delete: deleteUser,
   },
   auth: true,
   fields: [

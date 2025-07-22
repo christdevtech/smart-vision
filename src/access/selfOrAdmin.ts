@@ -1,23 +1,11 @@
 import { Access, Where } from 'payload'
 
-// @ts-ignore - Payload CMS role field compatibility
-export const selfOrAdmin: Access = ({ req: { user } }) => {
-  if (user) {
-    return {
-      or: [
-        {
-          id: {
-            equals: user.id,
-          },
-        },
-        {
-          role: {
-            in: ['user', 'admin'],
-          },
-        },
-      ],
-    }
+export const selfOrAdmin: Access = ({ req: { user }, data }) => {
+  if (user && data && data.id === user.id) {
+    return true
   }
-
+  if (user && ['admin', 'superadmin'].includes(user.role)) {
+    return true
+  }
   return false
 }

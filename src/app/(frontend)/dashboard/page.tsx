@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import config from '@/payload.config'
 import Link from 'next/link'
 import ReferralDashboard from '@/components/ReferralDashboard'
+import SubscriptionDashboard from '@/components/SubscriptionDashboard'
 import { Media } from '@/components/Media'
 import { User } from 'lucide-react'
 
@@ -19,6 +20,27 @@ export default async function DashboardPage() {
   if (!user) {
     redirect('/')
   }
+  const subscriptionDocs = await payload.find({
+    collection: 'subscriptions',
+    where: {
+      user: {
+        equals: user.id,
+      },
+    },
+  })
+  const transactionDocs = await payload.find({
+    collection: 'transactions',
+    where: {
+      user: {
+        equals: user.id,
+      },
+    },
+  })
+  const settings = await payload.findGlobal({
+    slug: 'settings',
+  })
+  const transactions = transactionDocs.docs
+  const subscription = subscriptionDocs.docs[0]
 
   return (
     <div className="min-h-screen text-white bg-black">
@@ -85,8 +107,14 @@ export default async function DashboardPage() {
           </div>
 
           {/* Referral Dashboard */}
-          <div className="lg:col-span-2">
+          <div className="space-y-8 lg:col-span-2">
             <ReferralDashboard />
+            <SubscriptionDashboard
+              user={user}
+              subscription={subscriptionDocs.docs[0]}
+              transactions={transactions}
+              subscriptionData={settings.subscriptionCosts}
+            />
           </div>
         </div>
 

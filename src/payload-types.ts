@@ -106,8 +106,12 @@ export interface Config {
   db: {
     defaultIDType: string;
   };
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    settings: Setting;
+  };
+  globalsSelect: {
+    settings: SettingsSelect<false> | SettingsSelect<true>;
+  };
   locale: null;
   user: User & {
     collection: 'users';
@@ -343,6 +347,21 @@ export interface Mcq {
     isCorrect?: boolean | null;
     id?: string | null;
   }[];
+  explanation?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   academicLevel: string | AcademicLevel;
   subject: string | Subject;
   difficulty?: ('easy' | 'medium' | 'hard') | null;
@@ -451,11 +470,67 @@ export interface Subscription {
 export interface Transaction {
   id: string;
   user: string | User;
-  subscription: string | Subscription;
+  subscription?: (string | null) | Subscription;
   transactionId: string;
+  /**
+   * Transaction ID from Fapshi (e.g., fp_1234567890)
+   */
+  fapshiTransId?: string | null;
+  /**
+   * Your system order/transaction ID for reconciliation
+   */
+  externalId?: string | null;
   amount: number;
-  status?: ('pending' | 'paid' | 'failed' | 'refunded') | null;
-  date: string;
+  /**
+   * Amount received after Fapshi fees deduction
+   */
+  revenue?: number | null;
+  status?: ('created' | 'pending' | 'successful' | 'failed' | 'expired' | 'refunded') | null;
+  /**
+   * Payment method used
+   */
+  paymentMedium?: ('mobile money' | 'orange money') | null;
+  /**
+   * Phone number used for payment
+   */
+  phone?: string | null;
+  /**
+   * Transaction ID from the mobile money operator
+   */
+  financialTransId?: string | null;
+  dateInitiated: string;
+  /**
+   * Date when payment was confirmed
+   */
+  dateConfirmed?: string | null;
+  /**
+   * Whether webhook notification was received
+   */
+  webhookReceived?: boolean | null;
+  /**
+   * Timestamp when webhook was received
+   */
+  webhookReceivedAt?: string | null;
+  /**
+   * Last time status was checked via API
+   */
+  lastStatusCheck?: string | null;
+  /**
+   * Number of times status was checked
+   */
+  statusCheckCount?: number | null;
+  /**
+   * Whether transaction has been reconciled
+   */
+  reconciled?: boolean | null;
+  /**
+   * Date when transaction was reconciled
+   */
+  reconciledAt?: string | null;
+  /**
+   * Additional notes or error messages
+   */
+  notes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -667,6 +742,7 @@ export interface McqSelect<T extends boolean = true> {
         isCorrect?: T;
         id?: T;
       };
+  explanation?: T;
   academicLevel?: T;
   subject?: T;
   difficulty?: T;
@@ -853,9 +929,23 @@ export interface TransactionsSelect<T extends boolean = true> {
   user?: T;
   subscription?: T;
   transactionId?: T;
+  fapshiTransId?: T;
+  externalId?: T;
   amount?: T;
+  revenue?: T;
   status?: T;
-  date?: T;
+  paymentMedium?: T;
+  phone?: T;
+  financialTransId?: T;
+  dateInitiated?: T;
+  dateConfirmed?: T;
+  webhookReceived?: T;
+  webhookReceivedAt?: T;
+  lastStatusCheck?: T;
+  statusCheckCount?: T;
+  reconciled?: T;
+  reconciledAt?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -902,6 +992,78 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "settings".
+ */
+export interface Setting {
+  id: string;
+  siteName?: string | null;
+  siteDescription?: string | null;
+  siteLogo?: (string | null) | Media;
+  siteFavicon?: (string | null) | Media;
+  siteEmail?: string | null;
+  sitePhone?: string | null;
+  siteAddress?: string | null;
+  siteSocial?:
+    | {
+        name?: string | null;
+        url?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  siteCopyright?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  subscriptionCosts: {
+    monthly: number;
+    yearly: number;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "settings_select".
+ */
+export interface SettingsSelect<T extends boolean = true> {
+  siteName?: T;
+  siteDescription?: T;
+  siteLogo?: T;
+  siteFavicon?: T;
+  siteEmail?: T;
+  sitePhone?: T;
+  siteAddress?: T;
+  siteSocial?:
+    | T
+    | {
+        name?: T;
+        url?: T;
+        id?: T;
+      };
+  siteCopyright?: T;
+  subscriptionCosts?:
+    | T
+    | {
+        monthly?: T;
+        yearly?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
