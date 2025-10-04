@@ -1,7 +1,6 @@
 import React from 'react'
 import '../styles.css'
 import { HeaderServerWrapper } from '@/Header/ServerWrapper'
-import { Toaster } from 'sonner'
 
 export const metadata = {
   description:
@@ -11,14 +10,9 @@ export const metadata = {
 
 export default function WebLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
-        <div className="min-h-screen bg-black">
-          <HeaderServerWrapper />
-          {children}
-          <Toaster />
-        </div>
-      </body>
-    </html>
+    <div className="min-h-screen bg-black">
+      <HeaderServerWrapper />
+      {children}
+    </div>
   )
 }

@@ -1,6 +1,4 @@
 import React from 'react'
-import '../styles.css'
-import { Toaster } from 'sonner'
 
 export const metadata = {
   description:
@@ -9,14 +7,5 @@ export const metadata = {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body>
-        <div className="min-h-screen bg-black">
-          {children}
-          <Toaster />
-        </div>
-      </body>
-    </html>
-  )
+  return <div className="min-h-screen text-white bg-black">{children}</div>
 }

@@ -1,2 +1,3 @@
 1. This application is designed for mobile use, so even though some users may access it on their laptops, let the designs of pages and components always be optimized for mobile use.
 2. Only create api endpoints when what we need the api endpoint to do cannot be achieved with payload cms default api endpoints. All custom api endpoints should be located in the /api/custom folder
+3. Where possible use lucide react icons, unless it does not have the icons you need.
