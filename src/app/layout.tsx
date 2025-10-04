@@ -1,6 +1,7 @@
 import React from 'react'
 import './styles.css'
 import { Toaster } from 'sonner'
+import { ThemeProvider } from '@/components/ThemeProvider'
 
 export const metadata = {
   title: 'SmartVision - Mobile Learning Platform',
@@ -10,10 +11,12 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        {children}
-        <Toaster />
+        <ThemeProvider>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )

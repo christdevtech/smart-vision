@@ -172,8 +172,8 @@ export default function SubscriptionDashboard({
   }
 
   return (
-    <div className="p-6 rounded-xl border bg-white/5 border-white/10">
-      <h3 className="mb-4 text-xl font-semibold text-white">Subscription</h3>
+    <div className="p-6 rounded-xl border bg-card border-border">
+      <h3 className="mb-4 text-xl font-semibold text-foreground">Subscription</h3>
 
       {/* Subscription Status */}
       {hasActiveSubscription ? (
@@ -182,7 +182,7 @@ export default function SubscriptionDashboard({
             <span className="mr-2 text-emerald-400 text-xl">✓</span>
             <h4 className="font-medium text-emerald-400">Active Subscription</h4>
           </div>
-          <p className="text-white/80 text-sm">
+          <p className="text-muted-foreground text-sm">
             Your {subscription?.plan} subscription is active until{' '}
             {formatDate(subscription?.endDate || '')}
           </p>
@@ -193,7 +193,7 @@ export default function SubscriptionDashboard({
             <span className="mr-2 text-amber-400 text-xl">!</span>
             <h4 className="font-medium text-amber-400">No Active Subscription</h4>
           </div>
-          <p className="text-white/80 text-sm">
+          <p className="text-muted-foreground text-sm">
             Subscribe now to access all premium features and content.
           </p>
         </div>
@@ -201,50 +201,50 @@ export default function SubscriptionDashboard({
 
       {/* Subscription Options */}
       <div className="mb-6">
-        <h4 className="mb-3 font-medium text-white">Select Subscription Plan</h4>
+        <h4 className="mb-3 font-medium text-foreground">Select Subscription Plan</h4>
         <div className="grid grid-cols-2 gap-3 mb-4">
           <button
             onClick={() => setSelectedPlan('monthly')}
             className={`p-3 text-center rounded-lg border transition-all ${
               selectedPlan === 'monthly'
-                ? 'bg-indigo-600 border-indigo-400'
-                : 'bg-white/5 border-white/10 hover:bg-white/8'
+                ? 'bg-primary border-primary text-primary-foreground'
+                : 'bg-card border-border hover:bg-accent'
             }`}
           >
             <div className="mb-1 text-lg font-medium">Monthly</div>
             <div className="text-2xl font-bold">{subscriptionData?.monthly || 3000} XAF</div>
-            <div className="mt-1 text-xs text-white/60">Billed monthly</div>
+            <div className="mt-1 text-xs text-muted-foreground">Billed monthly</div>
           </button>
 
           <button
             onClick={() => setSelectedPlan('yearly')}
             className={`p-3 text-center rounded-lg border transition-all ${
               selectedPlan === 'yearly'
-                ? 'bg-indigo-600 border-indigo-400'
-                : 'bg-white/5 border-white/10 hover:bg-white/8'
+                ? 'bg-primary border-primary text-primary-foreground'
+                : 'bg-card border-border hover:bg-accent'
             }`}
           >
             <div className="mb-1 text-lg font-medium">Yearly</div>
             <div className="text-2xl font-bold">{subscriptionData?.yearly || 30000} XAF</div>
-            <div className="mt-1 text-xs text-white/60">Save up to 20%</div>
+            <div className="mt-1 text-xs text-muted-foreground">Save up to 20%</div>
           </button>
         </div>
       </div>
 
       {/* Payment Form */}
       <div className="mb-6">
-        <h4 className="mb-3 font-medium text-white">Payment Information</h4>
+        <h4 className="mb-3 font-medium text-foreground">Payment Information</h4>
         <input
           type="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="Enter phone number (e.g., 677123456)"
-          className="px-3 py-2 mb-3 w-full text-white rounded border bg-white/5 border-white/10"
+          className="px-3 py-2 mb-3 w-full text-foreground rounded border bg-input border-border"
         />
         <button
           onClick={initiatePayment}
           disabled={isLoading || isPolling}
-          className="px-4 py-2 w-full text-white bg-indigo-500 rounded hover:bg-indigo-600 transition-colors"
+          className="px-4 py-2 w-full text-primary-foreground bg-primary rounded hover:bg-primary/90 transition-colors"
         >
           {isLoading
             ? 'Initiating...'
@@ -252,11 +252,11 @@ export default function SubscriptionDashboard({
               ? 'Checking status...'
               : `Subscribe Now - ${subscriptionAmount} XAF`}
         </button>
-        {error && <p className="mt-2 text-red-500">{error}</p>}
+        {error && <p className="mt-2 text-destructive">{error}</p>}
         {transactionId && status && (
-          <div className="mt-3 p-3 rounded-lg bg-white/5 border border-white/10">
+          <div className="mt-3 p-3 rounded-lg bg-card border border-border">
             <p className="text-sm">
-              Transaction ID: <span className="text-indigo-400">{transactionId}</span>
+              Transaction ID: <span className="text-primary">{transactionId}</span>
             </p>
             <p className="text-sm">
               Status:{' '}
@@ -268,17 +268,17 @@ export default function SubscriptionDashboard({
             </p>
           </div>
         )}
-        {isPolling && <p className="mt-2 text-yellow-500">Awaiting payment confirmation...</p>}
+        {isPolling && <p className="mt-2 text-warning">Awaiting payment confirmation...</p>}
       </div>
 
       {/* Transaction History */}
       {transactions.length > 0 && (
         <div>
           <div className="flex justify-between items-center mb-3">
-            <h4 className="font-medium text-white">Transaction History</h4>
+            <h4 className="font-medium text-foreground">Transaction History</h4>
             <button
               onClick={() => setShowTransactions(!showTransactions)}
-              className="text-sm text-indigo-400 hover:text-indigo-300"
+              className="text-sm text-primary hover:text-primary/80"
             >
               {showTransactions ? 'Hide' : 'Show'}
             </button>
@@ -289,12 +289,12 @@ export default function SubscriptionDashboard({
               {transactions.map((transaction) => (
                 <div
                   key={transaction.id}
-                  className="p-3 rounded-lg bg-white/5 border border-white/10"
+                  className="p-3 rounded-lg bg-card border border-border"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="text-sm font-medium">{transaction.amount} XAF</p>
-                      <p className="text-xs text-white/60">
+                      <p className="text-xs text-muted-foreground">
                         {formatDate(transaction.dateInitiated)}
                       </p>
                     </div>
@@ -305,14 +305,14 @@ export default function SubscriptionDashboard({
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <p className="text-xs text-white/60">
+                    <p className="text-xs text-muted-foreground">
                       ID: {transaction.transactionId?.substring(0, 10)}...
                     </p>
                     {(transaction.status === 'pending' || transaction.status === 'created') && (
                       <button
                         onClick={() => verifyTransaction(transaction.id)}
                         disabled={verifyingTransaction === transaction.id}
-                        className="px-2 py-1 text-xs text-white bg-indigo-500 rounded hover:bg-indigo-600 transition-colors"
+                        className="px-2 py-1 text-xs text-primary-foreground bg-primary rounded hover:bg-primary/90 transition-colors"
                       >
                         {verifyingTransaction === transaction.id ? 'Verifying...' : 'Verify'}
                       </button>

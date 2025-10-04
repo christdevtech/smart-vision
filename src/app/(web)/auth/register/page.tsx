@@ -10,7 +10,7 @@ export default function RegisterPage() {
     lastName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -19,7 +19,7 @@ export default function RegisterPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     })
   }
 
@@ -73,10 +73,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center px-6 py-8">
+    <div className="flex justify-center items-center px-6 py-8 min-h-screen bg-background text-foreground">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="mb-8 text-center">
           <Link href="/" className="inline-block">
             <svg
               width="60"
@@ -92,24 +92,27 @@ export default function RegisterPage() {
               <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
             </svg>
           </Link>
-          <h1 className="text-2xl font-bold bg-gradient-to-br from-indigo-500 to-emerald-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-primary to-success">
             SmartVision
           </h1>
-          <p className="text-white/60 mt-2">Create your account</p>
+          <p className="mt-2 text-muted-foreground">Create your account</p>
         </div>
 
         {/* Registration Form */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <div className="p-6 rounded-xl border bg-card border-border">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">
+              <div className="p-3 text-sm text-red-400 rounded-lg border bg-red-500/10 border-red-500/20">
                 {error}
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-white/80 mb-2">
+                <label
+                  htmlFor="firstName"
+                  className="block mb-2 text-sm font-medium text-foreground/80"
+                >
                   First Name
                 </label>
                 <input
@@ -119,12 +122,15 @@ export default function RegisterPage() {
                   value={formData.firstName}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="First name"
                 />
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-white/80 mb-2">
+                <label
+                  htmlFor="lastName"
+                  className="block mb-2 text-sm font-medium text-foreground/80"
+                >
                   Last Name
                 </label>
                 <input
@@ -134,14 +140,14 @@ export default function RegisterPage() {
                   value={formData.lastName}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="Last name"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+              <label htmlFor="email" className="block mb-2 text-sm font-medium text-foreground/80">
                 Email Address
               </label>
               <input
@@ -151,13 +157,16 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter your email"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
+              <label
+                htmlFor="password"
+                className="block mb-2 text-sm font-medium text-foreground/80"
+              >
                 Password
               </label>
               <input
@@ -167,13 +176,16 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Create a password"
               />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/80 mb-2">
+              <label
+                htmlFor="confirmPassword"
+                className="block mb-2 text-sm font-medium text-foreground/80"
+              >
                 Confirm Password
               </label>
               <input
@@ -183,7 +195,7 @@ export default function RegisterPage() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Confirm your password"
               />
             </div>
@@ -191,26 +203,29 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-br from-indigo-500 to-emerald-500 text-white py-2 px-4 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full bg-gradient-to-br from-primary to-success text-primary-foreground py-2 px-4 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <div className="text-white/60 text-sm">
+            <div className="text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link href="/auth/login" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+              <Link
+                href="/auth/login"
+                className="transition-colors text-primary hover:text-primary/80"
+              >
                 Sign in
               </Link>
             </div>
           </div>
         </div>
 
-        <div className="text-center mt-6">
+        <div className="mt-6 text-center">
           <Link
             href="/"
-            className="text-white/60 hover:text-white text-sm transition-colors"
+            className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
             ← Back to home
           </Link>

@@ -2,16 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePathname } from 'next/navigation'
-import { 
-  Home,
-  BarChart3,
-  Bell,
-  User,
-  Settings,
-  Menu,
-  X,
-  ChevronRight
-} from 'lucide-react'
+import { Home, BarChart3, Bell, User, Settings, Menu, X, ChevronRight } from 'lucide-react'
 import NavigationItem from './NavigationItem'
 import { navigationAnimations } from './animations/presets'
 import { useState, useEffect } from 'react'
@@ -31,17 +22,34 @@ interface SidebarNavigationProps {
   onToggle?: () => void
 }
 
-export default function SidebarNavigation({ 
+export default function SidebarNavigation({
   className = '',
   notificationCount = 0,
   isOpen: controlledIsOpen,
-  onToggle
+  onToggle,
 }: SidebarNavigationProps) {
   const pathname = usePathname()
   const [internalIsOpen, setInternalIsOpen] = useState(false)
-  
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Check if we're on mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   // Use controlled state if provided, otherwise use internal state
-  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen
+  // On desktop, default to open unless explicitly controlled
+  const isOpen = controlledIsOpen !== undefined 
+    ? controlledIsOpen 
+    : isMobile 
+      ? internalIsOpen 
+      : true
   const setIsOpen = onToggle || setInternalIsOpen
 
   const routes: NavigationRoute[] = [
@@ -49,33 +57,33 @@ export default function SidebarNavigation({
       href: '/dashboard',
       label: 'Home',
       icon: Home,
-      activeIcon: Home
+      activeIcon: Home,
     },
     {
       href: '/dashboard/analytics',
       label: 'Analytics',
       icon: BarChart3,
-      activeIcon: BarChart3
+      activeIcon: BarChart3,
     },
     {
       href: '/dashboard/notifications',
       label: 'Notifications',
       icon: Bell,
       activeIcon: Bell,
-      badge: notificationCount
+      badge: notificationCount,
     },
     {
       href: '/dashboard/profile',
       label: 'Profile',
       icon: User,
-      activeIcon: User
+      activeIcon: User,
     },
     {
       href: '/dashboard/settings',
       label: 'Settings',
       icon: Settings,
-      activeIcon: Settings
-    }
+      activeIcon: Settings,
+    },
   ]
 
   const isRouteActive = (href: string) => {
@@ -108,7 +116,7 @@ export default function SidebarNavigation({
     <>
       {/* Mobile Menu Button */}
       <motion.button
-        className="fixed top-4 left-4 z-50 flex md:hidden justify-center items-center w-10 h-10 text-gray-600 bg-white rounded-lg shadow-lg border border-gray-200"
+        className="fixed top-4 left-4 z-50 flex md:hidden justify-center items-center w-10 h-10 text-muted-foreground bg-card rounded-lg shadow-lg border border-border"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
@@ -154,33 +162,35 @@ export default function SidebarNavigation({
       {/* Sidebar */}
       <AnimatePresence>
         <motion.nav
-          className={`fixed top-0 left-0 z-50 h-full bg-white border-r border-gray-200 shadow-lg ${className}`}
+          className={`fixed top-0 left-0 z-50 h-full bg-card border-r border-border shadow-lg ${className} ${
+            !isMobile ? 'md:relative md:z-auto' : ''
+          }`}
           variants={navigationAnimations.sidebarSlide}
-          initial="initial"
-          animate={isOpen ? "animate" : "initial"}
+          initial={isMobile ? "initial" : "animate"}
+          animate={isOpen ? 'animate' : 'initial'}
           style={{
-            width: isOpen ? '280px' : '0px',
-            overflow: 'hidden'
+            width: isOpen ? '280px' : isMobile ? '0px' : '280px',
+            overflow: 'hidden',
           }}
           transition={{
             type: 'spring',
             stiffness: 300,
-            damping: 30
+            damping: 30,
           }}
         >
           {/* Background blur effect */}
-          <div className="absolute inset-0 backdrop-blur-lg bg-white/95" />
-          
+          <div className="absolute inset-0 backdrop-blur-lg bg-card/95" />
+
           {/* Sidebar Header */}
           <motion.div
-            className="flex relative justify-between items-center p-4 border-b border-gray-200"
+            className="flex relative justify-between items-center p-4 border-b border-border"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: isOpen ? 1 : 0, x: isOpen ? 0 : -20 }}
             transition={{ delay: 0.1 }}
           >
-            <h2 className="text-lg font-semibold text-gray-900">SmartVision</h2>
+            <h2 className="text-lg font-semibold text-foreground">SmartVision</h2>
             <button
-              className="flex md:hidden justify-center items-center w-8 h-8 text-gray-500 rounded-lg hover:bg-gray-100"
+              className="flex md:hidden justify-center items-center w-8 h-8 text-muted-foreground rounded-lg hover:bg-accent"
               onClick={() => setIsOpen(false)}
             >
               <X className="w-5 h-5" />
@@ -192,20 +202,20 @@ export default function SidebarNavigation({
             {routes.map((route, index) => {
               const isActive = isRouteActive(route.href)
               const IconComponent = isActive ? route.activeIcon : route.icon
-              
+
               return (
                 <motion.div
                   key={route.href}
                   initial={{ opacity: 0, x: -20 }}
-                  animate={{ 
-                    opacity: isOpen ? 1 : 0, 
-                    x: isOpen ? 0 : -20 
+                  animate={{
+                    opacity: isOpen ? 1 : 0,
+                    x: isOpen ? 0 : -20,
                   }}
-                  transition={{ 
-                    delay: isOpen ? (index * 0.1) + 0.2 : 0,
+                  transition={{
+                    delay: isOpen ? index * 0.1 + 0.2 : 0,
                     type: 'spring',
                     stiffness: 300,
-                    damping: 30
+                    damping: 30,
                   }}
                 >
                   <NavigationItem
@@ -215,7 +225,7 @@ export default function SidebarNavigation({
                     isActive={isActive}
                     badge={route.badge}
                     variant="sidebar"
-                    className="w-full justify-start px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="w-full justify-start px-3 py-2.5 rounded-lg hover:bg-accent transition-colors"
                   />
                 </motion.div>
               )
@@ -224,18 +234,18 @@ export default function SidebarNavigation({
 
           {/* Active route indicator */}
           <motion.div
-            className="absolute left-0 w-1 bg-blue-600 rounded-r-full"
+            className="absolute left-0 w-1 bg-primary rounded-r-full"
             layoutId="sidebarIndicator"
             style={{
               height: '40px',
-              top: `${88 + (routes.findIndex(route => isRouteActive(route.href)) * 48)}px`
+              top: `${88 + routes.findIndex((route) => isRouteActive(route.href)) * 48}px`,
             }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           />
 
           {/* Collapse/Expand Button for Desktop */}
           <motion.button
-            className="hidden md:flex absolute -right-3 top-20 justify-center items-center w-6 h-6 text-gray-400 bg-white rounded-full border border-gray-200 shadow-sm hover:text-gray-600"
+            className="hidden md:flex absolute -right-3 top-20 justify-center items-center w-6 h-6 text-muted-foreground bg-card rounded-full border border-border shadow-sm hover:text-foreground"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsOpen(!isOpen)}
@@ -243,10 +253,7 @@ export default function SidebarNavigation({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <motion.div
-              animate={{ rotate: isOpen ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
+            <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronRight className="w-4 h-4" />
             </motion.div>
           </motion.button>

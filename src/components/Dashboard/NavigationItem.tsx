@@ -27,7 +27,7 @@ export default function NavigationItem({
   disabled = false,
   onClick,
   className = '',
-  variant = 'bottom'
+  variant = 'bottom',
 }: NavigationItemProps) {
   const baseClasses = `
     relative flex items-center justify-center transition-colors duration-200
@@ -37,16 +37,16 @@ export default function NavigationItem({
   const variantClasses = {
     bottom: `
       flex-col space-y-1 p-2 min-h-[60px]
-      ${isActive ? 'text-blue-600' : 'text-gray-600 hover:text-blue-500'}
+      ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'}
     `,
     sidebar: `
       flex-row space-x-3 p-3 w-full rounded-lg
-      ${isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'}
+      ${isActive ? 'bg-accent text-primary' : 'text-foreground hover:bg-accent hover:text-primary'}
     `,
     horizontal: `
       flex-row space-x-2 px-4 py-2 rounded-lg
-      ${isActive ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'}
-    `
+      ${isActive ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent hover:text-primary'}
+    `,
   }
 
   const iconSize = variant === 'bottom' ? 'text-xl' : 'text-lg'
@@ -57,14 +57,14 @@ export default function NavigationItem({
       className={`${baseClasses} ${variantClasses[variant]} ${className}`}
       variants={interactiveAnimations.cardHover}
       initial="rest"
-      whileHover={disabled ? "rest" : "hover"}
-      whileTap={disabled ? "rest" : "tap"}
+      whileHover={disabled ? 'rest' : 'hover'}
+      whileTap={disabled ? 'rest' : 'tap'}
       onClick={disabled ? undefined : onClick}
     >
       {/* Active indicator for bottom navigation */}
       {variant === 'bottom' && isActive && (
         <motion.div
-          className="absolute top-0 left-1/2 w-8 h-1 bg-blue-600 rounded-b-full"
+          className="absolute top-0 left-1/2 w-8 h-1 rounded-b-full bg-primary"
           layoutId="activeIndicator"
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -75,7 +75,7 @@ export default function NavigationItem({
       {/* Active indicator for sidebar */}
       {variant === 'sidebar' && isActive && (
         <motion.div
-          className="absolute left-0 top-1/2 w-1 h-8 bg-blue-600 rounded-r-full"
+          className="absolute left-0 top-1/2 w-1 h-8 rounded-r-full bg-primary"
           layoutId="sidebarActiveIndicator"
           initial={{ opacity: 0, scaleY: 0 }}
           animate={{ opacity: 1, scaleY: 1 }}
@@ -89,19 +89,14 @@ export default function NavigationItem({
           className={iconSize}
           variants={navigationAnimations.navItemActive}
           initial="initial"
-          animate={isActive ? "animate" : "initial"}
+          animate={isActive ? 'animate' : 'initial'}
         >
           {icon}
         </motion.div>
-        
+
         {badge && badge > 0 && (
           <div className="absolute -top-1 -right-1">
-            <NotificationBadge 
-              count={badge} 
-              variant="number" 
-              color="red" 
-              pulse={true}
-            />
+            <NotificationBadge count={badge} variant="number" color="red" pulse={true} />
           </div>
         )}
       </div>
@@ -117,7 +112,7 @@ export default function NavigationItem({
 
       {/* Ripple effect on tap */}
       <motion.div
-        className="absolute inset-0 rounded-lg bg-blue-500 opacity-0"
+        className="absolute inset-0 rounded-lg opacity-0 bg-primary"
         initial={{ scale: 0, opacity: 0 }}
         whileTap={{ scale: 1, opacity: 0.1 }}
         transition={{ duration: 0.1 }}

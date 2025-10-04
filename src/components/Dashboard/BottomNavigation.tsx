@@ -83,7 +83,7 @@ export default function BottomNavigation({
     <AnimatePresence>
       {isVisible && (
         <motion.nav
-          className={`fixed right-0 bottom-0 left-0 z-50 bg-white border-t border-gray-200 safe-area-pb ${className}`}
+          className={`fixed right-0 bottom-0 left-0 z-50 bg-card border-t border-border safe-area-pb ${className}`}
           variants={navigationAnimations.bottomNavSlide}
           initial="hidden"
           animate="visible"
@@ -93,7 +93,7 @@ export default function BottomNavigation({
           }}
         >
           {/* Background blur effect */}
-          <div className="absolute inset-0 backdrop-blur-lg bg-white/80" />
+          <div className="absolute inset-0 backdrop-blur-lg bg-card/80" />
           
           {/* Navigation content */}
           <div className="flex relative justify-around items-center px-2 py-1">
@@ -131,7 +131,7 @@ export default function BottomNavigation({
           <AnimatePresence>
             {showFab && (
               <motion.button
-                className="flex absolute right-4 -top-6 justify-center items-center w-12 h-12 text-white bg-blue-600 rounded-full shadow-lg transition-colors duration-200 hover:bg-blue-700 active:scale-95"
+                className="flex absolute right-4 -top-6 justify-center items-center w-12 h-12 text-primary-foreground bg-primary rounded-full shadow-lg transition-colors duration-200 hover:bg-primary/90 active:scale-95"
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0, opacity: 0 }}
@@ -146,7 +146,7 @@ export default function BottomNavigation({
 
           {/* Active route indicator line */}
           <motion.div
-            className="absolute top-0 left-0 h-0.5 bg-blue-600"
+            className="absolute top-0 left-0 h-0.5 bg-primary"
             layoutId="bottomNavIndicator"
             style={{
               width: `${100 / routes.length}%`,

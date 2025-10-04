@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function WebLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-background">
       <HeaderServerWrapper />
       {children}
     </div>

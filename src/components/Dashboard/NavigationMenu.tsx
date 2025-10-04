@@ -176,7 +176,7 @@ export default function NavigationMenu({
     <motion.div
       className={`
         ${variant === 'sidebar' ? 'relative' : 'fixed inset-y-0 left-0 z-50'}
-        w-80 bg-white shadow-xl
+        w-80 bg-card shadow-xl
         flex flex-col
         ${className}
       `}
@@ -186,11 +186,11 @@ export default function NavigationMenu({
       exit="closed"
     >
       {/* Header */}
-      <div className="flex justify-between items-center p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900">Navigation</h2>
+      <div className="flex justify-between items-center p-4 border-b border-border">
+        <h2 className="text-lg font-semibold text-foreground">Navigation</h2>
         {variant === 'drawer' && (
           <motion.button
-            className="p-2 text-gray-500 rounded-lg hover:text-gray-700 hover:bg-gray-100"
+            className="p-2 text-muted-foreground rounded-lg hover:text-foreground hover:bg-accent"
             onClick={onClose}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -222,8 +222,8 @@ export default function NavigationMenu({
                     className={`
                       flex items-center justify-between w-full
                       text-xs font-semibold uppercase tracking-wider
-                      ${hasActiveItem ? 'text-blue-600' : 'text-gray-500'}
-                      hover:text-blue-600 transition-colors duration-200
+                      ${hasActiveItem ? 'text-primary' : 'text-muted-foreground'}
+                      hover:text-primary transition-colors duration-200
                     `}
                     onClick={() => toggleSection(sectionKey)}
                     whileHover={{ scale: 1.02 }}
@@ -241,7 +241,7 @@ export default function NavigationMenu({
                   <h3
                     className={`
                     text-xs font-semibold uppercase tracking-wider
-                    ${hasActiveItem ? 'text-blue-600' : 'text-gray-500'}
+                    ${hasActiveItem ? 'text-primary' : 'text-muted-foreground'}
                   `}
                   >
                     {section.title}
@@ -286,8 +286,8 @@ export default function NavigationMenu({
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200">
-        <div className="text-xs text-center text-gray-500">Smart Vision Dashboard</div>
+      <div className="p-4 border-t border-border">
+        <div className="text-xs text-center text-muted-foreground">Smart Vision Dashboard</div>
       </div>
     </motion.div>
   )
@@ -303,7 +303,7 @@ export default function NavigationMenu({
         <>
           {/* Overlay */}
           <motion.div
-            className="fixed inset-0 z-40 bg-black bg-opacity-50"
+            className="fixed inset-0 z-40 bg-black/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

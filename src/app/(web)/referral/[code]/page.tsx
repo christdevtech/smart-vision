@@ -11,12 +11,12 @@ interface ReferralPageProps {
 
 export default function ReferralPage({ params }: ReferralPageProps) {
   const router = useRouter()
-  
+
   useEffect(() => {
     async function processReferral() {
       try {
         const { code } = await params
-        
+
         if (!code) {
           router.push('/')
           return
@@ -25,7 +25,7 @@ export default function ReferralPage({ params }: ReferralPageProps) {
         // Call the API endpoint to set the cookie
         const response = await fetch(`/api/custom/referral/redirect/${code}`)
         const data = await response.json()
-        
+
         if (response.ok && data.success) {
           // Cookie was set successfully, redirect to home
           router.push(data.redirectUrl || '/')
@@ -39,15 +39,15 @@ export default function ReferralPage({ params }: ReferralPageProps) {
         router.push('/')
       }
     }
-    
+
     processReferral()
   }, [params, router])
-  
+
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="flex justify-center items-center min-h-screen bg-background">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p className="text-gray-300">Processing referral...</p>
+        <div className="mx-auto mb-4 w-12 h-12 rounded-full border-b-2 animate-spin border-primary"></div>
+        <p className="text-muted-foreground">Processing referral...</p>
       </div>
     </div>
   )

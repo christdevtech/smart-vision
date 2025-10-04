@@ -71,7 +71,7 @@ export default function ResetPasswordPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
+      <div className="flex justify-center items-center px-6 min-h-screen bg-background text-foreground">
         <div className="w-full max-w-md text-center">
           {/* Logo */}
           <div className="mb-8">
@@ -90,20 +90,22 @@ export default function ResetPasswordPage() {
                 <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
               </svg>
             </Link>
-            <h1 className="text-2xl font-bold bg-gradient-to-br from-indigo-500 to-emerald-500 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-primary to-success">
               SmartVision
             </h1>
           </div>
 
-          <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-            <div className="text-emerald-400 text-4xl mb-4">✓</div>
-            <h2 className="text-xl font-semibold text-white mb-3">Password Reset Successful</h2>
-            <p className="text-white/70 mb-6">
+          <div className="p-6 rounded-xl border bg-card border-border">
+            <div className="mb-4 text-4xl text-success">✓</div>
+            <h2 className="mb-3 text-xl font-semibold text-foreground">
+              Password Reset Successful
+            </h2>
+            <p className="mb-6 text-muted-foreground">
               Your password has been successfully reset. You can now sign in with your new password.
             </p>
             <Link
               href="/auth/login"
-              className="inline-block bg-gradient-to-br from-indigo-500 to-emerald-500 text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)]"
+              className="inline-block bg-gradient-to-br from-primary to-success text-primary-foreground py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)]"
             >
               Sign In
             </Link>
@@ -114,10 +116,10 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
+    <div className="flex justify-center items-center px-6 min-h-screen bg-background text-foreground">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="mb-8 text-center">
           <Link href="/" className="inline-block">
             <svg
               width="60"
@@ -133,29 +135,27 @@ export default function ResetPasswordPage() {
               <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
             </svg>
           </Link>
-          <h1 className="text-2xl font-bold bg-gradient-to-br from-indigo-500 to-emerald-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-primary to-success">
             SmartVision
           </h1>
-          <p className="text-white/60 mt-2">Reset your password</p>
+          <p className="mt-2 text-muted-foreground">Reset your password</p>
         </div>
 
         {/* Reset Password Form */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <div className="p-6 rounded-xl border bg-card border-border">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">
+              <div className="p-3 text-sm rounded-lg border bg-destructive/10 border-destructive/20 text-destructive">
                 {error}
               </div>
             )}
 
-            <div className="text-center mb-6">
-              <p className="text-white/70 text-sm">
-                Enter your new password below.
-              </p>
+            <div className="mb-6 text-center">
+              <p className="text-sm text-muted-foreground">Enter your new password below.</p>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm text-white/60 mb-2">
+              <label htmlFor="password" className="block mb-2 text-sm text-foreground/80">
                 New Password
               </label>
               <input
@@ -164,13 +164,13 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-indigo-500/50 focus:bg-white/8 transition-all"
+                className="px-4 py-3 w-full rounded-lg border transition-all bg-input border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter your new password"
               />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm text-white/60 mb-2">
+              <label htmlFor="confirmPassword" className="block mb-2 text-sm text-foreground/80">
                 Confirm New Password
               </label>
               <input
@@ -179,7 +179,7 @@ export default function ResetPasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-indigo-500/50 focus:bg-white/8 transition-all"
+                className="px-4 py-3 w-full rounded-lg border transition-all bg-input border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Confirm your new password"
               />
             </div>
@@ -187,7 +187,7 @@ export default function ResetPasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-br from-indigo-500 to-emerald-500 text-white py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full bg-gradient-to-br from-primary to-success text-primary-foreground py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {isLoading ? 'Resetting...' : 'Reset Password'}
             </button>
@@ -196,17 +196,17 @@ export default function ResetPasswordPage() {
           <div className="mt-6 text-center">
             <Link
               href="/auth/login"
-              className="text-indigo-400 hover:text-indigo-300 text-sm transition-colors"
+              className="text-sm transition-colors text-primary hover:text-primary/80"
             >
               Back to sign in
             </Link>
           </div>
         </div>
 
-        <div className="text-center mt-6">
+        <div className="mt-6 text-center">
           <Link
             href="/"
-            className="text-white/60 hover:text-white text-sm transition-colors"
+            className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
             ← Back to home
           </Link>

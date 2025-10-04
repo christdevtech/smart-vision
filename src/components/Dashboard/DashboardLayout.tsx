@@ -34,10 +34,10 @@ export default function DashboardLayout({
   const { isMenuOpen, isMobile, breadcrumbs, openMenu, closeMenu } = useNavigation()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Enhanced Header with Dashboard Features */}
       <motion.header
-        className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm"
+        className="sticky top-0 z-40 bg-card border-b border-border shadow-sm"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -64,13 +64,13 @@ export default function DashboardLayout({
                   <circle cx="75" cy="25" r="8" fill="#10B981" />
                   <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
                 </svg>
-                <span className="text-xl font-bold text-gray-900">SmartVision</span>
+                <span className="text-xl font-bold text-foreground">SmartVision</span>
               </motion.div>
 
               {title && (
                 <div className="hidden md:block">
-                  <span className="text-gray-400">|</span>
-                  <span className="ml-3 text-lg font-medium text-gray-700">{title}</span>
+                  <span className="text-muted-foreground">|</span>
+                  <span className="ml-3 text-lg font-medium text-foreground">{title}</span>
                 </div>
               )}
             </div>
@@ -86,16 +86,16 @@ export default function DashboardLayout({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                {index > 0 && <span className="text-gray-400">/</span>}
+                {index > 0 && <span className="text-muted-foreground">/</span>}
                 {crumb.href ? (
                   <a
                     href={crumb.href}
-                    className="text-gray-600 transition-colors hover:text-blue-600"
+                    className="text-muted-foreground transition-colors hover:text-primary"
                   >
                     {crumb.label}
                   </a>
                 ) : (
-                  <span className="font-medium text-gray-900">{crumb.label}</span>
+                  <span className="font-medium text-foreground">{crumb.label}</span>
                 )}
               </motion.div>
             ))}
@@ -105,7 +105,7 @@ export default function DashboardLayout({
           <div className="flex items-center space-x-3">
             {/* Notification Button */}
             <motion.button
-              className="relative p-2 text-gray-600 rounded-lg hover:text-gray-900 hover:bg-gray-100"
+              className="relative p-2 text-muted-foreground rounded-lg hover:text-foreground hover:bg-accent"
               onClick={() => setIsNotificationCenterOpen(true)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -127,13 +127,13 @@ export default function DashboardLayout({
                 transition={{ delay: 0.2 }}
               >
                 <div className="hidden text-right md:block">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-foreground">
                     {user.firstName || 'User'}
                   </p>
-                  <p className="text-xs text-gray-500">{user.role}</p>
+                  <p className="text-xs text-muted-foreground">{user.role}</p>
                 </div>
-                <div className="flex justify-center items-center w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full">
-                  <span className="text-sm font-semibold text-white">
+                <div className="flex justify-center items-center w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full">
+                  <span className="text-sm font-semibold text-primary-foreground">
                     {(user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase()}
                   </span>
                 </div>
@@ -143,15 +143,17 @@ export default function DashboardLayout({
         </div>
       </motion.header>
 
-      {/* Sidebar Navigation */}
-      {showSidebar && (
-        <SidebarNavigation
-          notificationCount={unreadCount}
-        />
-      )}
+      {/* Main Layout Container */}
+      <div className="flex">
+        {/* Sidebar Navigation */}
+        {showSidebar && (
+          <SidebarNavigation
+            notificationCount={unreadCount}
+          />
+        )}
 
-      {/* Main Content */}
-      <main className={`${showSidebar ? 'ml-0' : ''} ${className}`}>
+        {/* Main Content */}
+        <main className={`flex-1 ${showSidebar ? 'md:ml-0' : ''} ${className}`}>
         <PageTransition>
           <MotionWrapper
             animation="fadeIn"
@@ -160,7 +162,8 @@ export default function DashboardLayout({
             {children}
           </MotionWrapper>
         </PageTransition>
-      </main>
+        </main>
+      </div>
 
       {/* Mobile Navigation Menu (Fallback) */}
       <NavigationMenu

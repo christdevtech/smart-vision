@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -64,32 +64,32 @@ export default function ForgotPasswordPage() {
               <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
             </svg>
           </Link>
-          <h1 className="text-2xl font-bold bg-gradient-to-br from-indigo-500 to-emerald-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-br from-primary to-success bg-clip-text text-transparent">
             SmartVision
           </h1>
-          <p className="text-white/60 mt-2">Reset your password</p>
+          <p className="text-muted-foreground mt-2">Reset your password</p>
         </div>
 
         {/* Forgot Password Form */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-6">
           {!isSuccess ? (
             <>
               <div className="mb-6">
-                <h2 className="text-lg font-semibold text-white mb-2">Forgot your password?</h2>
-                <p className="text-white/60 text-sm">
+                <h2 className="text-lg font-semibold text-foreground mb-2">Forgot your password?</h2>
+                <p className="text-muted-foreground text-sm">
                   Enter your email address and we'll send you instructions to reset your password.
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-destructive text-sm">
                     {error}
                   </div>
                 )}
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-foreground/80 mb-2">
                     Email Address
                   </label>
                   <input
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-input border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="Enter your email address"
                   />
                 </div>
@@ -106,7 +106,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-br from-indigo-500 to-emerald-500 text-white py-2 px-4 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="w-full bg-gradient-to-br from-primary to-success text-primary-foreground py-2 px-4 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {isLoading ? 'Sending...' : 'Send Reset Instructions'}
                 </button>
@@ -114,9 +114,9 @@ export default function ForgotPasswordPage() {
             </>
           ) : (
             <div className="text-center">
-              <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
-                  className="w-8 h-8 text-emerald-400"
+                  className="w-8 h-8 text-success"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -129,14 +129,14 @@ export default function ForgotPasswordPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Check your email</h3>
-              <p className="text-white/60 text-sm mb-6">{message}</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Check your email</h3>
+              <p className="text-muted-foreground text-sm mb-6">{message}</p>
               <button
                 onClick={() => {
                   setIsSuccess(false)
                   setMessage('')
                 }}
-                className="text-indigo-400 hover:text-indigo-300 text-sm transition-colors"
+                className="text-primary hover:text-primary/80 text-sm transition-colors"
               >
                 Send another email
               </button>
@@ -146,7 +146,7 @@ export default function ForgotPasswordPage() {
           <div className="mt-6 text-center">
             <Link
               href="/auth/login"
-              className="text-indigo-400 hover:text-indigo-300 text-sm transition-colors"
+              className="text-primary hover:text-primary/80 text-sm transition-colors"
             >
               ← Back to login
             </Link>
@@ -156,7 +156,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center mt-6">
           <Link
             href="/"
-            className="text-white/60 hover:text-white text-sm transition-colors"
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
             ← Back to home
           </Link>

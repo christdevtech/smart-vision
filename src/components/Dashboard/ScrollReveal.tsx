@@ -24,12 +24,12 @@ export default function ScrollReveal({
   triggerOnce = true,
   className = '',
   stagger = false,
-  staggerDelay = 0.1
+  staggerDelay = 0.1,
 }: ScrollRevealProps) {
   const ref = useRef(null)
-  const isInView = useInView(ref, { 
+  const isInView = useInView(ref, {
     once: triggerOnce,
-    margin: `${-threshold * 100}%`
+    margin: `${-threshold * 100}% 0px`,
   })
 
   const getInitialPosition = () => {
@@ -58,9 +58,9 @@ export default function ScrollReveal({
         delay: stagger ? 0 : delay,
         ease: 'easeOut',
         staggerChildren: stagger ? staggerDelay : 0,
-        delayChildren: stagger ? delay : 0
-      }
-    }
+        delayChildren: stagger ? delay : 0,
+      },
+    },
   }
 
   const itemVariants: Variants = {
@@ -71,9 +71,9 @@ export default function ScrollReveal({
       y: 0,
       transition: {
         duration: 0.6,
-        ease: 'easeOut'
-      }
-    }
+        ease: 'easeOut',
+      },
+    },
   }
 
   return (
@@ -81,7 +81,7 @@ export default function ScrollReveal({
       ref={ref}
       className={className}
       initial="hidden"
-      animate={isInView ? "visible" : "hidden"}
+      animate={isInView ? 'visible' : 'hidden'}
       variants={variants}
     >
       {stagger ? (
@@ -92,9 +92,7 @@ export default function ScrollReveal({
             </motion.div>
           ))
         ) : (
-          <motion.div variants={itemVariants}>
-            {children}
-          </motion.div>
+          <motion.div variants={itemVariants}>{children}</motion.div>
         )
       ) : (
         children

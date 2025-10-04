@@ -14,10 +14,10 @@ interface NotificationBadgeProps {
 }
 
 const colorClasses = {
-  red: 'bg-red-500 text-white',
-  blue: 'bg-blue-500 text-white',
-  green: 'bg-green-500 text-white',
-  yellow: 'bg-yellow-500 text-black'
+  red: 'bg-destructive text-destructive-foreground',
+  blue: 'bg-primary text-primary-foreground',
+  green: 'bg-success text-success-foreground',
+  yellow: 'bg-warning text-warning-foreground'
 }
 
 export default function NotificationBadge({

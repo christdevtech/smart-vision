@@ -62,11 +62,11 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
 
   if (loading) {
     return (
-      <div className={`bg-white/5 border border-white/10 rounded-xl p-6 ${className}`}>
+      <div className={`bg-card border border-border rounded-xl p-6 ${className}`}>
         <div className="animate-pulse">
-          <div className="h-6 bg-white/10 rounded mb-4"></div>
-          <div className="h-4 bg-white/10 rounded mb-2"></div>
-          <div className="h-4 bg-white/10 rounded w-3/4"></div>
+          <div className="h-6 bg-muted rounded mb-4"></div>
+          <div className="h-4 bg-muted rounded mb-2"></div>
+          <div className="h-4 bg-muted rounded w-3/4"></div>
         </div>
       </div>
     )
@@ -74,11 +74,11 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
 
   if (error) {
     return (
-      <div className={`bg-red-500/10 border border-red-500/20 rounded-xl p-6 ${className}`}>
-        <p className="text-red-400">Error: {error}</p>
+      <div className={`bg-destructive/10 border border-destructive/20 rounded-xl p-6 ${className}`}>
+        <p className="text-destructive">Error: {error}</p>
         <button
           onClick={fetchReferralStats}
-          className="mt-2 px-4 py-2 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors"
+          className="mt-2 px-4 py-2 bg-destructive/20 text-destructive rounded hover:bg-destructive/30 transition-colors"
         >
           Retry
         </button>
@@ -89,41 +89,41 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
   if (!stats) return null
 
   return (
-    <div className={`bg-white/5 border border-white/10 rounded-xl p-6 ${className}`}>
-      <h3 className="text-xl font-semibold text-white mb-4">🎯 Referral Dashboard</h3>
+    <div className={`bg-card border border-border rounded-xl p-6 ${className}`}>
+      <h3 className="text-xl font-semibold text-foreground mb-4">🎯 Referral Dashboard</h3>
 
       {/* Referral Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white/5 rounded-lg p-4 text-center">
+        <div className="bg-card rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-emerald-500">{stats.totalReferrals}</div>
-          <div className="text-sm text-white/60">Total Referrals</div>
+          <div className="text-sm text-muted-foreground">Total Referrals</div>
         </div>
-        <div className="bg-white/5 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-indigo-500">{stats.referralCode}</div>
-          <div className="text-sm text-white/60">Your Code</div>
+        <div className="bg-card rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-primary">{stats.referralCode}</div>
+          <div className="text-sm text-muted-foreground">Your Code</div>
         </div>
-        <div className="bg-white/5 rounded-lg p-4 text-center">
+        <div className="bg-card rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-purple-500">🎁</div>
-          <div className="text-sm text-white/60">Rewards Earned</div>
+          <div className="text-sm text-muted-foreground">Rewards Earned</div>
         </div>
       </div>
 
       {/* Referral Link */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-white/80 mb-2">Your Referral Link</label>
+        <label className="block text-sm font-medium text-foreground mb-2">Your Referral Link</label>
         <div className="flex gap-2">
           <input
             type="text"
             value={stats.referralLink}
             readOnly
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500/50"
+            className="flex-1 bg-input border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-primary/50"
           />
           <button
             onClick={copyToClipboard}
             className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
               copied
                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/30'
+                : 'bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30'
             }`}
           >
             {copied ? '✓ Copied!' : 'Copy'}
@@ -134,20 +134,20 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
       {/* Recent Referrals */}
       {stats.referredUsers.length > 0 && (
         <div>
-          <h4 className="text-lg font-medium text-white mb-3">Recent Referrals</h4>
+          <h4 className="text-lg font-medium text-foreground mb-3">Recent Referrals</h4>
           <div className="space-y-2 max-h-40 overflow-y-auto">
             {stats.referredUsers.slice(0, 5).map((user) => (
               <div
                 key={user.id}
-                className="bg-white/5 rounded-lg p-3 flex justify-between items-center"
+                className="bg-card rounded-lg p-3 flex justify-between items-center"
               >
                 <div>
-                  <div className="text-white font-medium">
+                  <div className="text-foreground font-medium">
                     {user.firstName && user.lastName
                       ? `${user.firstName} ${user.lastName}`
                       : user.email}
                   </div>
-                  <div className="text-xs text-white/60">
+                  <div className="text-xs text-muted-foreground">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </div>
                 </div>
@@ -162,8 +162,8 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
       {stats.referredUsers.length === 0 && (
         <div className="text-center py-8">
           <div className="text-4xl mb-2">👥</div>
-          <div className="text-white/60 mb-2">No referrals yet</div>
-          <div className="text-sm text-white/40">
+          <div className="text-muted-foreground mb-2">No referrals yet</div>
+          <div className="text-sm text-muted-foreground/60">
             Share your referral link to start earning rewards!
           </div>
         </div>
