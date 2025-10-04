@@ -7,6 +7,7 @@ export const AcademicLevels: CollectionConfig = {
   slug: 'academicLevels',
   admin: {
     useAsTitle: 'name',
+    group: 'Categories',
   },
   access: {
     create: admin,

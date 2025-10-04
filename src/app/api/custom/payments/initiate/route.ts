@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { createFapshiService, generateExternalId, validatePhoneNumber, formatPhoneNumber } from '@/utilities/fapshi'
+import { 
+  determineSubscriptionPlan, 
+  findOrCreateUserSubscription, 
+  getSubscriptionCosts,
+  createSubscription 
+} from '@/utilities/subscription'
 
 interface PaymentRequest {
   userId: string
@@ -40,9 +46,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate amount (minimum 100 XAF)
-    if (amount < 100) {
+    const numericAmount = Number(amount)
+    if (isNaN(numericAmount) || numericAmount < 100) {
       return NextResponse.json(
-        { error: 'Minimum amount is 100 XAF' },
+        { error: 'Invalid amount or minimum amount is 100 XAF' },
         { status: 400 }
       )
     }
@@ -73,14 +80,75 @@ export async function POST(request: NextRequest) {
     // Generate unique external ID
     const externalId = generateExternalId('sv')
 
+    // Determine if this is a subscription payment and handle subscription logic
+    let finalSubscriptionId = subscriptionId
+    
+    // Get subscription costs to determine if this is a subscription payment
+    const subscriptionCosts = await getSubscriptionCosts(payload)
+    const plan = determineSubscriptionPlan(numericAmount, subscriptionCosts)
+    
+    if (plan) {
+      // This is a subscription payment
+      if (!finalSubscriptionId) {
+        // No subscription ID provided, check if user has an existing subscription
+        const existingSubscriptions = await payload.find({
+          collection: 'subscriptions',
+          where: {
+            user: {
+              equals: userId,
+            },
+          },
+          limit: 1,
+          sort: '-createdAt', // Get the most recent subscription
+        })
+        
+        if (existingSubscriptions.docs.length > 0) {
+          // User has an existing subscription, use it for renewal/extension
+          finalSubscriptionId = existingSubscriptions.docs[0].id
+          console.log(`Found existing subscription ${finalSubscriptionId} for user ${userId}, will extend/renew`)
+        } else {
+          // No existing subscription, create a new one
+          const subscription = await createSubscription(payload, {
+            userId,
+            plan,
+            amount: numericAmount,
+          })
+          finalSubscriptionId = subscription.id
+          console.log(`Created new subscription ${finalSubscriptionId} for user ${userId}, plan: ${plan}`)
+        }
+      } else {
+        // Subscription ID was provided, verify it belongs to the user
+        try {
+          const providedSubscription = await payload.findByID({
+            collection: 'subscriptions',
+            id: finalSubscriptionId,
+          })
+          
+          if (providedSubscription.user !== userId) {
+            return NextResponse.json(
+              { error: 'Subscription does not belong to the specified user' },
+              { status: 403 }
+            )
+          }
+          
+          console.log(`Using provided subscription ${finalSubscriptionId} for user ${userId}`)
+        } catch (error) {
+          return NextResponse.json(
+            { error: 'Invalid subscription ID provided' },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
     // Create transaction record first
     const transaction = await payload.create({
       collection: 'transactions',
       data: {
         user: userId,
-        subscription: subscriptionId,
+        subscription: finalSubscriptionId,
         transactionId: externalId,
-        amount,
+        amount: numericAmount,
         status: 'created',
         phone: formattedPhone,
         paymentMedium: medium,
@@ -94,7 +162,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare Fapshi payment request
     const paymentData = {
-      amount,
+      amount: numericAmount,
       phone: formattedPhone,
       medium,
       name: name || `${user.firstName} ${user.lastName}`.trim(),

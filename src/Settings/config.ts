@@ -2,6 +2,9 @@ import { GlobalConfig } from 'payload'
 
 export const Settings: GlobalConfig = {
   slug: 'settings',
+  admin: {
+    group: 'Platform Settings',
+  },
   fields: [
     {
       type: 'tabs',
@@ -85,14 +88,14 @@ export const Settings: GlobalConfig = {
                   name: 'monthly',
                   type: 'number',
                   label: 'Monthly Subscription Cost',
-                  defaultValue: '3000',
+                  defaultValue: 3000,
                   required: true,
                 },
                 {
                   name: 'yearly',
                   type: 'number',
                   label: 'Yearly Subscription Cost',
-                  defaultValue: '30000',
+                  defaultValue: 30000,
                   required: true,
                 },
               ],

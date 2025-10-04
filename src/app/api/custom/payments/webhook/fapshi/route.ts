@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { createFapshiService } from '@/utilities/fapshi'
+import { 
+  determineSubscriptionPlan, 
+  findOrCreateUserSubscription, 
+  getSubscriptionCosts 
+} from '@/utilities/subscription'
 
 export async function POST(request: NextRequest) {
   try {
@@ -117,15 +122,47 @@ export async function POST(request: NextRequest) {
 
 async function handleSuccessfulPayment(payload: any, transaction: any, webhookData: any) {
   try {
-    // Update related subscription if exists
-    if (transaction.subscription) {
-      await payload.update({
-        collection: 'subscriptions',
-        id: transaction.subscription,
-        data: {
-          paymentStatus: 'paid',
-        },
-      })
+    // Get subscription costs to determine plan
+    const subscriptionCosts = await getSubscriptionCosts(payload)
+    
+    // Determine subscription plan based on transaction amount
+    const plan = determineSubscriptionPlan(transaction.amount, subscriptionCosts)
+    
+    if (plan) {
+      // Create or update subscription with proper dates
+      const subscription = await findOrCreateUserSubscription(
+        payload,
+        transaction.user,
+        plan,
+        transaction.amount,
+        transaction.id
+      )
+      
+      console.log(`Subscription ${subscription.id} updated for user ${transaction.user}, plan: ${plan}`)
+      
+      // Update transaction with subscription reference if not already set
+      if (!transaction.subscription) {
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: {
+            subscription: subscription.id,
+          },
+        })
+      }
+    } else {
+      console.warn(`Could not determine subscription plan for amount ${transaction.amount}`)
+      
+      // Update existing subscription if referenced
+      if (transaction.subscription) {
+        await payload.update({
+          collection: 'subscriptions',
+          id: transaction.subscription,
+          data: {
+            paymentStatus: 'paid',
+          },
+        })
+      }
     }
 
     // Send confirmation email (if email service is configured)

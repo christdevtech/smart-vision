@@ -2,6 +2,12 @@ import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
 import { selfOrAdmin } from '@/access/selfOrAdmin'
 import { readTransactions } from '@/access/transactionAccess'
+import {
+  determineSubscriptionPlan,
+  findOrCreateUserSubscription,
+  getSubscriptionCosts,
+} from '@/utilities/subscription'
+import { updateSubscriptions } from './hooks/updateSubscriptions'
 
 export const Transactions: CollectionConfig = {
   slug: 'transactions',
@@ -11,6 +17,7 @@ export const Transactions: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'transactionId',
+    group: 'Finance',
   },
   access: {
     create: admin,
@@ -171,4 +178,7 @@ export const Transactions: CollectionConfig = {
       },
     },
   ],
+  hooks: {
+    afterChange: [updateSubscriptions],
+  },
 }

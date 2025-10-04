@@ -7,6 +7,7 @@ export const Subjects: CollectionConfig = {
   slug: 'subjects',
   admin: {
     useAsTitle: 'name',
+    group: 'Categories',
   },
   access: {
     create: admin,

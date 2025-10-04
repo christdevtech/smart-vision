@@ -10,6 +10,7 @@ export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
     useAsTitle: 'firstName',
+    group: 'User Content',
   },
   access: {
     create: userCreate,
@@ -82,9 +83,9 @@ export const Users: CollectionConfig = {
       name: 'role',
       type: 'select',
       options: [
-        { label: 'Super Admin', value: 'superadmin' },
+        { label: 'Super Admin', value: 'super-admin' },
         { label: 'Admin', value: 'admin' },
-        { label: 'Content Manager', value: 'contentmanager' },
+        { label: 'Content Manager', value: 'content-manager' },
         { label: 'Support', value: 'support' },
         { label: 'User', value: 'user' },
       ],
@@ -96,7 +97,7 @@ export const Users: CollectionConfig = {
         read: () => true,
         update: ({ req: { user } }) => {
           if (user) {
-            return Boolean(['admin', 'superadmin'].includes(user?.role))
+            return Boolean(['admin', 'super-admin'].includes(user?.role))
           } else return false
         },
       },

@@ -21,6 +21,9 @@ import { StudyPlans } from './collections/StudyPlans'
 import { Categories } from './collections/Category'
 import { Transactions } from './collections/Transactions'
 import { Topics } from './collections/Topics'
+import { UserProgress } from './collections/UserProgress'
+import { TestResults } from './collections/TestResults'
+import { ContentAccess } from './collections/ContentAccess'
 import { Settings } from './Settings/config'
 
 const filename = fileURLToPath(import.meta.url)
@@ -51,6 +54,9 @@ export default buildConfig({
     Categories,
     Transactions,
     Topics,
+    UserProgress,
+    TestResults,
+    ContentAccess,
   ],
   globals: [Settings],
   editor: lexicalEditor(),

@@ -6,6 +6,7 @@ export const Subscriptions: CollectionConfig = {
   slug: 'subscriptions',
   admin: {
     useAsTitle: 'user',
+    group: 'Finance',
   },
   access: {
     create: admin,
@@ -19,7 +20,6 @@ export const Subscriptions: CollectionConfig = {
       type: 'relationship',
       relationTo: 'users',
       required: true,
-      unique: true, // One active subscription per user
     },
     {
       name: 'plan',

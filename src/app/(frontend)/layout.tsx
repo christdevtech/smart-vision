@@ -1,6 +1,7 @@
 import React from 'react'
 import './styles.css'
-import { Header } from '@/Header/Component'
+import { HeaderServerWrapper } from '@/Header/ServerWrapper'
+import { Toaster } from 'sonner'
 
 export const metadata = {
   description:
@@ -15,9 +16,15 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     <html lang="en">
       <body>
         <main>
-          <Header />
+          <HeaderServerWrapper />
           {children}
         </main>
+        <Toaster 
+          theme="dark" 
+          position="top-center"
+          richColors
+          closeButton
+        />
       </body>
     </html>
   )

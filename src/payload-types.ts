@@ -80,6 +80,9 @@ export interface Config {
     categories: Category;
     transactions: Transaction;
     topics: Topic;
+    'user-progress': UserProgress;
+    'test-results': TestResult;
+    'content-access': ContentAccess;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -99,6 +102,9 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     topics: TopicsSelect<false> | TopicsSelect<true>;
+    'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
+    'test-results': TestResultsSelect<false> | TestResultsSelect<true>;
+    'content-access': ContentAccessSelect<false> | ContentAccessSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -155,7 +161,7 @@ export interface User {
   referredBy?: (string | null) | User;
   totalReferrals?: number | null;
   lastActiveAt?: string | null;
-  role: 'superadmin' | 'admin' | 'contentmanager' | 'support' | 'user';
+  role: 'super-admin' | 'admin' | 'content-manager' | 'support' | 'user';
   profilePic?: (string | null) | Media;
   updatedAt: string;
   createdAt: string;
@@ -305,7 +311,73 @@ export interface ExamPaper {
   year: number;
   paperType: '1' | '2' | '3';
   pdf: string | Media;
-  categories?: (string | null) | Category;
+  categories?: (string | Category)[] | null;
+  /**
+   * Description of the exam paper
+   */
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Exam duration in minutes
+   */
+  duration?: number | null;
+  /**
+   * Total marks for the exam
+   */
+  totalMarks?: number | null;
+  /**
+   * Whether subscription is required to access this exam paper
+   */
+  subscriptionRequired?: boolean | null;
+  /**
+   * Which subscription tiers can access this exam paper
+   */
+  subscriptionTiers?: ('free' | 'monthly' | 'annual')[] | null;
+  /**
+   * Whether PDF has DRM protection
+   */
+  isProtected?: boolean | null;
+  /**
+   * Whether exam paper can be printed
+   */
+  allowPrint?: boolean | null;
+  /**
+   * Encryption key for content protection
+   */
+  encryptionKey?: string | null;
+  /**
+   * Whether answer key is available
+   */
+  hasAnswerKey?: boolean | null;
+  /**
+   * Answer key PDF file
+   */
+  answerKeyPdf?: (string | null) | Media;
+  /**
+   * Whether exam paper is active and accessible
+   */
+  isActive?: boolean | null;
+  /**
+   * Total number of views
+   */
+  viewCount?: number | null;
+  /**
+   * Last time exam paper was accessed
+   */
+  lastAccessed?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -392,12 +464,8 @@ export interface Video {
   slug?: string | null;
   slugLock?: boolean | null;
   subject: string | Subject;
-  chapter: string;
+  topic?: (string | Topic)[] | null;
   video: string | Media;
-  /**
-   * Duration in seconds
-   */
-  duration?: number | null;
   description?: {
     root: {
       type: string;
@@ -413,7 +481,6 @@ export interface Video {
     };
     [k: string]: unknown;
   } | null;
-  topic?: (string | Topic)[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -445,6 +512,62 @@ export interface Book {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Book author(s)
+   */
+  author?: string | null;
+  /**
+   * ISBN number
+   */
+  isbn?: string | null;
+  /**
+   * Total number of pages
+   */
+  pageCount?: number | null;
+  /**
+   * Whether subscription is required to access this book
+   */
+  subscriptionRequired?: boolean | null;
+  /**
+   * Which subscription tiers can access this book
+   */
+  subscriptionTiers?: ('free' | 'monthly' | 'annual')[] | null;
+  /**
+   * Whether PDF has DRM protection
+   */
+  isProtected?: boolean | null;
+  /**
+   * Whether book can be printed
+   */
+  allowPrint?: boolean | null;
+  /**
+   * Whether text can be copied from the book
+   */
+  allowCopy?: boolean | null;
+  /**
+   * Watermark text to overlay on PDF pages
+   */
+  watermarkText?: string | null;
+  /**
+   * Encryption key for content protection
+   */
+  encryptionKey?: string | null;
+  /**
+   * File size in bytes
+   */
+  fileSize?: number | null;
+  /**
+   * Whether book is active and accessible
+   */
+  isActive?: boolean | null;
+  /**
+   * Total number of views
+   */
+  viewCount?: number | null;
+  /**
+   * Last time book was accessed
+   */
+  lastAccessed?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -551,7 +674,434 @@ export interface StudyPlan {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Overall progress percentage (0-100)
+   */
   progress?: number | null;
+  /**
+   * Academic level for this study plan
+   */
+  academicLevel: string | AcademicLevel;
+  /**
+   * Type of study plan
+   */
+  planType?: ('exam_prep' | 'regular_study' | 'revision' | 'catch_up' | 'advanced') | null;
+  /**
+   * Target exam date for exam preparation plans
+   */
+  targetExamDate?: string | null;
+  studyGoals?:
+    | {
+        title: string;
+        description?: string | null;
+        subject?: (string | null) | Subject;
+        targetDate?: string | null;
+        priority?: ('high' | 'medium' | 'low') | null;
+        status?: ('not_started' | 'in_progress' | 'completed' | 'paused') | null;
+        /**
+         * Goal progress percentage (0-100)
+         */
+        progress?: number | null;
+        completedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  weeklySchedule?:
+    | {
+        dayOfWeek: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+        /**
+         * Start time (e.g., 09:00)
+         */
+        startTime: string;
+        /**
+         * End time (e.g., 10:30)
+         */
+        endTime: string;
+        subject: string | Subject;
+        topics?: (string | Topic)[] | null;
+        sessionType?: ('study' | 'practice' | 'revision' | 'test') | null;
+        isActive?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  milestones?:
+    | {
+        title: string;
+        description?: string | null;
+        targetDate: string;
+        subjects?: (string | Subject)[] | null;
+        isCompleted?: boolean | null;
+        completedAt?: string | null;
+        /**
+         * Reward for completing this milestone
+         */
+        reward?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  studyReminders?:
+    | {
+        title: string;
+        message?: string | null;
+        reminderTime: string;
+        reminderType?: ('study_session' | 'assignment_due' | 'exam_reminder' | 'goal_deadline' | 'custom') | null;
+        isRecurring?: boolean | null;
+        recurrencePattern?: ('daily' | 'weekly' | 'monthly') | null;
+        isActive?: boolean | null;
+        isSent?: boolean | null;
+        sentAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  studyPreferences?: {
+    preferredStudyTime?: ('early_morning' | 'morning' | 'afternoon' | 'evening' | 'night' | 'late_night') | null;
+    /**
+     * Preferred study session duration in minutes
+     */
+    sessionDuration?: number | null;
+    /**
+     * Preferred break duration in minutes
+     */
+    breakDuration?: number | null;
+    studyMethod?: ('reading' | 'video' | 'practice' | 'notes' | 'group' | 'flashcards')[] | null;
+    difficultyPreference?: ('easy_first' | 'hard_first' | 'mixed') | null;
+  };
+  /**
+   * Study plan analytics and statistics
+   */
+  analytics?: {
+    /**
+     * Total hours studied
+     */
+    totalStudyHours?: number | null;
+    /**
+     * Hours studied this week
+     */
+    weeklyStudyHours?: number | null;
+    /**
+     * Current study streak in days
+     */
+    currentStreak?: number | null;
+    /**
+     * Longest study streak in days
+     */
+    longestStreak?: number | null;
+    /**
+     * Number of completed goals
+     */
+    completedGoals?: number | null;
+    /**
+     * Number of completed milestones
+     */
+    completedMilestones?: number | null;
+    /**
+     * Average study session duration in minutes
+     */
+    averageSessionDuration?: number | null;
+    /**
+     * Last study session date
+     */
+    lastStudySession?: string | null;
+  };
+  /**
+   * Whether study plan is active
+   */
+  isActive?: boolean | null;
+  createdAt: string;
+  updatedAt: string;
+  /**
+   * Additional notes about the study plan
+   */
+  notes?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-progress".
+ */
+export interface UserProgress {
+  id: string;
+  user: string | User;
+  contentType: 'mcq' | 'video' | 'book' | 'exam-paper' | 'study-plan';
+  /**
+   * ID of the content item (video, book, mcq, etc.)
+   */
+  contentId: string;
+  subject?: (string | null) | Subject;
+  topic?: (string | Topic)[] | null;
+  academicLevel?: (string | null) | AcademicLevel;
+  /**
+   * Progress percentage (0-100)
+   */
+  progressPercentage?: number | null;
+  /**
+   * Time spent in minutes
+   */
+  timeSpent?: number | null;
+  lastAccessed?: string | null;
+  completed?: boolean | null;
+  completedAt?: string | null;
+  /**
+   * Score for tests/assessments (percentage)
+   */
+  score?: number | null;
+  /**
+   * Number of attempts for this content
+   */
+  attempts?: number | null;
+  bookmarks?:
+    | {
+        /**
+         * Page number, timestamp, or position marker
+         */
+        position?: string | null;
+        note?: string | null;
+        createdAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Current study streak in days
+   */
+  studyStreak?: number | null;
+  achievements?:
+    | {
+        achievementType?:
+          | ('first_test' | 'perfect_score' | 'study_streak' | 'content_master' | 'early_bird' | 'night_owl')
+          | null;
+        earnedAt?: string | null;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-results".
+ */
+export interface TestResult {
+  id: string;
+  user: string | User;
+  testType: 'practice' | 'timed' | 'exam_paper' | 'topic' | 'subject';
+  subject: string | Subject;
+  topics?: (string | Topic)[] | null;
+  academicLevel: string | AcademicLevel;
+  /**
+   * Reference to exam paper if this is an exam paper test
+   */
+  examPaper?: (string | null) | ExamPaper;
+  questions: {
+    question: string | Mcq;
+    /**
+     * The option text that user selected
+     */
+    selectedAnswer: string;
+    /**
+     * The correct option text
+     */
+    correctAnswer: string;
+    isCorrect: boolean;
+    /**
+     * Time spent on this question in seconds
+     */
+    timeSpent?: number | null;
+    difficulty?: ('easy' | 'medium' | 'hard') | null;
+    id?: string | null;
+  }[];
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  skippedQuestions?: number | null;
+  scorePercentage: number;
+  grade?: ('A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D' | 'F') | null;
+  /**
+   * Time limit in minutes (null for untimed tests)
+   */
+  timeLimit?: number | null;
+  /**
+   * Actual time used in minutes
+   */
+  timeUsed: number;
+  startedAt: string;
+  completedAt: string;
+  isCompleted?: boolean | null;
+  /**
+   * Which attempt this is for the same test/content
+   */
+  attemptNumber?: number | null;
+  weakAreas?:
+    | {
+        topic?: (string | null) | Topic;
+        /**
+         * Accuracy percentage for this topic
+         */
+        accuracy?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  strongAreas?:
+    | {
+        topic?: (string | null) | Topic;
+        /**
+         * Accuracy percentage for this topic
+         */
+        accuracy?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Whether user has reviewed incorrect answers
+   */
+  reviewMode?: boolean | null;
+  reviewedAt?: string | null;
+  /**
+   * User notes about this test attempt
+   */
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Manages subscription-based access control for content
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-access".
+ */
+export interface ContentAccess {
+  id: string;
+  /**
+   * User requesting access
+   */
+  user: string | User;
+  /**
+   * Type of content being accessed
+   */
+  contentType: 'videos' | 'books' | 'exam-papers' | 'mcquestions';
+  /**
+   * ID of the specific content item
+   */
+  contentId: string;
+  /**
+   * Title of the content for reference
+   */
+  contentTitle?: string | null;
+  /**
+   * User subscription used for access
+   */
+  subscription: string | Subscription;
+  /**
+   * Whether access is granted
+   */
+  accessGranted?: boolean | null;
+  /**
+   * Reason for access grant/denial
+   */
+  accessReason?:
+    | ('valid_subscription' | 'free_content' | 'trial_access' | 'admin_override' | 'promotional_access')
+    | null;
+  /**
+   * Reason for access denial
+   */
+  accessDeniedReason?:
+    | (
+        | 'no_subscription'
+        | 'subscription_expired'
+        | 'insufficient_tier'
+        | 'content_unavailable'
+        | 'geo_restricted'
+        | 'account_suspended'
+      )
+    | null;
+  /**
+   * Minimum subscription tier required
+   */
+  requiredSubscriptionTier?: ('free' | 'monthly' | 'annual') | null;
+  /**
+   * User current subscription tier
+   */
+  userSubscriptionTier?: ('free' | 'monthly' | 'annual') | null;
+  /**
+   * Number of access attempts
+   */
+  accessAttempts?: number | null;
+  /**
+   * First time access was attempted
+   */
+  firstAccessAt?: string | null;
+  /**
+   * Last time access was attempted
+   */
+  lastAccessAt?: string | null;
+  /**
+   * When access was granted
+   */
+  grantedAt?: string | null;
+  /**
+   * When access expires
+   */
+  expiresAt?: string | null;
+  deviceInfo?: {
+    /**
+     * Device identifier
+     */
+    deviceId?: string | null;
+    deviceType?: ('mobile' | 'tablet' | 'desktop' | 'unknown') | null;
+    /**
+     * Operating system/platform
+     */
+    platform?: string | null;
+    /**
+     * Browser user agent
+     */
+    userAgent?: string | null;
+    /**
+     * IP address of access attempt
+     */
+    ipAddress?: string | null;
+  };
+  /**
+   * Whether content can be printed
+   */
+  printAllowed?: boolean | null;
+  /**
+   * Whether content can be copied
+   */
+  copyAllowed?: boolean | null;
+  /**
+   * Maximum concurrent sessions allowed
+   */
+  maxConcurrentSessions?: number | null;
+  /**
+   * Current active sessions
+   */
+  currentSessions?: number | null;
+  /**
+   * Unique session token for access tracking
+   */
+  sessionToken?: string | null;
+  /**
+   * Whether access record is active
+   */
+  isActive?: boolean | null;
+  /**
+   * Additional notes about access
+   */
+  notes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -613,6 +1163,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'topics';
         value: string | Topic;
+      } | null)
+    | ({
+        relationTo: 'user-progress';
+        value: string | UserProgress;
+      } | null)
+    | ({
+        relationTo: 'test-results';
+        value: string | TestResult;
+      } | null)
+    | ({
+        relationTo: 'content-access';
+        value: string | ContentAccess;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -726,6 +1288,19 @@ export interface ExamPapersSelect<T extends boolean = true> {
   paperType?: T;
   pdf?: T;
   categories?: T;
+  description?: T;
+  duration?: T;
+  totalMarks?: T;
+  subscriptionRequired?: T;
+  subscriptionTiers?: T;
+  isProtected?: T;
+  allowPrint?: T;
+  encryptionKey?: T;
+  hasAnswerKey?: T;
+  answerKeyPdf?: T;
+  isActive?: T;
+  viewCount?: T;
+  lastAccessed?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -759,11 +1334,9 @@ export interface VideosSelect<T extends boolean = true> {
   slug?: T;
   slugLock?: T;
   subject?: T;
-  chapter?: T;
-  video?: T;
-  duration?: T;
-  description?: T;
   topic?: T;
+  video?: T;
+  description?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -780,6 +1353,20 @@ export interface BooksSelect<T extends boolean = true> {
   category?: T;
   pdf?: T;
   description?: T;
+  author?: T;
+  isbn?: T;
+  pageCount?: T;
+  subscriptionRequired?: T;
+  subscriptionTiers?: T;
+  isProtected?: T;
+  allowPrint?: T;
+  allowCopy?: T;
+  watermarkText?: T;
+  encryptionKey?: T;
+  fileSize?: T;
+  isActive?: T;
+  viewCount?: T;
+  lastAccessed?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -907,8 +1494,85 @@ export interface StudyPlansSelect<T extends boolean = true> {
         id?: T;
       };
   progress?: T;
-  updatedAt?: T;
+  academicLevel?: T;
+  planType?: T;
+  targetExamDate?: T;
+  studyGoals?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        subject?: T;
+        targetDate?: T;
+        priority?: T;
+        status?: T;
+        progress?: T;
+        completedAt?: T;
+        id?: T;
+      };
+  weeklySchedule?:
+    | T
+    | {
+        dayOfWeek?: T;
+        startTime?: T;
+        endTime?: T;
+        subject?: T;
+        topics?: T;
+        sessionType?: T;
+        isActive?: T;
+        id?: T;
+      };
+  milestones?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        targetDate?: T;
+        subjects?: T;
+        isCompleted?: T;
+        completedAt?: T;
+        reward?: T;
+        id?: T;
+      };
+  studyReminders?:
+    | T
+    | {
+        title?: T;
+        message?: T;
+        reminderTime?: T;
+        reminderType?: T;
+        isRecurring?: T;
+        recurrencePattern?: T;
+        isActive?: T;
+        isSent?: T;
+        sentAt?: T;
+        id?: T;
+      };
+  studyPreferences?:
+    | T
+    | {
+        preferredStudyTime?: T;
+        sessionDuration?: T;
+        breakDuration?: T;
+        studyMethod?: T;
+        difficultyPreference?: T;
+      };
+  analytics?:
+    | T
+    | {
+        totalStudyHours?: T;
+        weeklyStudyHours?: T;
+        currentStreak?: T;
+        longestStreak?: T;
+        completedGoals?: T;
+        completedMilestones?: T;
+        averageSessionDuration?: T;
+        lastStudySession?: T;
+      };
+  isActive?: T;
   createdAt?: T;
+  updatedAt?: T;
+  notes?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -958,6 +1622,137 @@ export interface TopicsSelect<T extends boolean = true> {
   subjects?: T;
   slug?: T;
   slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-progress_select".
+ */
+export interface UserProgressSelect<T extends boolean = true> {
+  user?: T;
+  contentType?: T;
+  contentId?: T;
+  subject?: T;
+  topic?: T;
+  academicLevel?: T;
+  progressPercentage?: T;
+  timeSpent?: T;
+  lastAccessed?: T;
+  completed?: T;
+  completedAt?: T;
+  score?: T;
+  attempts?: T;
+  bookmarks?:
+    | T
+    | {
+        position?: T;
+        note?: T;
+        createdAt?: T;
+        id?: T;
+      };
+  studyStreak?: T;
+  achievements?:
+    | T
+    | {
+        achievementType?: T;
+        earnedAt?: T;
+        description?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-results_select".
+ */
+export interface TestResultsSelect<T extends boolean = true> {
+  user?: T;
+  testType?: T;
+  subject?: T;
+  topics?: T;
+  academicLevel?: T;
+  examPaper?: T;
+  questions?:
+    | T
+    | {
+        question?: T;
+        selectedAnswer?: T;
+        correctAnswer?: T;
+        isCorrect?: T;
+        timeSpent?: T;
+        difficulty?: T;
+        id?: T;
+      };
+  totalQuestions?: T;
+  correctAnswers?: T;
+  incorrectAnswers?: T;
+  skippedQuestions?: T;
+  scorePercentage?: T;
+  grade?: T;
+  timeLimit?: T;
+  timeUsed?: T;
+  startedAt?: T;
+  completedAt?: T;
+  isCompleted?: T;
+  attemptNumber?: T;
+  weakAreas?:
+    | T
+    | {
+        topic?: T;
+        accuracy?: T;
+        id?: T;
+      };
+  strongAreas?:
+    | T
+    | {
+        topic?: T;
+        accuracy?: T;
+        id?: T;
+      };
+  reviewMode?: T;
+  reviewedAt?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-access_select".
+ */
+export interface ContentAccessSelect<T extends boolean = true> {
+  user?: T;
+  contentType?: T;
+  contentId?: T;
+  contentTitle?: T;
+  subscription?: T;
+  accessGranted?: T;
+  accessReason?: T;
+  accessDeniedReason?: T;
+  requiredSubscriptionTier?: T;
+  userSubscriptionTier?: T;
+  accessAttempts?: T;
+  firstAccessAt?: T;
+  lastAccessAt?: T;
+  grantedAt?: T;
+  expiresAt?: T;
+  deviceInfo?:
+    | T
+    | {
+        deviceId?: T;
+        deviceType?: T;
+        platform?: T;
+        userAgent?: T;
+        ipAddress?: T;
+      };
+  printAllowed?: T;
+  copyAllowed?: T;
+  maxConcurrentSessions?: T;
+  currentSessions?: T;
+  sessionToken?: T;
+  isActive?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

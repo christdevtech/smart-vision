@@ -11,6 +11,7 @@ export const Topics: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'name',
+    group: 'Categories',
   },
   access: {
     create: admin,

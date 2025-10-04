@@ -12,6 +12,10 @@ export const Categories: CollectionConfig = {
     update: admin,
     delete: admin,
   },
+  admin: {
+    useAsTitle: 'title',
+    group: 'Categories',
+  },
   labels: {
     singular: 'Category',
     plural: 'Categories',

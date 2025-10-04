@@ -7,6 +7,7 @@ export const Videos: CollectionConfig = {
   slug: 'videos',
   admin: {
     useAsTitle: 'title',
+    group: 'Platform Content',
   },
   access: {
     create: admin,
@@ -28,9 +29,16 @@ export const Videos: CollectionConfig = {
       required: true,
     },
     {
-      name: 'chapter',
-      type: 'text',
-      required: true,
+      name: 'topic',
+      type: 'relationship',
+      relationTo: 'topics',
+      hasMany: true,
+      filterOptions: ({ siblingData }) => {
+        if (!siblingData.subject) return false
+        return {
+          subjects: { contains: siblingData.subject },
+        }
+      },
     },
     {
       name: 'video',
@@ -39,27 +47,8 @@ export const Videos: CollectionConfig = {
       required: true,
     },
     {
-      name: 'duration',
-      type: 'number',
-      admin: {
-        description: 'Duration in seconds',
-      },
-    },
-    {
       name: 'description',
       type: 'richText',
-    },
-    {
-      name: 'topic',
-      type: 'relationship',
-      relationTo: 'topics',
-      hasMany: true,
-      filterOptions: ({ siblingData }) => {
-        if (!siblingData.subject) return false;
-        return {
-          subjects: { contains: siblingData.subject },
-        };
-      },
     },
   ],
 }

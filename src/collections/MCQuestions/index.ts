@@ -15,6 +15,7 @@ export const MCQuestions: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'question',
+    group: 'Platform Content',
   },
   access: {
     create: admin,
