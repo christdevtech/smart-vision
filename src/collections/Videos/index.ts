@@ -33,7 +33,7 @@ export const Videos: CollectionConfig = {
       type: 'relationship',
       relationTo: 'topics',
       hasMany: true,
-      filterOptions: ({ siblingData }) => {
+      filterOptions: ({ siblingData }: { siblingData: any }) => {
         if (!siblingData.subject) return false
         return {
           subjects: { contains: siblingData.subject },

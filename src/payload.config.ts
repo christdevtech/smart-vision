@@ -24,6 +24,8 @@ import { Topics } from './collections/Topics'
 import { UserProgress } from './collections/UserProgress'
 import { TestResults } from './collections/TestResults'
 import { ContentAccess } from './collections/ContentAccess'
+import { Notifications } from './collections/Notifications'
+import { ActivityLogs } from './collections/ActivityLogs'
 import { Settings } from './Settings/config'
 
 const filename = fileURLToPath(import.meta.url)
@@ -57,6 +59,8 @@ export default buildConfig({
     UserProgress,
     TestResults,
     ContentAccess,
+    Notifications,
+    ActivityLogs,
   ],
   globals: [Settings],
   editor: lexicalEditor(),

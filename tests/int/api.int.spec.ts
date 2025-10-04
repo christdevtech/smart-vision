@@ -47,6 +47,7 @@ describe('API', () => {
           password: 'password123',
           firstName: 'Test',
           lastName: 'User1',
+          role: 'user',
         },
       })
 
@@ -57,6 +58,7 @@ describe('API', () => {
           password: 'password123',
           firstName: 'Test',
           lastName: 'User2',
+          role: 'user',
         },
       })
 
@@ -76,6 +78,7 @@ describe('API', () => {
           password: 'password123',
           firstName: 'Referrer',
           lastName: 'User',
+          role: 'user',
         },
       })
 
@@ -101,6 +104,7 @@ describe('API', () => {
           password: 'password123',
           firstName: 'Referred',
           lastName: 'User',
+          role: 'user',
         },
         req: mockReq as any,
       })
@@ -125,6 +129,7 @@ describe('API', () => {
           password: 'password123',
           firstName: 'Referrer',
           lastName: 'Expired',
+          role: 'user',
         },
       })
 
@@ -151,6 +156,7 @@ describe('API', () => {
           password: 'password123',
           firstName: 'Not',
           lastName: 'Referred',
+          role: 'user',
         },
         req: mockReq as any,
       })

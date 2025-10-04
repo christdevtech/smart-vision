@@ -83,6 +83,8 @@ export interface Config {
     'user-progress': UserProgress;
     'test-results': TestResult;
     'content-access': ContentAccess;
+    notifications: Notification;
+    'activity-logs': ActivityLog;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -105,6 +107,8 @@ export interface Config {
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
     'test-results': TestResultsSelect<false> | TestResultsSelect<true>;
     'content-access': ContentAccessSelect<false> | ContentAccessSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    'activity-logs': ActivityLogsSelect<false> | ActivityLogsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -1106,6 +1110,340 @@ export interface ContentAccess {
   createdAt: string;
 }
 /**
+ * Manage user notifications and push notifications for mobile app
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: string;
+  /**
+   * Notification title/subject
+   */
+  title: string;
+  /**
+   * Notification message content
+   */
+  message: string;
+  /**
+   * User who will receive this notification
+   */
+  recipient: string | User;
+  /**
+   * Category of notification for filtering and styling
+   */
+  type:
+    | 'system'
+    | 'payment'
+    | 'subscription'
+    | 'content'
+    | 'achievement'
+    | 'reminder'
+    | 'referral'
+    | 'study_plan'
+    | 'test_result'
+    | 'general';
+  /**
+   * Priority level affects display order and styling
+   */
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  /**
+   * Whether the user has read this notification
+   */
+  isRead?: boolean | null;
+  /**
+   * Timestamp when notification was marked as read
+   */
+  readAt?: string | null;
+  /**
+   * Optional URL where user can take action or see details (e.g., /dashboard/subscription)
+   */
+  actionLink?: string | null;
+  /**
+   * Label for the action button (e.g., "View Details", "Complete Payment")
+   */
+  actionLabel?: string | null;
+  /**
+   * Optional: Schedule notification for future delivery
+   */
+  scheduledFor?: string | null;
+  /**
+   * Optional: When this notification should be automatically hidden
+   */
+  expiresAt?: string | null;
+  /**
+   * Settings for mobile push notifications
+   */
+  pushNotification?: {
+    /**
+     * Send as push notification to mobile devices
+     */
+    sendPush?: boolean | null;
+    /**
+     * Whether push notification was successfully sent
+     */
+    pushSent?: boolean | null;
+    /**
+     * When push notification was sent
+     */
+    pushSentAt?: string | null;
+    /**
+     * Error message if push notification failed
+     */
+    pushError?: string | null;
+    /**
+     * Sound to play with push notification
+     */
+    sound?: ('default' | 'silent' | 'achievement' | 'alert') | null;
+    /**
+     * Badge count to display on app icon
+     */
+    badge?: number | null;
+    /**
+     * Additional data to send with push notification (JSON format)
+     */
+    data?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+  };
+  /**
+   * Additional notification metadata
+   */
+  metadata?: {
+    /**
+     * Type of content this notification relates to
+     */
+    relatedContentType?:
+      | (
+          | 'videos'
+          | 'books'
+          | 'exam-papers'
+          | 'mcquestions'
+          | 'study-plans'
+          | 'test-results'
+          | 'subscriptions'
+          | 'transactions'
+        )
+      | null;
+    /**
+     * ID of the related content item
+     */
+    relatedContentId?: string | null;
+    /**
+     * Source that generated this notification
+     */
+    source?: ('system' | 'admin' | 'automated' | 'api') | null;
+    /**
+     * Tags for categorization and filtering
+     */
+    tags?:
+      | {
+          tag: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  /**
+   * Whether this notification is active and should be displayed
+   */
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Platform activity logs for analytics and auditing
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activity-logs".
+ */
+export interface ActivityLog {
+  id: string;
+  /**
+   * The specific action that was performed
+   */
+  action:
+    | 'auth.login'
+    | 'auth.logout'
+    | 'auth.register'
+    | 'auth.password_reset_request'
+    | 'auth.password_reset_complete'
+    | 'auth.account_activation'
+    | 'auth.account_deactivation'
+    | 'content.video_viewed'
+    | 'content.video_started'
+    | 'content.video_completed'
+    | 'content.book_downloaded'
+    | 'content.book_opened'
+    | 'content.exam_paper_downloaded'
+    | 'content.mcq_test_started'
+    | 'content.mcq_test_completed'
+    | 'content.search'
+    | 'content.access_denied'
+    | 'profile.updated'
+    | 'profile.picture_changed'
+    | 'profile.academic_level_changed'
+    | 'profile.phone_updated'
+    | 'subscription.purchased'
+    | 'subscription.renewed'
+    | 'subscription.cancelled'
+    | 'subscription.expired'
+    | 'payment.initiated'
+    | 'payment.completed'
+    | 'payment.failed'
+    | 'study_plan.created'
+    | 'study_plan.updated'
+    | 'study_plan.deleted'
+    | 'study_plan.session_completed'
+    | 'referral.code_generated'
+    | 'referral.link_shared'
+    | 'referral.successful'
+    | 'referral.reward_earned'
+    | 'admin.user_created'
+    | 'admin.user_updated'
+    | 'admin.user_deleted'
+    | 'admin.content_created'
+    | 'admin.content_updated'
+    | 'admin.content_deleted'
+    | 'admin.subscription_modified'
+    | 'admin.settings_changed'
+    | 'admin.bulk_operation'
+    | 'notification.sent'
+    | 'notification.read'
+    | 'notification.push_sent'
+    | 'security.failed_login'
+    | 'security.account_locked'
+    | 'security.suspicious_activity'
+    | 'security.data_export'
+    | 'security.account_deletion_request'
+    | 'system.error'
+    | 'system.rate_limit_exceeded'
+    | 'system.backup'
+    | 'system.maintenance';
+  /**
+   * Category of the action for easier filtering
+   */
+  category:
+    | 'auth'
+    | 'content'
+    | 'profile'
+    | 'subscription'
+    | 'study_plan'
+    | 'referral'
+    | 'admin'
+    | 'notification'
+    | 'security'
+    | 'system';
+  /**
+   * User who performed the action (null for system actions)
+   */
+  user?: (string | null) | User;
+  /**
+   * Type of user who performed the action
+   */
+  userType: 'user' | 'admin' | 'system' | 'anonymous';
+  /**
+   * Detailed description of what happened
+   */
+  description?: string | null;
+  /**
+   * Additional structured data related to the action (JSON format)
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Type of resource that was affected by the action
+   */
+  resourceType?:
+    | (
+        | 'users'
+        | 'videos'
+        | 'books'
+        | 'exam-papers'
+        | 'mcq'
+        | 'subscriptions'
+        | 'transactions'
+        | 'study-plans'
+        | 'notifications'
+        | 'test-results'
+        | 'user-progress'
+        | 'content-access'
+        | 'system'
+      )
+    | null;
+  /**
+   * ID of the specific resource that was affected
+   */
+  resourceId?: string | null;
+  /**
+   * IP address from which the action was performed
+   */
+  ipAddress?: string | null;
+  /**
+   * User agent string of the client
+   */
+  userAgent?: string | null;
+  /**
+   * Session ID for tracking user sessions
+   */
+  sessionId?: string | null;
+  /**
+   * Whether the action was successful
+   */
+  success?: boolean | null;
+  /**
+   * Error message if the action failed
+   */
+  errorMessage?: string | null;
+  /**
+   * Duration of the action in milliseconds (for performance tracking)
+   */
+  duration?: number | null;
+  /**
+   * When the action occurred
+   */
+  timestamp: string;
+  /**
+   * Source platform/interface where the action originated
+   */
+  source?: ('web' | 'mobile' | 'api' | 'admin' | 'system' | 'webhook') | null;
+  /**
+   * Geographic location information (optional)
+   */
+  geolocation?: {
+    /**
+     * Country where the action was performed
+     */
+    country?: string | null;
+    /**
+     * City where the action was performed
+     */
+    city?: string | null;
+    /**
+     * Latitude coordinate
+     */
+    latitude?: number | null;
+    /**
+     * Longitude coordinate
+     */
+    longitude?: number | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
@@ -1175,6 +1513,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'content-access';
         value: string | ContentAccess;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: string | Notification;
+      } | null)
+    | ({
+        relationTo: 'activity-logs';
+        value: string | ActivityLog;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1753,6 +2099,82 @@ export interface ContentAccessSelect<T extends boolean = true> {
   sessionToken?: T;
   isActive?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  title?: T;
+  message?: T;
+  recipient?: T;
+  type?: T;
+  priority?: T;
+  isRead?: T;
+  readAt?: T;
+  actionLink?: T;
+  actionLabel?: T;
+  scheduledFor?: T;
+  expiresAt?: T;
+  pushNotification?:
+    | T
+    | {
+        sendPush?: T;
+        pushSent?: T;
+        pushSentAt?: T;
+        pushError?: T;
+        sound?: T;
+        badge?: T;
+        data?: T;
+      };
+  metadata?:
+    | T
+    | {
+        relatedContentType?: T;
+        relatedContentId?: T;
+        source?: T;
+        tags?:
+          | T
+          | {
+              tag?: T;
+              id?: T;
+            };
+      };
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activity-logs_select".
+ */
+export interface ActivityLogsSelect<T extends boolean = true> {
+  action?: T;
+  category?: T;
+  user?: T;
+  userType?: T;
+  description?: T;
+  metadata?: T;
+  resourceType?: T;
+  resourceId?: T;
+  ipAddress?: T;
+  userAgent?: T;
+  sessionId?: T;
+  success?: T;
+  errorMessage?: T;
+  duration?: T;
+  timestamp?: T;
+  source?: T;
+  geolocation?:
+    | T
+    | {
+        country?: T;
+        city?: T;
+        latitude?: T;
+        longitude?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
