@@ -1,5 +1,5 @@
 import React from 'react'
-import './styles.css'
+import '../styles.css'
 import { HeaderServerWrapper } from '@/Header/ServerWrapper'
 import { Toaster } from 'sonner'
 
@@ -9,22 +9,15 @@ export const metadata = {
   title: 'SmartVision - Mobile Learning Platform',
 }
 
-export default async function RootLayout(props: { children: React.ReactNode }) {
-  const { children } = props
-
+export default function WebLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <main>
+        <div className="min-h-screen bg-black">
           <HeaderServerWrapper />
           {children}
-        </main>
-        <Toaster 
-          theme="dark" 
-          position="top-center"
-          richColors
-          closeButton
-        />
+          <Toaster />
+        </div>
       </body>
     </html>
   )
