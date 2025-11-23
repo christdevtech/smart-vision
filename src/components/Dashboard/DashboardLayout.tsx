@@ -13,6 +13,7 @@ import { Menu, Bell, ChevronRight, X } from 'lucide-react'
 import NotificationBadge from './NotificationBadge'
 import { Media } from '../Media'
 import { ThemeSwitcher } from '../ThemeSwitcher'
+import { Logo } from '../Graphics/Logo/Logo'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -113,28 +114,8 @@ export default function DashboardLayout({
 
               {/* Logo and Title */}
               <div className="flex items-center space-x-3">
-                <motion.div className="flex items-center space-x-2" whileHover={{ scale: 1.02 }}>
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 100 100"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="drop-shadow-sm"
-                  >
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      fill="#4F46E5"
-                      stroke="#6366F1"
-                      strokeWidth="2"
-                    />
-                    <path d="M35 40h30v5H35v-5zm0 10h25v5H35v-5zm0 10h20v5H35v-5z" fill="white" />
-                    <circle cx="75" cy="25" r="8" fill="#10B981" />
-                    <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
-                  </svg>
-                  <span className="text-xl font-bold text-foreground">SmartVision</span>
+                <motion.div whileHover={{ scale: 1.02 }}>
+                  <Logo />
                 </motion.div>
 
                 {title && (

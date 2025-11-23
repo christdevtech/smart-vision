@@ -27,6 +27,7 @@ import { ContentAccess } from './collections/ContentAccess'
 import { Notifications } from './collections/Notifications'
 import { ActivityLogs } from './collections/ActivityLogs'
 import { Settings } from './Settings/config'
+import { url } from 'inspector'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -40,6 +41,19 @@ export default buildConfig({
     routes: {},
     components: {
       beforeDashboard: ['@/components/BeforeAdminDashboard'],
+      graphics: {
+        Icon: '@/components/Graphics/Icon/Icon#Icon',
+        Logo: '@/components/Graphics/Logo/Logo#Logo',
+      },
+    },
+    meta: {
+      titleSuffix: ' - Smart Vision',
+      title: 'Smart Vision',
+      icons: [
+        {
+          url: `${process.env.NEXT_PUBLIC_SERVER_URL}/favicon.png`,
+        },
+      ],
     },
   },
   collections: [

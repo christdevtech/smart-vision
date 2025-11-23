@@ -9,7 +9,7 @@ interface Props {
   priority?: 'auto' | 'high' | 'low'
 }
 
-export const Logo = (props: Props) => {
+export const Icon = (props: Props) => {
   const { loading: loadingFromProps, priority: priorityFromProps, className } = props
   const router = useRouter()
 
@@ -20,14 +20,14 @@ export const Logo = (props: Props) => {
     /* eslint-disable @next/next/no-img-element */
     <img
       onClick={() => router.push('/')}
-      alt="316 Group Logo"
-      width={193}
-      height={34}
+      alt="Smart Vision Icon"
+      width={150}
+      height={150}
       loading={loading}
       fetchPriority={priority}
       decoding="async"
-      className={clsx('max-w-[15.375rem] w-full h-[60px]', className)}
-      src="/assets/logo.svg"
+      className={clsx('w-full max-w-[150px]', className)}
+      src="/favicon.png"
     />
   )
 }

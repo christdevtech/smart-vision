@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { User } from '@/payload-types'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
+import { Logo } from '@/components/Graphics/Logo/Logo'
 
 interface HeaderProps {
   user?: User | null
@@ -45,24 +46,7 @@ export function Header({ user, adminRoute = '/admin' }: HeaderProps) {
       <header className="sticky top-0 z-50 border-b backdrop-blur-sm border-border bg-background/80">
         <div className="flex justify-between items-center px-4 py-3 mx-auto max-w-6xl">
           {/* Logo */}
-          <Link href="/" className="flex gap-2 items-center no-underline" onClick={closeMenu}>
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 100 100"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="drop-shadow-[0_4px_8px_rgba(79,70,229,0.3)] sm:w-10 sm:h-10"
-            >
-              <circle cx="50" cy="50" r="45" fill="#4F46E5" stroke="#6366F1" strokeWidth="2" />
-              <path d="M35 40h30v5H35v-5zm0 10h25v5H35v-5zm0 10h20v5H35v-5z" fill="white" />
-              <circle cx="75" cy="25" r="8" fill="#10B981" />
-              <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
-            </svg>
-            <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-br from-primary to-success sm:text-xl">
-              SmartVision
-            </span>
-          </Link>
+          <Logo />
 
           {/* Desktop Navigation */}
           <div className="hidden gap-3 items-center md:flex">
