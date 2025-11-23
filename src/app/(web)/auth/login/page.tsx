@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function LoginPage() {
+function LoginContent() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -12,7 +12,7 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const message = searchParams.get('message')
-  const messageType = searchParams.get('type') || 'success' // Default to success, but can be 'error'
+  const messageType = searchParams.get('type') || 'success'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,8 +34,6 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        // Login successful, redirect to dashboard
-        // router.push('/dashboard')
         window.location.href = '/dashboard'
       } else {
         setError(data.message || 'Login failed. Please check your credentials.')
@@ -51,7 +49,6 @@ export default function LoginPage() {
   return (
     <div className="flex justify-center items-center px-6 min-h-screen text-foreground bg-background">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="mb-8 text-center">
           <Link href="/" className="inline-block">
             <svg
@@ -74,7 +71,6 @@ export default function LoginPage() {
           <p className="mt-2 text-muted-foreground">Sign in to your account</p>
         </div>
 
-        {/* Login Form */}
         <div className="p-6 rounded-xl border bg-card border-border">
           <form onSubmit={handleSubmit} className="space-y-4">
             {message && (
@@ -110,10 +106,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block mb-2 text-sm font-medium text-foreground/80"
-              >
+              <label htmlFor="password" className="block mb-2 text-sm font-medium text-foreground/80">
                 Password
               </label>
               <input
@@ -137,19 +130,13 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 space-y-3 text-center">
-            <Link
-              href="/auth/forgot-password"
-              className="text-sm transition-colors text-primary hover:text-primary/80"
-            >
+            <Link href="/auth/forgot-password" className="text-sm transition-colors text-primary hover:text-primary/80">
               Forgot your password?
             </Link>
 
             <div className="text-sm text-muted-foreground">
               No account yet?{' '}
-              <Link
-                href="/auth/register"
-                className="transition-colors text-primary hover:text-primary/80"
-              >
+              <Link href="/auth/register" className="transition-colors text-primary hover:text-primary/80">
                 Sign up
               </Link>
             </div>
@@ -157,14 +144,19 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-6 text-center">
-          <Link
-            href="/"
-            className="text-sm transition-colors text-muted-foreground hover:text-foreground"
-          >
+          <Link href="/" className="text-sm transition-colors text-muted-foreground hover:text-foreground">
             ← Back to home
           </Link>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   )
 }

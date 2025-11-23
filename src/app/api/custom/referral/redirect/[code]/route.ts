@@ -4,10 +4,10 @@ import config from '@/payload.config'
 import { REFERRAL_CONSTANTS, getReferralCookieOptions } from '@/utilities/referral'
 import { cookies } from 'next/headers'
 
-export async function GET(request: NextRequest, { params }: { params: { code: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   try {
     const { code } = await params
-    
+
     if (!code) {
       return NextResponse.json({ error: 'Referral code is required' }, { status: 400 })
     }
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: { code: st
     // Check if referral cookie already exists
     const cookieStore = await cookies()
     const existingCookie = cookieStore.get(REFERRAL_CONSTANTS.COOKIE_NAME)
-    
+
     if (existingCookie) {
       // Cookie already exists, redirect to home
       return NextResponse.redirect(new URL('/', request.url))
@@ -45,25 +45,25 @@ export async function GET(request: NextRequest, { params }: { params: { code: st
     const cookieData = {
       referrerId: referrer.id,
       referralCode: code,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
-    
+
     // Create JSON response instead of redirect
     const response = NextResponse.json({
       success: true,
       message: 'Referral code applied successfully',
-      redirectUrl: '/'
+      redirectUrl: '/',
     })
-    
+
     // Set HTTP-only cookie with referral information
     const cookieOptions = getReferralCookieOptions()
     response.cookies.set(REFERRAL_CONSTANTS.COOKIE_NAME, JSON.stringify(cookieData), cookieOptions)
-    
+
     // Log for debugging (remove in production)
     console.log('Setting referral cookie:', {
       cookieName: REFERRAL_CONSTANTS.COOKIE_NAME,
       cookieData,
-      cookieOptions
+      cookieOptions,
     })
 
     return response

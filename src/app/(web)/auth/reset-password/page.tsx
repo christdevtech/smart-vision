@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -19,7 +19,6 @@ export default function ResetPasswordPage() {
     if (tokenParam) {
       setToken(tokenParam)
     } else {
-      // No token provided, redirect to forgot password
       router.push('/auth/forgot-password')
     }
   }, [searchParams, router])
@@ -29,14 +28,12 @@ export default function ResetPasswordPage() {
     setIsLoading(true)
     setError('')
 
-    // Validate passwords match
     if (password !== confirmPassword) {
       setError('Passwords do not match')
       setIsLoading(false)
       return
     }
 
-    // Validate password length
     if (password.length < 6) {
       setError('Password must be at least 6 characters long')
       setIsLoading(false)
@@ -73,7 +70,6 @@ export default function ResetPasswordPage() {
     return (
       <div className="flex justify-center items-center px-6 min-h-screen bg-background text-foreground">
         <div className="w-full max-w-md text-center">
-          {/* Logo */}
           <div className="mb-8">
             <Link href="/" className="inline-block">
               <svg
@@ -97,16 +93,11 @@ export default function ResetPasswordPage() {
 
           <div className="p-6 rounded-xl border bg-card border-border">
             <div className="mb-4 text-4xl text-success">✓</div>
-            <h2 className="mb-3 text-xl font-semibold text-foreground">
-              Password Reset Successful
-            </h2>
+            <h2 className="mb-3 text-xl font-semibold text-foreground">Password Reset Successful</h2>
             <p className="mb-6 text-muted-foreground">
               Your password has been successfully reset. You can now sign in with your new password.
             </p>
-            <Link
-              href="/auth/login"
-              className="inline-block bg-gradient-to-br from-primary to-success text-primary-foreground py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)]"
-            >
+            <Link href="/auth/login" className="inline-block bg-gradient-to-br from-primary to-success text-primary-foreground py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)]">
               Sign In
             </Link>
           </div>
@@ -118,7 +109,6 @@ export default function ResetPasswordPage() {
   return (
     <div className="flex justify-center items-center px-6 min-h-screen bg-background text-foreground">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="mb-8 text-center">
           <Link href="/" className="inline-block">
             <svg
@@ -135,13 +125,10 @@ export default function ResetPasswordPage() {
               <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
             </svg>
           </Link>
-          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-primary to-success">
-            SmartVision
-          </h1>
+          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-primary to-success">SmartVision</h1>
           <p className="mt-2 text-muted-foreground">Reset your password</p>
         </div>
 
-        {/* Reset Password Form */}
         <div className="p-6 rounded-xl border bg-card border-border">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
@@ -194,24 +181,26 @@ export default function ResetPasswordPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <Link
-              href="/auth/login"
-              className="text-sm transition-colors text-primary hover:text-primary/80"
-            >
+            <Link href="/auth/login" className="text-sm transition-colors text-primary hover:text-primary/80">
               Back to sign in
             </Link>
           </div>
         </div>
 
         <div className="mt-6 text-center">
-          <Link
-            href="/"
-            className="text-sm transition-colors text-muted-foreground hover:text-foreground"
-          >
+          <Link href="/" className="text-sm transition-colors text-muted-foreground hover:text-foreground">
             ← Back to home
           </Link>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }
