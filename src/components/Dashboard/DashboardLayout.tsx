@@ -11,6 +11,8 @@ import PageTransition from './PageTransition'
 import MotionWrapper from './MotionWrapper'
 import { Menu, Bell, ChevronRight, X } from 'lucide-react'
 import NotificationBadge from './NotificationBadge'
+import { Media } from '../Media'
+import { ThemeSwitcher } from '../ThemeSwitcher'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -72,7 +74,7 @@ export default function DashboardLayout({
           animate={{ y: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         >
-          <div className="flex justify-between items-center px-4 py-3 mx-auto max-w-7xl">
+          <div className="flex justify-between items-center px-4 py-3 mx-auto">
             {/* Left Section */}
             <div className="flex items-center space-x-4">
               {/* Mobile Menu Toggle Button */}
@@ -144,13 +146,8 @@ export default function DashboardLayout({
               </div>
             </div>
 
-            {/* Center Section - Title (Desktop) */}
-            <div className="hidden items-center space-x-2 text-sm lg:flex">
-              {title && <span className="font-medium text-foreground">{title}</span>}
-            </div>
-
             {/* Right Section */}
-            <div className="flex items-center space-x-3">
+            <div className="flex gap-3 items-center">
               {/* Notification Button */}
               <motion.button
                 className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -169,21 +166,31 @@ export default function DashboardLayout({
               {/* User Info */}
               {user && (
                 <motion.div
-                  className="flex items-center space-x-2"
+                  className="flex gap-2 items-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
                 >
+                  <ThemeSwitcher variant="icon-only" className="mr-2" />
                   <div className="hidden text-right md:block">
                     <p className="text-sm font-medium text-foreground">
                       {user.firstName || 'User'}
                     </p>
                     <p className="text-xs text-muted-foreground">{user.role}</p>
                   </div>
-                  <div className="flex justify-center items-center w-8 h-8 bg-gradient-to-br rounded-full from-primary to-secondary">
-                    <span className="text-sm font-semibold text-primary-foreground">
-                      {(user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase()}
-                    </span>
+                  <div className="flex relative justify-center items-center w-8 h-8 bg-gradient-to-br rounded-full from-primary to-secondary">
+                    {user.profilePic ? (
+                      <Media
+                        resource={user.profilePic}
+                        alt={user.firstName || 'User'}
+                        imgClassName="w-full h-full rounded-full object-cover"
+                        fill
+                      />
+                    ) : (
+                      <span className="text-sm font-semibold text-primary-foreground">
+                        {(user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                      </span>
+                    )}
                   </div>
                 </motion.div>
               )}
