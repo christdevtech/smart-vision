@@ -11,6 +11,10 @@ import {
   Calendar,
   BarChart3,
   User,
+  Users,
+  Download,
+  Crown,
+  FileQuestion,
   X,
   ChevronRight,
 } from 'lucide-react'
@@ -76,6 +80,12 @@ export function SidebarNavigation({
         activeIcon: FileText,
       },
       {
+        href: '/dashboard/question-bank',
+        label: 'Question Bank',
+        icon: FileQuestion,
+        activeIcon: FileQuestion,
+      },
+      {
         href: '/dashboard/videos',
         label: 'Video Library',
         icon: Play,
@@ -88,6 +98,12 @@ export function SidebarNavigation({
         activeIcon: Library,
       },
       {
+        href: '/dashboard/downloads',
+        label: 'Downloads',
+        icon: Download,
+        activeIcon: Download,
+      },
+      {
         href: '/dashboard/planner',
         label: 'Study Planner',
         icon: Calendar,
@@ -98,6 +114,18 @@ export function SidebarNavigation({
         label: 'Progress Tracking',
         icon: BarChart3,
         activeIcon: BarChart3,
+      },
+      {
+        href: '/dashboard/referrals',
+        label: 'Referrals',
+        icon: Users,
+        activeIcon: Users,
+      },
+      {
+        href: '/dashboard/subscriptions',
+        label: 'Subscriptions',
+        icon: Crown,
+        activeIcon: Crown,
       },
       {
         href: '/dashboard/account',
