@@ -45,10 +45,10 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
+    <div className="flex justify-center items-center px-6 min-h-screen bg-background text-foreground">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="mb-8 text-center">
           <Link href="/" className="inline-block">
             <svg
               width="60"
@@ -64,32 +64,37 @@ export default function ForgotPasswordPage() {
               <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
             </svg>
           </Link>
-          <h1 className="text-2xl font-bold bg-gradient-to-br from-primary to-success bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-primary to-success">
             SmartVision
           </h1>
-          <p className="text-muted-foreground mt-2">Reset your password</p>
+          <p className="mt-2 text-muted-foreground">Reset your password</p>
         </div>
 
         {/* Forgot Password Form */}
-        <div className="bg-card border border-border rounded-xl p-6">
+        <div className="p-6 rounded-xl border bg-card border-border">
           {!isSuccess ? (
             <>
               <div className="mb-6">
-                <h2 className="text-lg font-semibold text-foreground mb-2">Forgot your password?</h2>
-                <p className="text-muted-foreground text-sm">
-                  Enter your email address and we'll send you instructions to reset your password.
+                <h2 className="mb-2 text-lg font-semibold text-foreground">
+                  Forgot your password?
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Enter your email address and we will send you instructions to reset your password.
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-destructive text-sm">
+                  <div className="p-3 text-sm rounded-lg border bg-destructive/10 border-destructive/20 text-destructive">
                     {error}
                   </div>
                 )}
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-foreground/80 mb-2">
+                  <label
+                    htmlFor="email"
+                    className="block mb-2 text-sm font-medium text-foreground/80"
+                  >
                     Email Address
                   </label>
                   <input
@@ -98,7 +103,7 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full px-3 py-2 bg-input border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="Enter your email address"
                   />
                 </div>
@@ -114,7 +119,7 @@ export default function ForgotPasswordPage() {
             </>
           ) : (
             <div className="text-center">
-              <div className="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="flex justify-center items-center mx-auto mb-4 w-16 h-16 rounded-full bg-success/20">
                 <svg
                   className="w-8 h-8 text-success"
                   fill="none"
@@ -129,14 +134,14 @@ export default function ForgotPasswordPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">Check your email</h3>
-              <p className="text-muted-foreground text-sm mb-6">{message}</p>
+              <h3 className="mb-2 text-lg font-semibold text-foreground">Check your email</h3>
+              <p className="mb-6 text-sm text-muted-foreground">{message}</p>
               <button
                 onClick={() => {
                   setIsSuccess(false)
                   setMessage('')
                 }}
-                className="text-primary hover:text-primary/80 text-sm transition-colors"
+                className="text-sm transition-colors text-primary hover:text-primary/80"
               >
                 Send another email
               </button>
@@ -146,17 +151,17 @@ export default function ForgotPasswordPage() {
           <div className="mt-6 text-center">
             <Link
               href="/auth/login"
-              className="text-primary hover:text-primary/80 text-sm transition-colors"
+              className="text-sm transition-colors text-primary hover:text-primary/80"
             >
               ← Back to login
             </Link>
           </div>
         </div>
 
-        <div className="text-center mt-6">
+        <div className="mt-6 text-center">
           <Link
             href="/"
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+            className="text-sm transition-colors text-muted-foreground hover:text-foreground"
           >
             ← Back to home
           </Link>

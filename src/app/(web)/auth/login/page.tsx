@@ -104,7 +104,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="px-3 py-2 w-full text-foreground rounded-lg border bg-input border-border placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="px-3 py-2 w-full rounded-lg border text-foreground bg-input border-border placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter your email"
               />
             </div>
@@ -122,7 +122,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="px-3 py-2 w-full text-foreground rounded-lg border bg-input border-border placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="px-3 py-2 w-full rounded-lg border text-foreground bg-input border-border placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter your password"
               />
             </div>
@@ -139,16 +139,16 @@ export default function LoginPage() {
           <div className="mt-6 space-y-3 text-center">
             <Link
               href="/auth/forgot-password"
-              className="text-sm text-primary transition-colors hover:text-primary/80"
+              className="text-sm transition-colors text-primary hover:text-primary/80"
             >
               Forgot your password?
             </Link>
 
             <div className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
+              No account yet?{' '}
               <Link
                 href="/auth/register"
-                className="text-primary transition-colors hover:text-primary/80"
+                className="transition-colors text-primary hover:text-primary/80"
               >
                 Sign up
               </Link>
