@@ -30,21 +30,21 @@ export default function NavigationItem({
   variant = 'bottom',
 }: NavigationItemProps) {
   const baseClasses = `
-    relative flex items-center justify-center transition-colors duration-200
+    relative flex items-center transition-colors duration-200
     ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
   `
 
   const variantClasses = {
     bottom: `
-      flex-col space-y-1 p-2 min-h-[60px]
+      flex-col space-y-1 p-2 min-h-[60px] justify-center
       ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'}
     `,
     sidebar: `
-      flex-row space-x-3 p-3 w-full rounded-lg
-      ${isActive ? 'bg-accent text-primary' : 'text-foreground hover:bg-accent hover:text-primary'}
+      flex-row space-x-3 p-3 w-full rounded-lg justify-start
+      ${isActive ? 'text-primary bg-accent/50' : 'text-foreground hover:bg-accent hover:text-primary'}
     `,
     horizontal: `
-      flex-row space-x-2 px-4 py-2 rounded-lg
+      flex-row space-x-2 px-4 py-2 rounded-lg justify-center
       ${isActive ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent hover:text-primary'}
     `,
   }
@@ -68,17 +68,6 @@ export default function NavigationItem({
           layoutId="activeIndicator"
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-        />
-      )}
-
-      {/* Active indicator for sidebar */}
-      {variant === 'sidebar' && isActive && (
-        <motion.div
-          className="absolute left-0 top-1/2 w-1 h-8 rounded-r-full bg-primary"
-          layoutId="sidebarActiveIndicator"
-          initial={{ opacity: 0, scaleY: 0 }}
-          animate={{ opacity: 1, scaleY: 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         />
       )}
@@ -125,7 +114,7 @@ export default function NavigationItem({
   }
 
   return (
-    <Link href={href} className="block">
+    <Link href={href} className="block" onClick={onClick}>
       {content}
     </Link>
   )
