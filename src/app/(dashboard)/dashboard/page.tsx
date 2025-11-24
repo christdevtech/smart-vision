@@ -5,9 +5,6 @@ import { redirect } from 'next/navigation'
 
 import config from '@/payload.config'
 import Link from 'next/link'
-import ReferralDashboard from '@/components/ReferralDashboard'
-import SubscriptionDashboard from '@/components/SubscriptionDashboard'
-import { Media } from '@/components/Media'
 import {
   User,
   BookOpen,
@@ -18,6 +15,7 @@ import {
   Users,
   Calendar,
   Settings,
+  CreditCard,
 } from 'lucide-react'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
@@ -61,6 +59,21 @@ export default async function DashboardPage() {
 
   const transactions = transactionDocs.docs
   const subscription = subscriptionDocs.docs[0] || null
+
+  const filledProfileFields = [
+    Boolean(user.phoneNumber),
+    Boolean(user.dateOfBirth),
+    Boolean(user.academicLevel),
+    Boolean(user.profilePic),
+  ].filter(Boolean).length
+  const accountCompletion = Math.round((filledProfileFields / 4) * 100)
+  const now = new Date().toISOString()
+  const subscriptionActive = Boolean(
+    subscription &&
+      subscription.paymentStatus === 'paid' &&
+      subscription.endDate &&
+      subscription.endDate > now,
+  )
 
   return (
     <DashboardLayout user={user} title="Dashboard">
@@ -137,169 +150,155 @@ export default async function DashboardPage() {
             </div>
           </ScrollReveal>
 
-          {/* User Information Card */}
           <div className="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-3">
-            <ScrollReveal direction="left" delay={0.2}>
-              <div className="lg:col-span-1">
-                <MotionWrapper animation="scale" className="h-full">
-                  <div className="p-6 space-y-6 rounded-xl border transition-all duration-300 bg-dashboard-card border-border hover:bg-accent/50">
-                    <div className="flex gap-4 items-center pb-4 border-b border-border">
-                      <div className="relative w-16 h-16 rounded-full">
-                        {user.profilePic ? (
-                          <Media
-                            fill
-                            resource={user.profilePic}
-                            imgClassName="object-cover rounded-full"
-                          />
-                        ) : (
-                          <div className="flex justify-center items-center w-16 h-16 bg-gradient-to-br rounded-full from-primary to-secondary">
-                            <span className="text-2xl">👤</span>
-                          </div>
-                        )}
+            <ScrollReveal direction="up" delay={0.2}>
+              <MotionWrapper animation="scale" className="h-full">
+                <div className="p-6 rounded-xl border transition-all duration-300 bg-card border-border hover:shadow-lg">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex gap-3 items-center">
+                      <div className="p-3 rounded-lg bg-primary/10">
+                        <Settings className="w-6 h-6 text-primary" />
                       </div>
-                      <h3 className="text-lg font-semibold text-foreground">Profile Information</h3>
-                    </div>
-
-                    <div className="space-y-3">
                       <div>
-                        <label className="block mb-1 text-sm text-muted-foreground">Name</label>
-                        <p className="text-foreground">
-                          {user.firstName && user.lastName
-                            ? `${user.firstName} ${user.lastName}`
-                            : 'Not provided'}
+                        <p className="text-sm text-muted-foreground">Account Setup</p>
+                        <p className="font-semibold text-foreground">
+                          {accountCompletion}% Complete
                         </p>
                       </div>
-                      <div>
-                        <label className="block mb-1 text-sm text-muted-foreground">Email</label>
-                        <p className="text-foreground">{user.email}</p>
-                      </div>
-                      <div>
-                        <label className="block mb-1 text-sm text-muted-foreground">
-                          Member Since
-                        </label>
-                        <p className="text-foreground">
-                          {new Date(user.createdAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
-                        </p>
-                      </div>
-                      {user.referredBy && (
-                        <div>
-                          <label className="block mb-1 text-sm text-muted-foreground">
-                            Referred By
-                          </label>
-                          <p className="text-success">✓ Referred User</p>
-                        </div>
-                      )}
                     </div>
+                    <Link
+                      href="/dashboard/account"
+                      className="text-sm text-primary hover:text-primary/80"
+                    >
+                      Manage
+                    </Link>
                   </div>
-                </MotionWrapper>
-              </div>
+                  <div className="w-full h-2 rounded-full bg-border">
+                    <div
+                      className="h-2 rounded-full bg-primary"
+                      style={{ width: `${accountCompletion}%` }}
+                    />
+                  </div>
+                </div>
+              </MotionWrapper>
             </ScrollReveal>
 
-            {/* Referral Dashboard */}
-            <ScrollReveal direction="up" delay={0.5}>
-              <ReferralDashboard />
+            <ScrollReveal direction="up" delay={0.3}>
+              <MotionWrapper animation="scale" className="h-full">
+                <div className="p-6 rounded-xl border transition-all duration-300 bg-card border-border hover:shadow-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex gap-3 items-center">
+                      <div className="p-3 rounded-lg bg-success/10">
+                        <CreditCard className="w-6 h-6 text-success" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Subscription</p>
+                        <p className="font-semibold text-foreground">
+                          {subscriptionActive
+                            ? `${subscription?.plan?.[0]?.toUpperCase() + subscription?.plan?.slice(1)}`
+                            : 'No active subscription'}
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/dashboard/subscriptions"
+                      className="text-sm text-primary hover:text-primary/80"
+                    >
+                      {subscriptionActive ? 'View' : 'Subscribe'}
+                    </Link>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {subscriptionActive
+                      ? `Active until ${new Date(subscription!.endDate).toLocaleDateString('en-US')}`
+                      : 'Subscribe to access premium content'}
+                  </p>
+                </div>
+              </MotionWrapper>
             </ScrollReveal>
 
-            {/* Subscription Dashboard */}
-            <ScrollReveal direction="up" delay={0.6}>
-              <SubscriptionDashboard
-                user={user}
-                subscriptionData={subscriptionData}
-                subscription={subscription}
-                transactions={transactions}
-              />
+            <ScrollReveal direction="up" delay={0.4}>
+              <MotionWrapper animation="scale" className="h-full">
+                <div className="p-6 rounded-xl border transition-all duration-300 bg-card border-border hover:shadow-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex gap-3 items-center">
+                      <div className="p-3 rounded-lg bg-blue-500/10">
+                        <Users className="w-6 h-6 text-blue-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Referrals</p>
+                        <p className="font-semibold text-foreground">
+                          {user.totalReferrals || 0} total
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/dashboard/referrals"
+                      className="text-sm text-primary hover:text-primary/80"
+                    >
+                      View
+                    </Link>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Invite friends and earn rewards</p>
+                </div>
+              </MotionWrapper>
             </ScrollReveal>
           </div>
+          {/* Quick Actions */}
+          <ScrollReveal direction="up" delay={0.3}>
+            <div className="p-6 rounded-xl border bg-card border-border">
+              <h2 className="mb-4 text-xl font-semibold text-foreground">Quick Actions</h2>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {[
+                  {
+                    title: 'Study Materials',
+                    icon: BookOpen,
+                    href: '/study',
+                    color: 'text-blue-500',
+                    bgColor: 'bg-blue-500/10',
+                  },
+                  {
+                    title: 'Practice Tests',
+                    icon: TestTube,
+                    href: '/tests',
+                    color: 'text-purple-500',
+                    bgColor: 'bg-purple-500/10',
+                  },
+                  {
+                    title: 'Video Lessons',
+                    icon: Video,
+                    href: '/videos',
+                    color: 'text-red-500',
+                    bgColor: 'bg-red-500/10',
+                  },
+                  {
+                    title: 'Library',
+                    icon: Library,
+                    href: '/library',
+                    color: 'text-green-500',
+                    bgColor: 'bg-green-500/10',
+                  },
+                ].map((action, index) => (
+                  <MotionWrapper key={action.title} animation="scale" delay={0.1 * index}>
+                    <Link
+                      href={action.href}
+                      className="flex flex-col items-center p-4 rounded-lg border transition-all duration-300 group border-border hover:border-primary/30 hover:shadow-md"
+                    >
+                      <div
+                        className={`p-3 rounded-lg ${action.bgColor} group-hover:scale-110 transition-transform duration-300`}
+                      >
+                        <action.icon className={`w-6 h-6 ${action.color}`} />
+                      </div>
+                      <span className="mt-2 text-sm font-medium text-center text-foreground">
+                        {action.title}
+                      </span>
+                    </Link>
+                  </MotionWrapper>
+                ))}
+              </div>
+            </div>
+          </ScrollReveal>
         </div>
       </div>
-
-      {/* Quick Actions */}
-      <ScrollReveal direction="up" delay={0.3}>
-        <div className="p-6 rounded-xl border bg-card border-border">
-          <h2 className="mb-4 text-xl font-semibold text-foreground">Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {[
-              {
-                title: 'Study Materials',
-                icon: BookOpen,
-                href: '/study',
-                color: 'text-blue-500',
-                bgColor: 'bg-blue-500/10',
-              },
-              {
-                title: 'Practice Tests',
-                icon: TestTube,
-                href: '/tests',
-                color: 'text-purple-500',
-                bgColor: 'bg-purple-500/10',
-              },
-              {
-                title: 'Video Lessons',
-                icon: Video,
-                href: '/videos',
-                color: 'text-red-500',
-                bgColor: 'bg-red-500/10',
-              },
-              {
-                title: 'Library',
-                icon: Library,
-                href: '/library',
-                color: 'text-green-500',
-                bgColor: 'bg-green-500/10',
-              },
-            ].map((action, index) => (
-              <MotionWrapper key={action.title} animation="scale" delay={0.1 * index}>
-                <Link
-                  href={action.href}
-                  className="flex flex-col items-center p-4 rounded-lg border transition-all duration-300 group border-border hover:border-primary/30 hover:shadow-md"
-                >
-                  <div
-                    className={`p-3 rounded-lg ${action.bgColor} group-hover:scale-110 transition-transform duration-300`}
-                  >
-                    <action.icon className={`w-6 h-6 ${action.color}`} />
-                  </div>
-                  <span className="mt-2 text-sm font-medium text-center text-foreground">
-                    {action.title}
-                  </span>
-                </Link>
-              </MotionWrapper>
-            ))}
-          </div>
-        </div>
-      </ScrollReveal>
-
-      {/* User Information Card */}
-      <ScrollReveal direction="up" delay={0.4}>
-        <div className="p-6 rounded-xl border bg-card border-border">
-          <h2 className="mb-4 text-xl font-semibold text-foreground">Account Information</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="flex items-center space-x-3">
-              <div className="flex justify-center items-center w-12 h-12 rounded-full bg-blue-500/10">
-                <User className="w-6 h-6 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Full Name</p>
-                <p className="font-medium text-foreground">
-                  {user.firstName} {user.lastName}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="flex justify-center items-center w-12 h-12 rounded-full bg-green-500/10">
-                <span className="text-lg font-medium text-green-500">@</span>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium text-foreground">{user.email}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ScrollReveal>
     </DashboardLayout>
   )
 }
