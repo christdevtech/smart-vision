@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AcademicLevel, Subject, Topic, StudyPlan } from '@/payload-types'
 import { Calendar, Target, Clock, CheckCircle2, Plus, Trash2 } from 'lucide-react'
 import { DatePicker } from '@/components/DatePicker'
+import BadgeSelect from '@/components/BadgeSelect'
 
 type WeeklySession = NonNullable<StudyPlan['weeklySchedule']>[number]
 type StudyGoal = NonNullable<StudyPlan['studyGoals']>[number]
@@ -276,26 +277,18 @@ export default function PlannerForm({
         </div>
         <div className="mb-4">
           <label className="block mb-2 text-sm text-muted-foreground">Subjects</label>
-          <div className="grid grid-cols-2 gap-2">
-            {subjects.map((s) => {
-              const id = s.id as string
-              const checked = subjectsIds.includes(id)
-              return (
-                <label key={id} className="flex gap-2 items-center text-sm">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => {
-                      setSubjectsIds((prev) =>
-                        e.target.checked ? [...prev, id] : prev.filter((x) => x !== id),
-                      )
-                    }}
-                  />
-                  {(s as any).name || id}
-                </label>
-              )
-            })}
-          </div>
+          <BadgeSelect
+            ariaLabel="Select plan subjects"
+            options={subjects.map((s) => ({
+              value: s.id as string,
+              label: (s as any).name || (s.id as string),
+            }))}
+            selected={subjectsIds}
+            onChange={(next) => setSubjectsIds(next)}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Pick all subjects included in this plan.
+          </p>
         </div>
         <div>
           <label className="block mb-2 text-sm text-muted-foreground">Overall Goals</label>
@@ -325,85 +318,89 @@ export default function PlannerForm({
         </div>
         <div className="space-y-3">
           {weeklySchedule.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <select
-                value={item.dayOfWeek}
-                onChange={(e) => updateWeeklySession(idx, { dayOfWeek: e.target.value as any })}
-                className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-              >
-                <option value="monday">Monday</option>
-                <option value="tuesday">Tuesday</option>
-                <option value="wednesday">Wednesday</option>
-                <option value="thursday">Thursday</option>
-                <option value="friday">Friday</option>
-                <option value="saturday">Saturday</option>
-                <option value="sunday">Sunday</option>
-              </select>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  value={item.startTime}
-                  onChange={(e) => updateWeeklySession(idx, { startTime: e.target.value })}
-                  placeholder="Start 09:00"
-                  className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-                />
-                <input
-                  value={item.endTime}
-                  onChange={(e) => updateWeeklySession(idx, { endTime: e.target.value })}
-                  placeholder="End 10:00"
-                  className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
+            <div key={idx} className="flex flex-col gap-3 pb-2 mb-2 border-b-2 border-border">
+              <div className="grid gap-2 md:grid-cols-2">
                 <select
-                  value={item.subject as any}
-                  onChange={(e) => updateWeeklySession(idx, { subject: e.target.value })}
+                  value={item.dayOfWeek}
+                  onChange={(e) => updateWeeklySession(idx, { dayOfWeek: e.target.value as any })}
                   className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
                 >
-                  {subjects.map((s) => (
-                    <option key={s.id as string} value={s.id as string}>
-                      {(s as any).name || (s.id as string)}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  multiple
-                  value={
-                    (item.topics || []).map((t) =>
-                      typeof t === 'string' ? t : (t as any)?.id,
-                    ) as any
-                  }
-                  onChange={(e) => {
-                    const opts = Array.from(e.target.selectedOptions).map((o) => o.value)
-                    updateWeeklySession(idx, { topics: opts })
-                  }}
-                  className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-                >
-                  {topics.map((t) => (
-                    <option key={t.id as string} value={t.id as string}>
-                      {(t as any).name || (t.id as string)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-2 md:col-span-3">
-                <select
-                  value={item.sessionType || 'study'}
-                  onChange={(e) => updateWeeklySession(idx, { sessionType: e.target.value as any })}
-                  className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-                >
-                  <option value="study">Study</option>
-                  <option value="practice">Practice</option>
-                  <option value="revision">Revision</option>
-                  <option value="test">Test</option>
-                </select>
-                <label className="flex gap-2 items-center text-sm">
+                  <option value="monday">Monday</option>
+                  <option value="tuesday">Tuesday</option>
+                  <option value="wednesday">Wednesday</option>
+                  <option value="thursday">Thursday</option>
+                  <option value="friday">Friday</option>
+                  <option value="saturday">Saturday</option>
+                  <option value="sunday">Sunday</option>
+                </select>{' '}
+                <div className="grid grid-cols-2 gap-2">
                   <input
-                    type="checkbox"
-                    checked={item.isActive ?? true}
-                    onChange={(e) => updateWeeklySession(idx, { isActive: e.target.checked })}
+                    value={item.startTime}
+                    onChange={(e) => updateWeeklySession(idx, { startTime: e.target.value })}
+                    placeholder="Start 09:00"
+                    className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
                   />
-                  Active
-                </label>
+                  <input
+                    value={item.endTime}
+                    onChange={(e) => updateWeeklySession(idx, { endTime: e.target.value })}
+                    placeholder="End 10:00"
+                    className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div>
+                  <label className="block mb-1 text-sm text-muted-foreground">Subject</label>
+                  <BadgeSelect
+                    ariaLabel="Select session subject"
+                    mode="single"
+                    options={subjects.map((s) => ({
+                      value: s.id as string,
+                      label: (s as any).name || (s.id as string),
+                    }))}
+                    selected={[item.subject as string].filter(Boolean)}
+                    onChange={(next) => updateWeeklySession(idx, { subject: next[0] || '' })}
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm text-muted-foreground">Topics</label>
+                  <BadgeSelect
+                    ariaLabel="Select session topics"
+                    options={topics.map((t) => ({
+                      value: t.id as string,
+                      label: (t as any).name || (t.id as string),
+                    }))}
+                    selected={(item.topics || []).map((t) =>
+                      typeof t === 'string' ? t : (t as any)?.id,
+                    )}
+                    onChange={(next) => updateWeeklySession(idx, { topics: next })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex gap-2">
+                  <select
+                    value={item.sessionType || 'study'}
+                    onChange={(e) =>
+                      updateWeeklySession(idx, { sessionType: e.target.value as any })
+                    }
+                    className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
+                  >
+                    <option value="study">Study</option>
+                    <option value="practice">Practice</option>
+                    <option value="revision">Revision</option>
+                    <option value="test">Test</option>
+                  </select>
+                  <label className="flex gap-2 items-center text-sm">
+                    <input
+                      type="checkbox"
+                      checked={item.isActive ?? true}
+                      className="rounded-full border border-border"
+                      onChange={(e) => updateWeeklySession(idx, { isActive: e.target.checked })}
+                    />
+                    Active
+                  </label>
+                </div>
                 <button
                   type="button"
                   onClick={() => removeWeeklySession(idx)}
@@ -440,17 +437,19 @@ export default function PlannerForm({
                 placeholder="Title"
                 className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
               />
-              <select
-                value={g.subject as any}
-                onChange={(e) => updateStudyGoal(idx, { subject: e.target.value })}
-                className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-              >
-                {subjects.map((s) => (
-                  <option key={s.id as string} value={s.id as string}>
-                    {(s as any).name || (s.id as string)}
-                  </option>
-                ))}
-              </select>
+              <div>
+                <label className="block mb-1 text-sm text-muted-foreground">Subject</label>
+                <BadgeSelect
+                  ariaLabel="Select goal subject"
+                  mode="single"
+                  options={subjects.map((s) => ({
+                    value: s.id as string,
+                    label: (s as any).name || (s.id as string),
+                  }))}
+                  selected={[g.subject as string].filter(Boolean)}
+                  onChange={(next) => updateStudyGoal(idx, { subject: next[0] || '' })}
+                />
+              </div>
               <DatePicker
                 value={g.targetDate || ''}
                 onChange={(v) => updateStudyGoal(idx, { targetDate: v })}
@@ -529,25 +528,21 @@ export default function PlannerForm({
               />
               <div className="grid grid-cols-1 gap-2">
                 <label className="block mb-1 text-sm text-muted-foreground">Subjects</label>
-                <select
-                  multiple
-                  value={
-                    (m.subjects || []).map((s) =>
-                      typeof s === 'string' ? s : (s as any)?.id,
-                    ) as any
-                  }
-                  onChange={(e) => {
-                    const opts = Array.from(e.target.selectedOptions).map((o) => o.value)
-                    updateMilestone(idx, { subjects: opts })
-                  }}
-                  className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-                >
-                  {subjects.map((s) => (
-                    <option key={s.id as string} value={s.id as string}>
-                      {(s as any).name || (s.id as string)}
-                    </option>
-                  ))}
-                </select>
+                <BadgeSelect
+                  ariaLabel="Select milestone subjects"
+                  className="md:col-span-2"
+                  options={subjects.map((s) => ({
+                    value: s.id as string,
+                    label: (s as any).name || (s.id as string),
+                  }))}
+                  selected={(m.subjects || []).map((s) =>
+                    typeof s === 'string' ? s : (s as any)?.id,
+                  )}
+                  onChange={(next) => updateMilestone(idx, { subjects: next })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Choose all subjects that this milestone covers.
+                </p>
               </div>
               <textarea
                 value={m.description || ''}
@@ -721,65 +716,112 @@ export default function PlannerForm({
           <p className="font-medium text-foreground">Preferences</p>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <select
-            value={preferences.preferredStudyTime || ''}
-            onChange={(e) =>
-              setPreferences({ ...preferences, preferredStudyTime: e.target.value as any })
-            }
-            className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-          >
-            <option value="early_morning">Early Morning</option>
-            <option value="morning">Morning</option>
-            <option value="afternoon">Afternoon</option>
-            <option value="evening">Evening</option>
-            <option value="night">Night</option>
-            <option value="late_night">Late Night</option>
-          </select>
-          <input
-            type="number"
-            value={preferences.sessionDuration || 60}
-            onChange={(e) =>
-              setPreferences({ ...preferences, sessionDuration: Number(e.target.value) })
-            }
-            placeholder="Session minutes"
-            className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-          />
-          <input
-            type="number"
-            value={preferences.breakDuration || 15}
-            onChange={(e) =>
-              setPreferences({ ...preferences, breakDuration: Number(e.target.value) })
-            }
-            placeholder="Break minutes"
-            className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-          />
-          <select
-            multiple
-            value={(preferences.studyMethod || []) as any}
-            onChange={(e) => {
-              const opts = Array.from(e.target.selectedOptions).map((o) => o.value)
-              setPreferences({ ...preferences, studyMethod: opts as any })
-            }}
-            className="px-3 py-2 rounded-lg border bg-input border-border text-foreground md:col-span-2"
-          >
-            <option value="reading">Reading</option>
-            <option value="video">Video Learning</option>
-            <option value="practice">Practice Questions</option>
-            <option value="notes">Note Taking</option>
-            <option value="group">Group Study</option>
-            <option value="flashcards">Flashcards</option>
-          </select>
-          <select
-            value={preferences.difficultyPreference || 'easy_first'}
-            onChange={(e) =>
-              setPreferences({ ...preferences, difficultyPreference: e.target.value as any })
-            }
-            className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-          >
-            <option value="easy_first">Start Easy</option>
-            <option value="hard_first">Start Hard</option>
-            <option value="mixed">Mixed</option>
-          </select>
+          <div>
+            <label
+              htmlFor="preferredStudyTime"
+              className="block mb-1 text-sm text-muted-foreground"
+            >
+              Preferred Study Time
+            </label>
+            <select
+              id="preferredStudyTime"
+              aria-describedby="preferredStudyTime-help"
+              value={preferences.preferredStudyTime || ''}
+              onChange={(e) =>
+                setPreferences({ ...preferences, preferredStudyTime: e.target.value as any })
+              }
+              className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+            >
+              <option value="early_morning">Early Morning</option>
+              <option value="morning">Morning</option>
+              <option value="afternoon">Afternoon</option>
+              <option value="evening">Evening</option>
+              <option value="night">Night</option>
+              <option value="late_night">Late Night</option>
+            </select>
+            <p id="preferredStudyTime-help" className="mt-1 text-xs text-muted-foreground">
+              When you typically feel most focused.
+            </p>
+          </div>
+          <div>
+            <label htmlFor="sessionDuration" className="block mb-1 text-sm text-muted-foreground">
+              Session Duration
+            </label>
+            <input
+              id="sessionDuration"
+              aria-describedby="sessionDuration-help"
+              type="number"
+              value={preferences.sessionDuration || 60}
+              onChange={(e) =>
+                setPreferences({ ...preferences, sessionDuration: Number(e.target.value) })
+              }
+              placeholder="Minutes per session"
+              className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+            />
+            <p id="sessionDuration-help" className="mt-1 text-xs text-muted-foreground">
+              Recommended 45–90 minutes per session.
+            </p>
+          </div>
+          <div>
+            <label htmlFor="breakDuration" className="block mb-1 text-sm text-muted-foreground">
+              Break Duration
+            </label>
+            <input
+              id="breakDuration"
+              aria-describedby="breakDuration-help"
+              type="number"
+              value={preferences.breakDuration || 15}
+              onChange={(e) =>
+                setPreferences({ ...preferences, breakDuration: Number(e.target.value) })
+              }
+              placeholder="Minutes per break"
+              className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+            />
+            <p id="breakDuration-help" className="mt-1 text-xs text-muted-foreground">
+              Short breaks improve retention (10–20 minutes).
+            </p>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block mb-1 text-sm text-muted-foreground">Study Methods</label>
+            <BadgeSelect
+              ariaLabel="Select preferred study methods"
+              options={[
+                { value: 'reading', label: 'Reading' },
+                { value: 'video', label: 'Video Learning' },
+                { value: 'practice', label: 'Practice Questions' },
+                { value: 'notes', label: 'Note Taking' },
+                { value: 'group', label: 'Group Study' },
+                { value: 'flashcards', label: 'Flashcards' },
+              ]}
+              selected={(preferences.studyMethod || []) as string[]}
+              onChange={(next) => setPreferences({ ...preferences, studyMethod: next as any })}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">Pick all methods you prefer using.</p>
+          </div>
+          <div>
+            <label
+              htmlFor="difficultyPreference"
+              className="block mb-1 text-sm text-muted-foreground"
+            >
+              Difficulty Preference
+            </label>
+            <select
+              id="difficultyPreference"
+              aria-describedby="difficultyPreference-help"
+              value={preferences.difficultyPreference || 'easy_first'}
+              onChange={(e) =>
+                setPreferences({ ...preferences, difficultyPreference: e.target.value as any })
+              }
+              className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+            >
+              <option value="easy_first">Start Easy</option>
+              <option value="hard_first">Start Hard</option>
+              <option value="mixed">Mixed</option>
+            </select>
+            <p id="difficultyPreference-help" className="mt-1 text-xs text-muted-foreground">
+              Order sessions by difficulty to match your energy.
+            </p>
+          </div>
         </div>
       </div>
 
