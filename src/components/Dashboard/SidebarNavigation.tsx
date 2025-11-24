@@ -63,7 +63,7 @@ export function SidebarNavigation({
     () => [
       {
         href: '/dashboard',
-        label: 'Home',
+        label: 'User Dashboard',
         icon: Home,
         activeIcon: Home,
       },

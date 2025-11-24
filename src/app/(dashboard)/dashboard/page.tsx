@@ -16,6 +16,8 @@ import {
   Calendar,
   Settings,
   CreditCard,
+  FileQuestion,
+  Download,
 } from 'lucide-react'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
@@ -75,6 +77,40 @@ export default async function DashboardPage() {
       subscription.endDate > now,
   )
 
+  // Metrics: Tests Completed
+  const testsResults = await payload.find({
+    collection: 'test-results',
+    where: {
+      user: { equals: user.id },
+      isCompleted: { equals: true },
+    },
+    limit: 1000,
+  })
+  const testsCompleted = testsResults.totalDocs || testsResults.docs.length
+
+  // Metrics: Learning Progress and Study Streak
+  const userProgress = await payload.find({
+    collection: 'user-progress',
+    where: {
+      user: { equals: user.id },
+    },
+    limit: 100,
+    sort: '-lastAccessed',
+  })
+
+  const progressPercentages = userProgress.docs.map((p) =>
+    typeof p.progressPercentage === 'number' ? p.progressPercentage : 0,
+  )
+  const learningProgress = progressPercentages.length
+    ? Math.round(
+        progressPercentages.reduce((a: number, b: number) => a + b, 0) / progressPercentages.length,
+      )
+    : 0
+
+  const studyStreakDays = userProgress.docs
+    .map((p) => (typeof p.studyStreak === 'number' ? p.studyStreak : 0))
+    .reduce((max: number, val: number) => (val > max ? val : max), 0)
+
   return (
     <DashboardLayout user={user} title="Dashboard">
       <div className="min-h-screen bg-background">
@@ -113,21 +149,21 @@ export default async function DashboardPage() {
                 },
                 {
                   title: 'Learning Progress',
-                  value: '75%',
+                  value: `${learningProgress}%`,
                   icon: TrendingUp,
                   color: 'text-green-500',
                   bgColor: 'bg-green-500/10',
                 },
                 {
                   title: 'Tests Completed',
-                  value: '12',
+                  value: testsCompleted,
                   icon: TestTube,
                   color: 'text-purple-500',
                   bgColor: 'bg-purple-500/10',
                 },
                 {
                   title: 'Study Streak',
-                  value: '7 days',
+                  value: `${studyStreakDays} days`,
                   icon: Calendar,
                   color: 'text-orange-500',
                   bgColor: 'bg-orange-500/10',
@@ -252,30 +288,79 @@ export default async function DashboardPage() {
                   {
                     title: 'Study Materials',
                     icon: BookOpen,
-                    href: '/study',
+                    href: '/dashboard/learning',
                     color: 'text-blue-500',
                     bgColor: 'bg-blue-500/10',
                   },
                   {
                     title: 'Practice Tests',
                     icon: TestTube,
-                    href: '/tests',
+                    href: '/dashboard/testing',
                     color: 'text-purple-500',
                     bgColor: 'bg-purple-500/10',
                   },
                   {
                     title: 'Video Lessons',
                     icon: Video,
-                    href: '/videos',
+                    href: '/dashboard/videos',
                     color: 'text-red-500',
                     bgColor: 'bg-red-500/10',
                   },
                   {
                     title: 'Library',
                     icon: Library,
-                    href: '/library',
+                    href: '/dashboard/library',
                     color: 'text-green-500',
                     bgColor: 'bg-green-500/10',
+                  },
+                  {
+                    title: 'Planner',
+                    icon: Calendar,
+                    href: '/dashboard/planner',
+                    color: 'text-orange-500',
+                    bgColor: 'bg-orange-500/10',
+                  },
+                  {
+                    title: 'Progress',
+                    icon: TrendingUp,
+                    href: '/dashboard/progress',
+                    color: 'text-emerald-500',
+                    bgColor: 'bg-emerald-500/10',
+                  },
+                  {
+                    title: 'Question Bank',
+                    icon: FileQuestion,
+                    href: '/dashboard/question-bank',
+                    color: 'text-indigo-500',
+                    bgColor: 'bg-indigo-500/10',
+                  },
+                  {
+                    title: 'Referrals',
+                    icon: Users,
+                    href: '/dashboard/referrals',
+                    color: 'text-sky-500',
+                    bgColor: 'bg-sky-500/10',
+                  },
+                  {
+                    title: 'Subscriptions',
+                    icon: CreditCard,
+                    href: '/dashboard/subscriptions',
+                    color: 'text-teal-500',
+                    bgColor: 'bg-teal-500/10',
+                  },
+                  {
+                    title: 'Downloads',
+                    icon: Download,
+                    href: '/dashboard/downloads',
+                    color: 'text-gray-500',
+                    bgColor: 'bg-gray-500/10',
+                  },
+                  {
+                    title: 'Account',
+                    icon: Settings,
+                    href: '/dashboard/account',
+                    color: 'text-primary',
+                    bgColor: 'bg-primary/10',
                   },
                 ].map((action, index) => (
                   <MotionWrapper key={action.title} animation="scale" delay={0.1 * index}>

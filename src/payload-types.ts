@@ -465,11 +465,12 @@ export interface Topic {
 export interface Video {
   id: string;
   title: string;
+  video: string | Media;
   slug?: string | null;
   slugLock?: boolean | null;
+  academicLevel: string | AcademicLevel;
   subject: string | Subject;
   topic?: (string | Topic)[] | null;
-  video: string | Media;
   description?: {
     root: {
       type: string;
@@ -1677,11 +1678,12 @@ export interface McqSelect<T extends boolean = true> {
  */
 export interface VideosSelect<T extends boolean = true> {
   title?: T;
+  video?: T;
   slug?: T;
   slugLock?: T;
+  academicLevel?: T;
   subject?: T;
   topic?: T;
-  video?: T;
   description?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -21,7 +21,14 @@ export const Videos: CollectionConfig = {
       type: 'text',
       required: true,
     },
+    {
+      name: 'video',
+      type: 'upload',
+      relationTo: 'media',
+      required: true,
+    },
     ...slugField('title'),
+    { name: 'academicLevel', type: 'relationship', relationTo: 'academicLevels', required: true },
     {
       name: 'subject',
       type: 'relationship',
@@ -40,12 +47,7 @@ export const Videos: CollectionConfig = {
         }
       },
     },
-    {
-      name: 'video',
-      type: 'upload',
-      relationTo: 'media',
-      required: true,
-    },
+
     {
       name: 'description',
       type: 'richText',
