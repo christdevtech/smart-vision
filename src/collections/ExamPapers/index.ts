@@ -55,6 +55,7 @@ export const ExamPapers: CollectionConfig = {
       relationTo: 'media',
       required: true,
     },
+
     {
       name: 'categories',
       type: 'relationship',

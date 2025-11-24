@@ -5,6 +5,8 @@ import {
   FixedToolbarFeature,
   InlineToolbarFeature,
   lexicalEditor,
+  SubscriptFeature,
+  SuperscriptFeature,
 } from '@payloadcms/richtext-lexical'
 
 export const MCQuestions: CollectionConfig = {
@@ -29,7 +31,13 @@ export const MCQuestions: CollectionConfig = {
       type: 'richText',
       editor: lexicalEditor({
         features: ({ rootFeatures }) => {
-          return [...rootFeatures, FixedToolbarFeature(), InlineToolbarFeature()]
+          return [
+            ...rootFeatures,
+            FixedToolbarFeature(),
+            InlineToolbarFeature(),
+            SuperscriptFeature(),
+            SubscriptFeature(),
+          ]
         },
       }),
       required: true,

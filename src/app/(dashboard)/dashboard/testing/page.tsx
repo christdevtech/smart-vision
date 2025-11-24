@@ -7,6 +7,9 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { FileText } from 'lucide-react'
+import { AcademicLevel, Subscription } from '@/payload-types'
+import { isSubscriptionActive } from '@/utilities/subscription'
+import TestingCenterClient from '@/components/TestingCenter/Client'
 
 export default async function TestingCenterPage() {
   const headers = await getHeaders()
@@ -14,7 +17,6 @@ export default async function TestingCenterPage() {
   const payload = await getPayload({ config: payloadConfig })
   const { user } = await payload.auth({ headers })
 
-  // Redirect to home if not authenticated
   if (!user) {
     redirect('/auth/login')
   }
@@ -23,17 +25,14 @@ export default async function TestingCenterPage() {
     <DashboardLayout user={user} title="Testing Center">
       <div className="min-h-screen bg-background">
         <div className="container px-4 py-6 mx-auto space-y-8">
-          {/* Page Header */}
           <MotionWrapper animation="fadeIn" delay={0.1}>
             <div className="p-6 bg-gradient-to-r to-transparent rounded-2xl border from-primary/10 via-primary/5 border-border/50">
-              <div className="flex items-center gap-4">
+              <div className="flex gap-4 items-center">
                 <div className="flex justify-center items-center w-16 h-16 bg-gradient-to-br rounded-full from-primary to-secondary">
                   <FileText className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="mb-2 text-3xl font-bold text-foreground">
-                    Testing Center
-                  </h1>
+                  <h1 className="mb-2 text-3xl font-bold text-foreground">Testing Center</h1>
                   <p className="text-lg text-muted-foreground">
                     Take tests, quizzes, and assessments to track your progress
                   </p>
@@ -42,13 +41,31 @@ export default async function TestingCenterPage() {
             </div>
           </MotionWrapper>
 
-          {/* Content Area */}
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <div className="p-6 bg-card rounded-2xl border border-border/50">
-              <p className="text-muted-foreground">
-                Testing Center content will be implemented here.
-              </p>
-            </div>
+            {await (async () => {
+              const [levelsRes, subjectsRes, topicsRes, subsRes] = await Promise.all([
+                payload.find({ collection: 'academicLevels', limit: 200 }),
+                payload.find({ collection: 'subjects', limit: 200 }),
+                payload.find({ collection: 'topics', limit: 500 }),
+                payload.find({
+                  collection: 'subscriptions',
+                  where: { user: { equals: user.id } },
+                  limit: 1,
+                }),
+              ])
+              const levels = (levelsRes.docs || []) as AcademicLevel[]
+              const subs = subsRes.docs?.[0] as Subscription | undefined
+              const subscriptionActive = isSubscriptionActive(subs)
+              return (
+                <TestingCenterClient
+                  user={user as any}
+                  subscriptionActive={subscriptionActive}
+                  academicLevels={levels}
+                  subjects={subjectsRes.docs as any}
+                  topics={topicsRes.docs as any}
+                />
+              )
+            })()}
           </MotionWrapper>
         </div>
       </div>
