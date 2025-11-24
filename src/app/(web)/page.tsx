@@ -58,7 +58,8 @@ export default async function HomePage() {
             <div className="bg-card border border-border rounded-xl p-6 text-left transition-all duration-300 hover:bg-accent hover:border-primary/30 hover:-translate-y-0.5">
               <h3 className="mb-3 text-lg font-medium text-foreground">📴 Offline Access</h3>
               <p className="m-0 text-sm leading-relaxed text-muted-foreground">
-                Download content for offline study, ensuring learning continues anywhere.
+                Download content for offline study within our mobile app, ensuring learning
+                continues anywhere.
               </p>
             </div>
             <div className="bg-card border border-border rounded-xl p-6 text-left transition-all duration-300 hover:bg-accent hover:border-primary/30 hover:-translate-y-0.5">
