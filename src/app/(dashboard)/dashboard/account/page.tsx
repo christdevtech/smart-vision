@@ -7,6 +7,7 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { User } from 'lucide-react'
+import AccountManagement from '@/components/AccountManagement'
 
 export default async function AccountManagementPage() {
   const headers = await getHeaders()
@@ -17,6 +18,22 @@ export default async function AccountManagementPage() {
   // Redirect to home if not authenticated
   if (!user) {
     redirect('/auth/login')
+  }
+
+  const levels = await payload.find({
+    collection: 'academicLevels',
+    limit: 100,
+    select: { id: true, name: true },
+    sort: 'name',
+  })
+
+  let profileMedia: any = null
+  if (user?.profilePic && typeof user.profilePic === 'string') {
+    try {
+      profileMedia = await payload.findByID({ collection: 'media', id: user.profilePic })
+    } catch {}
+  } else if (user?.profilePic && typeof user.profilePic === 'object') {
+    profileMedia = user.profilePic
   }
 
   return (
@@ -31,9 +48,7 @@ export default async function AccountManagementPage() {
                   <User className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="mb-2 text-3xl font-bold text-foreground">
-                    Account Management
-                  </h1>
+                  <h1 className="mb-2 text-3xl font-bold text-foreground">Account Management</h1>
                   <p className="text-lg text-muted-foreground">
                     Manage your profile, settings, subscription, and account preferences
                   </p>
@@ -42,13 +57,12 @@ export default async function AccountManagementPage() {
             </div>
           </MotionWrapper>
 
-          {/* Content Area */}
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <p className="text-muted-foreground">
-                Account Management content will be implemented here.
-              </p>
-            </div>
+            <AccountManagement
+              user={user}
+              academicLevels={levels.docs as any}
+              profileMedia={user.profilePic}
+            />
           </MotionWrapper>
         </div>
       </div>
