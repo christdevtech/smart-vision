@@ -7,6 +7,7 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { Calendar } from 'lucide-react'
+import PlannerForm from '@/components/Planner/PlannerForm'
 
 export default async function StudyPlannerPage() {
   const headers = await getHeaders()
@@ -18,6 +19,18 @@ export default async function StudyPlannerPage() {
   if (!user) {
     redirect('/auth/login')
   }
+
+  const academicLevels = await payload.find({ collection: 'academicLevels', limit: 100 })
+  const subjects = await payload.find({ collection: 'subjects', limit: 100 })
+  const topics = await payload.find({ collection: 'topics', limit: 100 })
+
+  const existingPlan = await payload.find({
+    collection: 'study-plans',
+    where: { user: { equals: user.id } },
+    limit: 1,
+  })
+
+  const initialPlan = existingPlan.docs[0] || null
 
   return (
     <DashboardLayout user={user} title="Study Planner">
@@ -40,12 +53,15 @@ export default async function StudyPlannerPage() {
             </div>
           </MotionWrapper>
 
-          {/* Content Area */}
           <MotionWrapper animation="fadeIn" delay={0.2}>
             <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <p className="text-muted-foreground">
-                Study Planner content will be implemented here.
-              </p>
+              <PlannerForm
+                userId={user.id}
+                academicLevels={academicLevels.docs as any}
+                subjects={subjects.docs as any}
+                topics={topics.docs as any}
+                initialPlan={initialPlan as any}
+              />
             </div>
           </MotionWrapper>
         </div>
