@@ -4,7 +4,7 @@ import redirects from './redirects.js'
 
 const NEXT_PUBLIC_SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL
   ? process.env.NEXT_PUBLIC_SERVER_URL
-  : 'https://dev.gscengland.org'
+  : 'https://smartvisioncm.com'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
