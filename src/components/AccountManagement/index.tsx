@@ -446,6 +446,9 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
                 value={dateOfBirth || ''}
                 onChange={(v) => setDateOfBirth(v)}
                 disabled={{ after: new Date() }}
+                captionLayout="dropdown"
+                fromYear={1950}
+                toYear={new Date().getFullYear()}
               />
               {!validDOB && (
                 <p className="mt-2 text-xs text-destructive">You must be at least 13 years old</p>

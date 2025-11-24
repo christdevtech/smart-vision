@@ -12,6 +12,11 @@ type DatePickerProps = {
   placeholder?: string
   className?: string
   format?: (date: Date) => string
+  captionLayout?: 'label' | 'dropdown' | 'dropdown-months' | 'dropdown-years'
+  fromYear?: number
+  toYear?: number
+  fromDate?: Date
+  toDate?: Date
 }
 
 type DateRangeValue = { from?: string; to?: string }
@@ -23,6 +28,11 @@ type DateRangePickerProps = {
   placeholder?: string
   className?: string
   formatRange?: (from?: Date, to?: Date) => string
+  captionLayout?: 'label' | 'dropdown' | 'dropdown-months' | 'dropdown-years'
+  fromYear?: number
+  toYear?: number
+  fromDate?: Date
+  toDate?: Date
 }
 
 function parseISODateString(s?: string | null): Date | undefined {
@@ -73,6 +83,11 @@ export function DatePicker({
   placeholder = 'Select date',
   className = '',
   format,
+  captionLayout,
+  fromYear,
+  toYear,
+  fromDate,
+  toDate,
 }: DatePickerProps) {
   const initial = useMemo(() => {
     if (value instanceof Date) return value
@@ -105,7 +120,7 @@ export function DatePicker({
         onClick={() => setOpen((o) => !o)}
         className="flex justify-between items-center px-4 py-3 w-full rounded-lg border bg-input border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
       >
-        <span className={display ? '' : 'text-muted-foreground'}>{display || placeholder}</span>
+        <span className={display ? '':'text-muted-foreground'}>{display || placeholder}</span>
         <CalendarIcon className="w-4 h-4 text-muted-foreground" />
       </button>
       {open && (
@@ -117,6 +132,11 @@ export function DatePicker({
             disabled={disabled}
             defaultMonth={selected || new Date()}
             showOutsideDays
+            captionLayout={captionLayout}
+            fromYear={fromYear}
+            toYear={toYear}
+            fromDate={fromDate}
+            toDate={toDate}
           />
         </div>
       )}
@@ -131,6 +151,11 @@ export function DateRangePicker({
   placeholder = 'Select date range',
   className = '',
   formatRange,
+  captionLayout,
+  fromYear,
+  toYear,
+  fromDate,
+  toDate,
 }: DateRangePickerProps) {
   const initialRange: DateRange | undefined = useMemo(() => {
     if (!value) return undefined
@@ -183,7 +208,7 @@ export function DateRangePicker({
         onClick={() => setOpen((o) => !o)}
         className="flex justify-between items-center px-4 py-3 w-full rounded-lg border bg-input border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
       >
-        <span className={display ? '' : 'text-muted-foreground'}>{display || placeholder}</span>
+        <span className={display ? '':'text-muted-foreground'}>{display || placeholder}</span>
         <CalendarIcon className="w-4 h-4 text-muted-foreground" />
       </button>
       {open && (
@@ -195,6 +220,11 @@ export function DateRangePicker({
             disabled={disabled}
             defaultMonth={monthToShow}
             showOutsideDays
+            captionLayout={captionLayout}
+            fromYear={fromYear}
+            toYear={toYear}
+            fromDate={fromDate}
+            toDate={toDate}
           />
         </div>
       )}
