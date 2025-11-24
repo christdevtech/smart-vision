@@ -115,7 +115,7 @@ export default function SubscriptionDashboard({
         setIsPolling(false)
         // Remove transaction ID from URL after verification
         router.push(window.location.pathname)
-        
+
         if (data.newStatus === 'successful' || data.status === 'successful') {
           toast.success('Payment successful! Your subscription has been activated.', {
             duration: 5000,
@@ -177,23 +177,27 @@ export default function SubscriptionDashboard({
 
       {/* Subscription Status */}
       {hasActiveSubscription ? (
-        <div className="mb-6 p-4 rounded-lg bg-emerald-900/20 border border-emerald-500/30">
+        <div className="p-4 mb-6 bg-emerald-50 rounded-lg border border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-700/40">
           <div className="flex items-center mb-2">
-            <span className="mr-2 text-emerald-400 text-xl">✓</span>
-            <h4 className="font-medium text-emerald-400">Active Subscription</h4>
+            <span className="mr-2 text-xl text-emerald-700 dark:text-emerald-300">✓</span>
+            <h4 className="font-medium text-emerald-700 dark:text-emerald-300">
+              Active Subscription
+            </h4>
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-emerald-800 dark:text-emerald-200">
             Your {subscription?.plan} subscription is active until{' '}
             {formatDate(subscription?.endDate || '')}
           </p>
         </div>
       ) : (
-        <div className="mb-6 p-4 rounded-lg bg-amber-900/20 border border-amber-500/30">
+        <div className="p-4 mb-6 bg-amber-50 rounded-lg border border-amber-200 dark:bg-amber-900/30 dark:border-amber-700/40">
           <div className="flex items-center mb-2">
-            <span className="mr-2 text-amber-400 text-xl">!</span>
-            <h4 className="font-medium text-amber-400">No Active Subscription</h4>
+            <span className="mr-2 text-xl text-amber-700 dark:text-amber-300">!</span>
+            <h4 className="font-medium text-amber-700 dark:text-amber-300">
+              No Active Subscription
+            </h4>
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-amber-800 dark:text-amber-200">
             Subscribe now to access all premium features and content.
           </p>
         </div>
@@ -213,7 +217,7 @@ export default function SubscriptionDashboard({
           >
             <div className="mb-1 text-lg font-medium">Monthly</div>
             <div className="text-2xl font-bold">{subscriptionData?.monthly || 3000} XAF</div>
-            <div className="mt-1 text-xs text-muted-foreground">Billed monthly</div>
+            <div className="mt-1 text-xs">Billed monthly</div>
           </button>
 
           <button
@@ -226,7 +230,7 @@ export default function SubscriptionDashboard({
           >
             <div className="mb-1 text-lg font-medium">Yearly</div>
             <div className="text-2xl font-bold">{subscriptionData?.yearly || 30000} XAF</div>
-            <div className="mt-1 text-xs text-muted-foreground">Save up to 20%</div>
+            <div className="mt-1 text-xs">Save up to 20%</div>
           </button>
         </div>
       </div>
@@ -239,12 +243,12 @@ export default function SubscriptionDashboard({
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="Enter phone number (e.g., 677123456)"
-          className="px-3 py-2 mb-3 w-full text-foreground rounded border bg-input border-border"
+          className="px-3 py-2 mb-3 w-full rounded border text-foreground bg-input border-border"
         />
         <button
           onClick={initiatePayment}
           disabled={isLoading || isPolling}
-          className="px-4 py-2 w-full text-primary-foreground bg-primary rounded hover:bg-primary/90 transition-colors"
+          className="px-4 py-2 w-full rounded transition-colors text-primary-foreground bg-primary hover:bg-primary/90"
         >
           {isLoading
             ? 'Initiating...'
@@ -254,21 +258,25 @@ export default function SubscriptionDashboard({
         </button>
         {error && <p className="mt-2 text-destructive">{error}</p>}
         {transactionId && status && (
-          <div className="mt-3 p-3 rounded-lg bg-card border border-border">
+          <div className="p-3 mt-3 rounded-lg border bg-card border-border">
             <p className="text-sm">
               Transaction ID: <span className="text-primary">{transactionId}</span>
             </p>
             <p className="text-sm">
               Status:{' '}
               <span
-                className={`font-medium ${status === 'successful' ? 'text-emerald-400' : status === 'failed' ? 'text-red-400' : 'text-amber-400'}`}
+                className={`font-medium ${status === 'successful' ? 'dark:text-emerald-300 text-emerald-700' : status === 'failed' ? 'dark:text-red-300 text-red-700' : 'dark:text-amber-300 text-amber-700'}`}
               >
                 {status}
               </span>
             </p>
           </div>
         )}
-        {isPolling && <p className="mt-2 text-warning">Awaiting payment confirmation...</p>}
+        {isPolling && (
+          <p className="mt-2 text-amber-700 dark:text-amber-300">
+            Awaiting payment confirmation...
+          </p>
+        )}
       </div>
 
       {/* Transaction History */}
@@ -285,12 +293,9 @@ export default function SubscriptionDashboard({
           </div>
 
           {showTransactions && (
-            <div className="mt-2 space-y-3 max-h-60 overflow-y-auto">
+            <div className="overflow-y-auto mt-2 space-y-3 max-h-60">
               {transactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="p-3 rounded-lg bg-card border border-border"
-                >
+                <div key={transaction.id} className="p-3 rounded-lg border bg-card border-border">
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="text-sm font-medium">{transaction.amount} XAF</p>
@@ -299,7 +304,7 @@ export default function SubscriptionDashboard({
                       </p>
                     </div>
                     <span
-                      className={`px-2 py-1 text-xs rounded-full ${transaction.status === 'successful' ? 'bg-emerald-900/30 text-emerald-400' : transaction.status === 'failed' ? 'bg-red-900/30 text-red-400' : 'bg-amber-900/30 text-amber-400'}`}
+                      className={`px-2 py-1 text-xs rounded-full ${transaction.status === 'successful' ? 'dark:bg-emerald-900/30 dark:text-emerald-300 bg-emerald-100 text-emerald-700' : transaction.status === 'failed' ? 'dark:bg-red-900/30 dark:text-red-300 bg-red-100 text-red-700' : 'dark:bg-amber-900/30 dark:text-amber-300 bg-amber-100 text-amber-700'}`}
                     >
                       {transaction.status}
                     </span>
@@ -312,7 +317,7 @@ export default function SubscriptionDashboard({
                       <button
                         onClick={() => verifyTransaction(transaction.id)}
                         disabled={verifyingTransaction === transaction.id}
-                        className="px-2 py-1 text-xs text-primary-foreground bg-primary rounded hover:bg-primary/90 transition-colors"
+                        className="px-2 py-1 text-xs rounded transition-colors text-primary-foreground bg-primary hover:bg-primary/90"
                       >
                         {verifyingTransaction === transaction.id ? 'Verifying...' : 'Verify'}
                       </button>

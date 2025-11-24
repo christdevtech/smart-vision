@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Logo } from '@/components/Graphics/Logo/Logo'
 
 function LoginContent() {
   const [email, setEmail] = useState('')
@@ -50,24 +51,7 @@ function LoginContent() {
     <div className="flex justify-center items-center px-6 min-h-screen text-foreground bg-background">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <Link href="/" className="inline-block">
-            <svg
-              width="60"
-              height="60"
-              viewBox="0 0 100 100"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="drop-shadow-[0_4px_8px_rgba(79,70,229,0.3)] mx-auto mb-4"
-            >
-              <circle cx="50" cy="50" r="45" fill="#4F46E5" stroke="#6366F1" strokeWidth="2" />
-              <path d="M35 40h30v5H35v-5zm0 10h25v5H35v-5zm0 10h20v5H35v-5z" fill="white" />
-              <circle cx="75" cy="25" r="8" fill="#10B981" />
-              <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
-            </svg>
-          </Link>
-          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-primary to-success">
-            SmartVision
-          </h1>
+          <Logo />
           <p className="mt-2 text-muted-foreground">Sign in to your account</p>
         </div>
 
@@ -106,7 +90,10 @@ function LoginContent() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block mb-2 text-sm font-medium text-foreground/80">
+              <label
+                htmlFor="password"
+                className="block mb-2 text-sm font-medium text-foreground/80"
+              >
                 Password
               </label>
               <input
@@ -130,13 +117,19 @@ function LoginContent() {
           </form>
 
           <div className="mt-6 space-y-3 text-center">
-            <Link href="/auth/forgot-password" className="text-sm transition-colors text-primary hover:text-primary/80">
+            <Link
+              href="/auth/forgot-password"
+              className="text-sm transition-colors text-primary hover:text-primary/80"
+            >
               Forgot your password?
             </Link>
 
             <div className="text-sm text-muted-foreground">
               No account yet?{' '}
-              <Link href="/auth/register" className="transition-colors text-primary hover:text-primary/80">
+              <Link
+                href="/auth/register"
+                className="transition-colors text-primary hover:text-primary/80"
+              >
                 Sign up
               </Link>
             </div>
@@ -144,7 +137,10 @@ function LoginContent() {
         </div>
 
         <div className="mt-6 text-center">
-          <Link href="/" className="text-sm transition-colors text-muted-foreground hover:text-foreground">
+          <Link
+            href="/"
+            className="text-sm transition-colors text-muted-foreground hover:text-foreground"
+          >
             ← Back to home
           </Link>
         </div>

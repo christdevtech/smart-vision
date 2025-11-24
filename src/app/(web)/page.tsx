@@ -20,22 +20,6 @@ export default async function HomePage() {
   return (
     <div className="flex overflow-hidden flex-col justify-between items-center px-11 py-11 mx-auto max-w-4xl min-h-screen text-foreground bg-background md:px-6">
       <div className="flex flex-col flex-grow justify-center items-center w-full max-w-5xl text-center">
-        <div className="mb-5">
-          <svg
-            width="80"
-            height="80"
-            viewBox="0 0 100 100"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="drop-shadow-[0_4px_8px_rgba(79,70,229,0.3)]"
-          >
-            <circle cx="50" cy="50" r="45" fill="#4F46E5" stroke="#6366F1" strokeWidth="2" />
-            <path d="M35 40h30v5H35v-5zm0 10h25v5H35v-5zm0 10h20v5H35v-5z" fill="white" />
-            <circle cx="75" cy="25" r="8" fill="#10B981" />
-            <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
-          </svg>
-        </div>
-
         <h1 className="xl:text-6xl lg:text-4xl md:text-4xl text-3xl font-bold bg-gradient-to-br from-primary to-success bg-clip-text text-transparent mb-2.5 mt-5">
           SmartVision
         </h1>

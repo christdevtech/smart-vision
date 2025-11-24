@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Logo } from '@/components/Graphics/Logo/Logo'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -75,26 +76,8 @@ export default function RegisterPage() {
   return (
     <div className="flex justify-center items-center px-6 py-8 min-h-screen bg-background text-foreground">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="mb-8 text-center">
-          <Link href="/" className="inline-block">
-            <svg
-              width="60"
-              height="60"
-              viewBox="0 0 100 100"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="drop-shadow-[0_4px_8px_rgba(79,70,229,0.3)] mx-auto mb-4"
-            >
-              <circle cx="50" cy="50" r="45" fill="#4F46E5" stroke="#6366F1" strokeWidth="2" />
-              <path d="M35 40h30v5H35v-5zm0 10h25v5H35v-5zm0 10h20v5H35v-5z" fill="white" />
-              <circle cx="75" cy="25" r="8" fill="#10B981" />
-              <path d="M72 25l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
-            </svg>
-          </Link>
-          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-primary to-success">
-            SmartVision
-          </h1>
+          <Logo />
           <p className="mt-2 text-muted-foreground">Create your account</p>
         </div>
 
