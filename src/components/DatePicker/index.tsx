@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { DayPicker, Matcher, DateRange } from 'react-day-picker'
+import { DayPicker, Matcher, DateRange, DropdownProps } from 'react-day-picker'
 import 'react-day-picker/style.css'
 import { Calendar as CalendarIcon } from 'lucide-react'
 
@@ -49,12 +49,27 @@ function parseISODateString(s?: string | null): Date | undefined {
 }
 
 const formatDateToReadable = (date: Date) => {
-  // the output looks like Dec 1, 2023
   return date.toLocaleString('default', {
     month: 'short',
     day: '2-digit',
     year: 'numeric',
   })
+}
+
+function CustomDropdown(props: DropdownProps) {
+  const { className = '', options = [], ...rest } = props
+  return (
+    <select
+      {...rest}
+      className={`px-2 py-1 text-sm rounded-md border bg-input border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${className}`}
+    >
+      {options?.map((opt) => (
+        <option key={String(opt.value)} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  )
 }
 
 function toISODateString(d?: Date | null): string {
@@ -120,7 +135,7 @@ export function DatePicker({
         onClick={() => setOpen((o) => !o)}
         className="flex justify-between items-center px-4 py-3 w-full rounded-lg border bg-input border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
       >
-        <span className={display ? '':'text-muted-foreground'}>{display || placeholder}</span>
+        <span className={display ? '' : 'text-muted-foreground'}>{display || placeholder}</span>
         <CalendarIcon className="w-4 h-4 text-muted-foreground" />
       </button>
       {open && (
@@ -137,6 +152,7 @@ export function DatePicker({
             toYear={toYear}
             fromDate={fromDate}
             toDate={toDate}
+            components={{ Dropdown: CustomDropdown }}
           />
         </div>
       )}
@@ -208,7 +224,7 @@ export function DateRangePicker({
         onClick={() => setOpen((o) => !o)}
         className="flex justify-between items-center px-4 py-3 w-full rounded-lg border bg-input border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
       >
-        <span className={display ? '':'text-muted-foreground'}>{display || placeholder}</span>
+        <span className={display ? '' : 'text-muted-foreground'}>{display || placeholder}</span>
         <CalendarIcon className="w-4 h-4 text-muted-foreground" />
       </button>
       {open && (
@@ -225,6 +241,7 @@ export function DateRangePicker({
             toYear={toYear}
             fromDate={fromDate}
             toDate={toDate}
+            components={{ Dropdown: CustomDropdown }}
           />
         </div>
       )}
