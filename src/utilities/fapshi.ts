@@ -191,7 +191,7 @@ export class FapshiService {
 
 // Factory function to create Fapshi service instance
 export function createFapshiService(): FapshiService {
-  const isProduction = process.env.NODE_ENV === 'production'
+  const isProduction = process.env.FAPSHI_ENV_MODE === 'production'
 
   const config: FapshiConfig = {
     apiUser: process.env.FAPSHI_API_USER!,
