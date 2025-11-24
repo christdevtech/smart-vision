@@ -513,19 +513,25 @@ export default function PlannerForm({
         <div className="space-y-3">
           {milestones.map((m, idx) => (
             <div key={idx} className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <input
-                value={m.title || ''}
-                onChange={(e) => updateMilestone(idx, { title: e.target.value })}
-                placeholder="Title"
-                className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-              />
-              <DatePicker
-                value={m.targetDate || ''}
-                onChange={(v) => updateMilestone(idx, { targetDate: v })}
-                captionLayout="dropdown"
-                fromYear={new Date().getFullYear() - 1}
-                toYear={new Date().getFullYear() + 2}
-              />
+              <div>
+                <label className="block mb-1 text-sm text-muted-foreground">Title</label>
+                <input
+                  value={m.title || ''}
+                  onChange={(e) => updateMilestone(idx, { title: e.target.value })}
+                  placeholder="Milestone title"
+                  className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-muted-foreground">Target Date</label>
+                <DatePicker
+                  value={m.targetDate || ''}
+                  onChange={(v) => updateMilestone(idx, { targetDate: v })}
+                  captionLayout="dropdown"
+                  fromYear={new Date().getFullYear() - 1}
+                  toYear={new Date().getFullYear() + 2}
+                />
+              </div>
               <div className="grid grid-cols-1 gap-2">
                 <label className="block mb-1 text-sm text-muted-foreground">Subjects</label>
                 <BadgeSelect
@@ -544,12 +550,15 @@ export default function PlannerForm({
                   Choose all subjects that this milestone covers.
                 </p>
               </div>
-              <textarea
-                value={m.description || ''}
-                onChange={(e) => updateMilestone(idx, { description: e.target.value })}
-                placeholder="Description"
-                className="px-3 py-2 rounded-lg border bg-input border-border text-foreground md:col-span-2"
-              />
+              <div className="md:col-span-2">
+                <label className="block mb-1 text-sm text-muted-foreground">Description</label>
+                <textarea
+                  value={m.description || ''}
+                  onChange={(e) => updateMilestone(idx, { description: e.target.value })}
+                  placeholder="Describe the milestone"
+                  className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+                />
+              </div>
               <div className="grid grid-cols-3 gap-2 md:col-span-3">
                 <label className="flex gap-2 items-center text-sm">
                   <input
@@ -559,12 +568,15 @@ export default function PlannerForm({
                   />
                   Completed
                 </label>
-                <input
-                  value={m.reward || ''}
-                  onChange={(e) => updateMilestone(idx, { reward: e.target.value })}
-                  placeholder="Reward"
-                  className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-                />
+                <div>
+                  <label className="block mb-1 text-sm text-muted-foreground">Reward</label>
+                  <input
+                    value={m.reward || ''}
+                    onChange={(e) => updateMilestone(idx, { reward: e.target.value })}
+                    placeholder="Optional"
+                    className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={() => removeMilestone(idx)}
