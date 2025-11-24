@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import './styles.css'
 import { Home, ArrowLeft, Search, BookOpen } from 'lucide-react'
 
 export default function DashboardNotFound() {

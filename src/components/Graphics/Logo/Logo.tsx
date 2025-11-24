@@ -31,7 +31,7 @@ export const Logo = (props: Props) => {
         className={clsx('w-full max-w-[50px]', className)}
         src="/favicon.png"
       />
-      <span className="hidden text-lg font-bold text-transparent bg-clip-text bg-gradient-to-br md:block from-primary to-success sm:text-xl">
+      <span className="hidden text-lg font-bold text-foreground md:block sm:text-xl text-decoration-none">
         SmartVision
       </span>
     </Link>
