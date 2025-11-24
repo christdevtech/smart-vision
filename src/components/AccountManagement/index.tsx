@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AcademicLevel, Media as MediaType, User } from '@/payload-types'
 import { toast } from 'sonner'
 import { Camera, CheckCircle, Shield, Trash2, Image as ImageIcon, X, Edit } from 'lucide-react'
+import { DatePicker } from '@/components/DatePicker'
 import { Media } from '@/components/Media'
 
 type Props = {
@@ -441,11 +442,10 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
             </div>
             <div>
               <label className="block mb-2 text-sm text-muted-foreground">Date of Birth</label>
-              <input
-                type="date"
-                value={dateOfBirth ? dateOfBirth.slice(0, 10) : ''}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                className="px-4 py-3 w-full rounded-lg border bg-input border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              <DatePicker
+                value={dateOfBirth || ''}
+                onChange={(v) => setDateOfBirth(v)}
+                disabled={{ after: new Date() }}
               />
               {!validDOB && (
                 <p className="mt-2 text-xs text-destructive">You must be at least 13 years old</p>
