@@ -65,7 +65,7 @@ export default async function WatchVideoPage({ params }: { params: Promise<{ vid
           <MotionWrapper animation="fadeIn" delay={0.2}>
             <div className="p-6 rounded-2xl border bg-card border-border/50">
               {!subscriptionActive && (
-                <div className="mb-3 flex justify-between items-center p-3 rounded-xl border bg-input border-border">
+                <div className="flex justify-between items-center p-3 mb-3 rounded-xl border bg-input border-border">
                   <p className="text-sm text-muted-foreground">
                     You need an active subscription to watch videos.
                   </p>
@@ -78,7 +78,7 @@ export default async function WatchVideoPage({ params }: { params: Promise<{ vid
                 </div>
               )}
               {subscriptionActive && (
-                <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
+                <div className="overflow-hidden w-full bg-black rounded-xl aspect-video">
                   <Media
                     resource={videoDoc.video as any}
                     videoClassName="w-full h-full object-cover"
