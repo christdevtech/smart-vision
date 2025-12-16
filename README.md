@@ -17,7 +17,7 @@ Personalized study program generation that creates customized timetables based o
 
 ### Key Capabilities:
 
-- Offline Functionality: Complete offline access after initial content download
+- Offline Functionality: Complete offline access after initial content download (mobile app only)
 - Content Security: Advanced protection preventing screenshots, content sharing, or unauthorized distribution
 - Cross-Platform: Available on both iOS and Android devices
 - Payment Integration: Supports MTN Mobile Money and Orange Money through Fapshi gateway
@@ -35,6 +35,7 @@ Personalized study program generation that creates customized timetables based o
 ## Functional Requirements Summary
 
 ### User Authentication
+
 - Register with email and password
 - Authenticate using email/username and password
 - Password recovery
@@ -42,6 +43,7 @@ Personalized study program generation that creates customized timetables based o
 - Auto logout after 30 days inactivity
 
 ### Subscription Management
+
 - Monthly and annual plans
 - Integration with Fapshi payment gateway
 - Support for MTN Mobile Money and Orange Money
@@ -50,6 +52,7 @@ Personalized study program generation that creates customized timetables based o
 - Expiry notifications and graceful lapse handling
 
 ### Study Program Generator
+
 - Collect user preferences and goals
 - Generate personalized timetables
 - Organize by subjects and chapters
@@ -57,6 +60,7 @@ Personalized study program generation that creates customized timetables based o
 - Track adherence and provide reminders
 
 ### MCQ Test-Taking
+
 - Questions organized by chapters
 - Timed and untimed modes
 - Feedback after tests
@@ -64,11 +68,13 @@ Personalized study program generation that creates customized timetables based o
 - Review incorrect answers
 
 ### Question Bank
+
 - Organized by subject, year, and paper
 - Offline access to downloaded questions
 - Support for text, images, equations
 
 ### Tutorial Videos
+
 - Organized by subjects and chapters
 - Streaming with adaptive quality
 - Download for offline viewing
@@ -76,6 +82,7 @@ Personalized study program generation that creates customized timetables based o
 - Multiple resolutions and playback controls
 
 ### Digital Library (PDF Books)
+
 - Library of educational PDFs
 - Download for offline reading
 - Secure in-app viewing only
@@ -85,6 +92,7 @@ Personalized study program generation that creates customized timetables based o
 - Progress tracking and encryption
 
 ### Offline Functionality
+
 - Complete offline operation after download
 - Content selection for offline
 - Storage management
@@ -92,6 +100,7 @@ Personalized study program generation that creates customized timetables based o
 - Offline indicators and queued actions
 
 ### Content Protection
+
 - Local encryption
 - Prevent screen recording and sharing
 - Digital watermarking for PDFs
@@ -99,6 +108,7 @@ Personalized study program generation that creates customized timetables based o
 - Remove access on expiry
 
 ### Progress Tracking
+
 - Track engagement across content
 - User analytics dashboards
 - Test performance monitoring
@@ -108,6 +118,7 @@ Personalized study program generation that creates customized timetables based o
 ## Non-Functional Requirements Summary
 
 ### Performance
+
 - Launch in 5s
 - Content load in 5s online, instant offline
 - Video start in 5s
@@ -115,6 +126,7 @@ Personalized study program generation that creates customized timetables based o
 - Support 10,000 concurrent users
 
 ### Security
+
 - HTTPS encryption
 - Local content encryption
 - Password hashing
@@ -123,24 +135,28 @@ Personalized study program generation that creates customized timetables based o
 - Session management
 
 ### Reliability
+
 - 99.5% uptime
 - Graceful network handling
 - Reliable sync
 - Auto backups
 
 ### Usability
+
 - Intuitive navigation
 - Responsive interface
 - Clear feedback
 - Light/dark themes
 
 ### Storage
+
 - 100MB initial install
 - Up to 5GB offline content
 - Usage indicators and management
 - Efficient compression
 
 ### Compatibility
+
 - iOS 12.0+, Android 6.0+
 - Min 2GB RAM
 - Multiple screen support
