@@ -9,11 +9,16 @@ import { PlayCircle } from 'lucide-react'
 import { Subject, Video } from '@/payload-types'
 import Link from 'next/link'
 
-export default async function SubjectVideosPage({ params }: { params: { subject: string } }) {
+export default async function SubjectVideosPage({
+  params,
+}: {
+  params: Promise<{ subject: string }>
+}) {
   const headers = await getHeaders()
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
   const { user } = await payload.auth({ headers })
+  const { subject: subjectParam } = await params
 
   if (!user) {
     redirect('/auth/login')
@@ -22,14 +27,14 @@ export default async function SubjectVideosPage({ params }: { params: { subject:
   async function resolveSubject(): Promise<Subject | null> {
     const bySlug = await payload.find({
       collection: 'subjects',
-      where: { slug: { equals: params.subject } },
+      where: { slug: { equals: subjectParam } },
       limit: 1,
     })
     const slugDoc = (bySlug.docs?.[0] as Subject) || null
     if (slugDoc) return slugDoc
     const byId = await payload.find({
       collection: 'subjects',
-      where: { id: { equals: params.subject } },
+      where: { id: { equals: subjectParam } },
       limit: 1,
     })
     return (byId.docs?.[0] as Subject) || null

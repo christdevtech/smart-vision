@@ -8,11 +8,12 @@ import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { BookOpen } from 'lucide-react'
 import { Book } from '@/payload-types'
 
-export default async function ReadBookPage({ params }: { params: { bookId: string } }) {
+export default async function ReadBookPage({ params }: { params: Promise<{ bookId: string }> }) {
   const headers = await getHeaders()
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
   const { user } = await payload.auth({ headers })
+  const { bookId } = await params
 
   if (!user) {
     redirect('/auth/login')
@@ -20,7 +21,7 @@ export default async function ReadBookPage({ params }: { params: { bookId: strin
 
   const res = await payload.find({
     collection: 'books',
-    where: { id: { equals: params.bookId } },
+    where: { id: { equals: bookId } },
     limit: 1,
     depth: 1,
   })
@@ -41,7 +42,7 @@ export default async function ReadBookPage({ params }: { params: { bookId: strin
                 </div>
                 <div>
                   <h1 className="mb-2 text-3xl font-bold text-foreground">
-                    {(bookDoc as any).title || params.bookId}
+                    {(bookDoc as any).title || bookId}
                   </h1>
                   <p className="text-lg text-muted-foreground">Secure in-app PDF reader</p>
                 </div>
