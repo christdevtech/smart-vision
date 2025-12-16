@@ -6,6 +6,7 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { Settings } from 'lucide-react'
+import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 
 export default async function AccountSettingsPage() {
   const headers = await getHeaders()
@@ -36,8 +37,15 @@ export default async function AccountSettingsPage() {
           </MotionWrapper>
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <p className="text-muted-foreground">Settings panel will be available here.</p>
+            <div className="p-6 space-y-3 rounded-2xl border bg-card border-border/50">
+              <div className="p-3 rounded-lg border bg-input border-border">
+                <p className="mb-2 font-medium text-foreground">Theme</p>
+                <ThemeSwitcher />
+              </div>
+              <div className="p-3 rounded-lg border bg-input border-border">
+                <p className="text-sm text-muted-foreground">Notification preferences</p>
+                <p className="text-muted-foreground">Coming soon</p>
+              </div>
             </div>
           </MotionWrapper>
         </div>

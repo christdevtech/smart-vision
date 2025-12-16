@@ -6,6 +6,7 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { BookOpen } from 'lucide-react'
+import { Book } from '@/payload-types'
 
 export default async function ReadBookPage({ params }: { params: { bookId: string } }) {
   const headers = await getHeaders()
@@ -15,6 +16,17 @@ export default async function ReadBookPage({ params }: { params: { bookId: strin
 
   if (!user) {
     redirect('/auth/login')
+  }
+
+  const res = await payload.find({
+    collection: 'books',
+    where: { id: { equals: params.bookId } },
+    limit: 1,
+    depth: 1,
+  })
+  const bookDoc = (res.docs?.[0] as Book) || null
+  if (!bookDoc) {
+    redirect('/dashboard/library')
   }
 
   return (
@@ -28,7 +40,9 @@ export default async function ReadBookPage({ params }: { params: { bookId: strin
                   <BookOpen className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="mb-2 text-3xl font-bold text-foreground">Book {params.bookId}</h1>
+                  <h1 className="mb-2 text-3xl font-bold text-foreground">
+                    {(bookDoc as any).title || params.bookId}
+                  </h1>
                   <p className="text-lg text-muted-foreground">Secure in-app PDF reader</p>
                 </div>
               </div>
@@ -36,8 +50,36 @@ export default async function ReadBookPage({ params }: { params: { bookId: strin
           </MotionWrapper>
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <p className="text-muted-foreground">PDF reader will be available here.</p>
+            <div className="p-6 space-y-3 rounded-2xl border bg-card border-border/50">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">Author</p>
+                  <p className="text-foreground">{(bookDoc as any).author || '—'}</p>
+                </div>
+                <div className="p-3 rounded-lg border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">Pages</p>
+                  <p className="text-foreground">{(bookDoc as any).pageCount || '—'}</p>
+                </div>
+                <div className="p-3 rounded-lg border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">ISBN</p>
+                  <p className="text-foreground">{(bookDoc as any).isbn || '—'}</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border bg-input border-border">
+                <p className="text-sm text-muted-foreground">Description</p>
+                <p className="text-foreground">
+                  {(() => {
+                    const root = (bookDoc as any)?.description?.root
+                    if (!root?.children) return '—'
+                    return (
+                      root.children
+                        .map((child: any) => child.text || '')
+                        .join(' ')
+                        .trim() || '—'
+                    )
+                  })()}
+                </p>
+              </div>
             </div>
           </MotionWrapper>
         </div>

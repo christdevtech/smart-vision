@@ -6,6 +6,8 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { CalendarPlus } from 'lucide-react'
+import CreateForm from '@/components/Planner/CreateForm'
+import { AcademicLevel } from '@/payload-types'
 
 export default async function PlannerCreatePage() {
   const headers = await getHeaders()
@@ -17,6 +19,11 @@ export default async function PlannerCreatePage() {
     redirect('/auth/login')
   }
 
+  const [levelsRes, subjectsRes] = await Promise.all([
+    payload.find({ collection: 'academicLevels', limit: 200 }),
+    payload.find({ collection: 'subjects', limit: 200 }),
+  ])
+  const levels = (levelsRes.docs || []) as AcademicLevel[]
   return (
     <DashboardLayout user={user} title="Create Study Plan">
       <div className="min-h-screen bg-background">
@@ -37,7 +44,7 @@ export default async function PlannerCreatePage() {
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
             <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <p className="text-muted-foreground">Study plan creation will be available here.</p>
+              <CreateForm userId={user.id} levels={levels} subjects={subjectsRes.docs as any} />
             </div>
           </MotionWrapper>
         </div>

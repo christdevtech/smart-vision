@@ -6,6 +6,9 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { Timer } from 'lucide-react'
+import { AcademicLevel, Subscription } from '@/payload-types'
+import { isSubscriptionActive } from '@/utilities/subscription'
+import TestingCenterClient from '@/components/TestingCenter/Client'
 
 export default async function ExamPage() {
   const headers = await getHeaders()
@@ -17,6 +20,15 @@ export default async function ExamPage() {
     redirect('/auth/login')
   }
 
+  const [levelsRes, subjectsRes, topicsRes, subsRes] = await Promise.all([
+    payload.find({ collection: 'academicLevels', limit: 200 }),
+    payload.find({ collection: 'subjects', limit: 200 }),
+    payload.find({ collection: 'topics', limit: 500 }),
+    payload.find({ collection: 'subscriptions', where: { user: { equals: user.id } }, limit: 1 }),
+  ])
+  const levels = (levelsRes.docs || []) as AcademicLevel[]
+  const subs = subsRes.docs?.[0] as Subscription | undefined
+  const subscriptionActive = isSubscriptionActive(subs)
   return (
     <DashboardLayout user={user} title="Exam Mode">
       <div className="min-h-screen bg-background">
@@ -36,9 +48,13 @@ export default async function ExamPage() {
           </MotionWrapper>
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <p className="text-muted-foreground">Exam interface will be available here.</p>
-            </div>
+            <TestingCenterClient
+              user={user as any}
+              subscriptionActive={subscriptionActive}
+              academicLevels={levels}
+              subjects={subjectsRes.docs as any}
+              topics={topicsRes.docs as any}
+            />
           </MotionWrapper>
         </div>
       </div>

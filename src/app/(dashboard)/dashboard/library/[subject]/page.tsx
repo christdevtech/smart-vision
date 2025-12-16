@@ -6,6 +6,8 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { Library } from 'lucide-react'
+import { Subject, Book } from '@/payload-types'
+import Link from 'next/link'
 
 export default async function SubjectLibraryPage({ params }: { params: { subject: string } }) {
   const headers = await getHeaders()
@@ -16,6 +18,32 @@ export default async function SubjectLibraryPage({ params }: { params: { subject
   if (!user) {
     redirect('/auth/login')
   }
+
+  async function resolveSubject(): Promise<Subject | null> {
+    const bySlug = await payload.find({
+      collection: 'subjects',
+      where: { slug: { equals: params.subject } },
+      limit: 1,
+    })
+    const slugDoc = (bySlug.docs?.[0] as Subject) || null
+    if (slugDoc) return slugDoc
+    const byId = await payload.find({
+      collection: 'subjects',
+      where: { id: { equals: params.subject } },
+      limit: 1,
+    })
+    return (byId.docs?.[0] as Subject) || null
+  }
+  const subject = await resolveSubject()
+  if (!subject) {
+    redirect('/dashboard/library')
+  }
+  const booksRes = await payload.find({
+    collection: 'books',
+    where: { subject: { equals: subject.id } },
+    limit: 100,
+  })
+  const books = booksRes.docs as Book[]
 
   return (
     <DashboardLayout user={user} title="Digital Library">
@@ -28,7 +56,9 @@ export default async function SubjectLibraryPage({ params }: { params: { subject
                   <Library className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="mb-2 text-3xl font-bold text-foreground">{params.subject}</h1>
+                  <h1 className="mb-2 text-3xl font-bold text-foreground">
+                    {(subject as any).name || subject.slug || subject.id}
+                  </h1>
                   <p className="text-lg text-muted-foreground">Browse PDF books</p>
                 </div>
               </div>
@@ -36,8 +66,22 @@ export default async function SubjectLibraryPage({ params }: { params: { subject
           </MotionWrapper>
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <p className="text-muted-foreground">Books list will be displayed here.</p>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {books.map((b) => (
+                <Link
+                  key={b.id}
+                  href={`/dashboard/library/read/${b.id}`}
+                  className="p-3 rounded-xl border bg-card border-border hover:bg-accent transition-colors"
+                >
+                  <p className="font-medium text-foreground">{(b as any).title || b.id}</p>
+                  <p className="text-sm text-muted-foreground">Tap to read</p>
+                </Link>
+              ))}
+              {!books.length && (
+                <div className="p-6 rounded-2xl border bg-card border-border/50">
+                  <p className="text-muted-foreground">No books available for this subject.</p>
+                </div>
+              )}
             </div>
           </MotionWrapper>
         </div>

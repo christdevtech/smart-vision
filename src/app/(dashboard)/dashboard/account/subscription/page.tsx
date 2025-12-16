@@ -6,6 +6,8 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { CreditCard } from 'lucide-react'
+import { Subscription } from '@/payload-types'
+import { isSubscriptionActive, getSubscriptionCosts } from '@/utilities/subscription'
 
 export default async function AccountSubscriptionPage() {
   const headers = await getHeaders()
@@ -16,6 +18,16 @@ export default async function AccountSubscriptionPage() {
   if (!user) {
     redirect('/auth/login')
   }
+
+  const subsRes = await payload.find({
+    collection: 'subscriptions',
+    where: { user: { equals: user.id } },
+    limit: 1,
+  })
+  const sub = (subsRes.docs?.[0] as Subscription) || null
+  const costs = await getSubscriptionCosts(payload)
+  const active = isSubscriptionActive(sub)
+  const planLabel = sub?.plan || 'free'
 
   return (
     <DashboardLayout user={user} title="Subscription">
@@ -36,8 +48,53 @@ export default async function AccountSubscriptionPage() {
           </MotionWrapper>
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <p className="text-muted-foreground">Subscription details will be displayed here.</p>
+            <div className="p-6 space-y-3 rounded-2xl border bg-card border-border/50">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">Current Plan</p>
+                  <p className="text-foreground">{planLabel}</p>
+                </div>
+                <div className="p-3 rounded-lg border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <p
+                    className={`text-foreground ${active ? 'text-emerald-600 dark:text-emerald-300' : ''}`}
+                  >
+                    {active ? 'Active' : 'Inactive'}
+                  </p>
+                </div>
+                {sub && (
+                  <>
+                    <div className="p-3 rounded-lg border bg-input border-border">
+                      <p className="text-sm text-muted-foreground">Start</p>
+                      <p className="text-foreground">
+                        {new Date(sub.startDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-input border-border">
+                      <p className="text-sm text-muted-foreground">End</p>
+                      <p className="text-foreground">
+                        {new Date(sub.endDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="p-3 rounded-lg border bg-input border-border">
+                <p className="text-sm text-muted-foreground">Pricing</p>
+                <p className="text-foreground">
+                  Monthly {costs.monthly} • Annual {costs.yearly}
+                </p>
+              </div>
+              {!active && (
+                <div className="flex gap-2">
+                  <a
+                    href="/dashboard/subscriptions"
+                    className="px-3 py-2 rounded-lg bg-primary text-primary-foreground"
+                  >
+                    Subscribe
+                  </a>
+                </div>
+              )}
             </div>
           </MotionWrapper>
         </div>
