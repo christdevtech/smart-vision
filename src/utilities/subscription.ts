@@ -26,7 +26,7 @@ export interface UpdateSubscriptionParams {
  */
 export function determineSubscriptionPlan(
   amount: number,
-  subscriptionCosts: any,
+  subscriptionCosts: Setting['subscriptionCosts'],
 ): 'monthly' | 'annual' | null {
   const monthlyAmount = subscriptionCosts?.monthly || 3000
   const yearlyAmount = subscriptionCosts?.yearly || 30000
