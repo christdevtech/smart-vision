@@ -7,6 +7,7 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { BarChart3 } from 'lucide-react'
+import { TestResult, UserProgress } from '@/payload-types'
 
 export default async function ProgressTrackingPage() {
   const headers = await getHeaders()
@@ -18,6 +19,21 @@ export default async function ProgressTrackingPage() {
   if (!user) {
     redirect('/auth/login')
   }
+
+  const [progressRes, resultsRes] = await Promise.all([
+    payload.find({ collection: 'user-progress', where: { user: { equals: user.id } }, limit: 500 }),
+    payload.find({ collection: 'test-results', where: { user: { equals: user.id } }, limit: 50 }),
+  ])
+  const progresses = (progressRes.docs || []) as UserProgress[]
+  const results = (resultsRes.docs || []) as TestResult[]
+
+  const totalTime = progresses.reduce((sum, p) => sum + (p.timeSpent || 0), 0)
+  const completedCount = progresses.filter((p) => p.completed).length
+  const averageScore =
+    results.length > 0
+      ? Math.round(results.reduce((sum, r) => sum + (r.scorePercentage || 0), 0) / results.length)
+      : null
+  const streak = Math.max(...progresses.map((p) => p.studyStreak || 0), 0)
 
   return (
     <DashboardLayout user={user} title="Progress Tracking">
@@ -42,10 +58,41 @@ export default async function ProgressTrackingPage() {
 
           {/* Content Area */}
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <p className="text-muted-foreground">
-                Progress Tracking content will be implemented here.
-              </p>
+            <div className="p-6 space-y-3 rounded-2xl border bg-card border-border/50">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">Total Time Spent</p>
+                  <p className="text-2xl font-bold">{totalTime} min</p>
+                </div>
+                <div className="p-3 rounded-lg border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">Completed Items</p>
+                  <p className="text-2xl font-bold">{completedCount}</p>
+                </div>
+                <div className="p-3 rounded-lg border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">Average Test Score</p>
+                  <p className="text-2xl font-bold">{averageScore !== null ? `${averageScore}%` : '—'}</p>
+                </div>
+                <div className="p-3 rounded-lg border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">Study Streak</p>
+                  <p className="text-2xl font-bold">{streak} days</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="font-medium text-foreground">Recent Test Results</p>
+                {results.slice(0, 5).map((r) => (
+                  <div key={r.id} className="p-3 rounded-lg border bg-input border-border">
+                    <p className="text-sm">
+                      {typeof r.subject === 'string' ? r.subject : (r.subject as any)?.name || 'Subject'} •{' '}
+                      {r.testType} • {r.scorePercentage}% • {new Date(r.completedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+                {!results.length && (
+                  <div className="p-3 rounded-lg border bg-input border-border">
+                    <p className="text-sm text-muted-foreground">No test results yet.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </MotionWrapper>
         </div>
