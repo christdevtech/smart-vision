@@ -11,12 +11,13 @@ import { Subject, Topic, Mcq, Video, Book as BookType } from '@/payload-types'
 export default async function ChapterPage({
   params,
 }: {
-  params: { subject: string; chapter: string }
+  params: Promise<{ subject: string; chapter: string }>
 }) {
   const headers = await getHeaders()
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
   const { user } = await payload.auth({ headers })
+  const { subject: subjectParam, chapter: chapterParam } = await params
 
   if (!user) {
     redirect('/auth/login')
@@ -25,14 +26,14 @@ export default async function ChapterPage({
   async function resolveSubject(): Promise<Subject | null> {
     const bySlug = await payload.find({
       collection: 'subjects',
-      where: { slug: { equals: params.subject } },
+      where: { slug: { equals: subjectParam } },
       limit: 1,
     })
     const slugDoc = (bySlug.docs?.[0] as Subject) || null
     if (slugDoc) return slugDoc
     const byId = await payload.find({
       collection: 'subjects',
-      where: { id: { equals: params.subject } },
+      where: { id: { equals: subjectParam } },
       limit: 1,
     })
     return (byId.docs?.[0] as Subject) || null
@@ -40,14 +41,14 @@ export default async function ChapterPage({
   async function resolveTopic(): Promise<Topic | null> {
     const bySlug = await payload.find({
       collection: 'topics',
-      where: { slug: { equals: params.chapter } },
+      where: { slug: { equals: chapterParam } },
       limit: 1,
     })
     const slugDoc = (bySlug.docs?.[0] as Topic) || null
     if (slugDoc) return slugDoc
     const byId = await payload.find({
       collection: 'topics',
-      where: { id: { equals: params.chapter } },
+      where: { id: { equals: chapterParam } },
       limit: 1,
     })
     return (byId.docs?.[0] as Topic) || null

@@ -8,11 +8,12 @@ import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { Trophy } from 'lucide-react'
 import { TestResult, Mcq } from '@/payload-types'
 
-export default async function TestResultPage({ params }: { params: { testId: string } }) {
+export default async function TestResultPage({ params }: { params: Promise<{ testId: string }> }) {
   const headers = await getHeaders()
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
   const { user } = await payload.auth({ headers })
+  const { testId } = await params
 
   if (!user) {
     redirect('/auth/login')
@@ -20,7 +21,7 @@ export default async function TestResultPage({ params }: { params: { testId: str
 
   const res = await payload.find({
     collection: 'test-results',
-    where: { id: { equals: params.testId } },
+    where: { id: { equals: testId } },
     limit: 1,
   })
   const doc = (res.docs?.[0] as TestResult) || null

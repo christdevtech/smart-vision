@@ -9,11 +9,12 @@ import { Play } from 'lucide-react'
 import { Video } from '@/payload-types'
 import { Media } from '@/components/Media'
 
-export default async function WatchVideoPage({ params }: { params: { videoId: string } }) {
+export default async function WatchVideoPage({ params }: { params: Promise<{ videoId: string }> }) {
   const headers = await getHeaders()
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
   const { user } = await payload.auth({ headers })
+  const { videoId } = await params
 
   if (!user) {
     redirect('/auth/login')
@@ -21,7 +22,7 @@ export default async function WatchVideoPage({ params }: { params: { videoId: st
 
   const res = await payload.find({
     collection: 'videos',
-    where: { id: { equals: params.videoId } },
+    where: { id: { equals: videoId } },
     limit: 1,
     depth: 1,
   })
@@ -42,7 +43,7 @@ export default async function WatchVideoPage({ params }: { params: { videoId: st
                 </div>
                 <div>
                   <h1 className="mb-2 text-3xl font-bold text-foreground">
-                    {(videoDoc as any).title || params.videoId}
+                    {(videoDoc as any).title || videoId}
                   </h1>
                   <p className="text-lg text-muted-foreground">Player and controls</p>
                 </div>
