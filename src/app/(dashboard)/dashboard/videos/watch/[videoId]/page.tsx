@@ -8,6 +8,9 @@ import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { Play } from 'lucide-react'
 import { Video } from '@/payload-types'
 import { Media } from '@/components/Media'
+import VideoProgressTracker from '@/components/Progress/VideoProgressTracker'
+import { Subscription } from '@/payload-types'
+import { isSubscriptionActive } from '@/utilities/subscription'
 
 export default async function WatchVideoPage({ params }: { params: Promise<{ videoId: string }> }) {
   const headers = await getHeaders()
@@ -31,6 +34,14 @@ export default async function WatchVideoPage({ params }: { params: Promise<{ vid
     redirect('/dashboard/videos')
   }
 
+  const subsRes = await payload.find({
+    collection: 'subscriptions',
+    where: { user: { equals: user.id } },
+    limit: 1,
+  })
+  const sub = (subsRes.docs?.[0] as Subscription) || null
+  const subscriptionActive = isSubscriptionActive(sub)
+
   return (
     <DashboardLayout user={user} title="Watch Video">
       <div className="min-h-screen bg-background">
@@ -53,12 +64,36 @@ export default async function WatchVideoPage({ params }: { params: Promise<{ vid
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
             <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
-                <Media
-                  resource={videoDoc.video as any}
-                  videoClassName="w-full h-full object-cover"
-                />
-              </div>
+              {!subscriptionActive && (
+                <div className="mb-3 flex justify-between items-center p-3 rounded-xl border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">
+                    You need an active subscription to watch videos.
+                  </p>
+                  <a
+                    href="/dashboard/subscriptions"
+                    className="px-3 py-2 rounded-lg bg-primary text-primary-foreground"
+                  >
+                    Subscribe
+                  </a>
+                </div>
+              )}
+              {subscriptionActive && (
+                <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
+                  <Media
+                    resource={videoDoc.video as any}
+                    videoClassName="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <VideoProgressTracker
+                userId={user.id}
+                contentId={videoDoc.id}
+                subjectId={
+                  typeof videoDoc.subject === 'string'
+                    ? (videoDoc.subject as string)
+                    : ((videoDoc.subject as any)?.id as string)
+                }
+              />
             </div>
           </MotionWrapper>
         </div>

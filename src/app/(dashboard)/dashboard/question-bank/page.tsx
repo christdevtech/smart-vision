@@ -7,6 +7,8 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { FileQuestion } from 'lucide-react'
+import QuestionBankClient from '@/components/QuestionBank/Client'
+import { AcademicLevel } from '@/payload-types'
 
 export default async function QuestionBankPage() {
   const headers = await getHeaders()
@@ -18,6 +20,13 @@ export default async function QuestionBankPage() {
   if (!user) {
     redirect('/auth/login')
   }
+
+  const [levelsRes, subjectsRes, topicsRes] = await Promise.all([
+    payload.find({ collection: 'academicLevels', limit: 200 }),
+    payload.find({ collection: 'subjects', limit: 200 }),
+    payload.find({ collection: 'topics', limit: 500 }),
+  ])
+  const levels = (levelsRes.docs || []) as AcademicLevel[]
 
   return (
     <DashboardLayout user={user} title="Question Bank">
@@ -42,11 +51,11 @@ export default async function QuestionBankPage() {
 
           {/* Content Area */}
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <div className="p-6 bg-card rounded-2xl border border-border/50">
-              <p className="text-muted-foreground">
-                The Question Bank will list categories, topics, and filters for targeted practice.
-              </p>
-            </div>
+            <QuestionBankClient
+              academicLevels={levels}
+              subjects={subjectsRes.docs as any}
+              topics={topicsRes.docs as any}
+            />
           </MotionWrapper>
         </div>
       </div>

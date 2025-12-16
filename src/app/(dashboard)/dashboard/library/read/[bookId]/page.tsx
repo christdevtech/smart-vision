@@ -7,6 +7,10 @@ import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { BookOpen } from 'lucide-react'
 import { Book } from '@/payload-types'
+import BookProgressTracker from '@/components/Progress/BookProgressTracker'
+import { Subscription } from '@/payload-types'
+import { isSubscriptionActive } from '@/utilities/subscription'
+import PDFReader from '@/components/Library/PDFReader'
 
 export default async function ReadBookPage({ params }: { params: Promise<{ bookId: string }> }) {
   const headers = await getHeaders()
@@ -30,6 +34,14 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
     redirect('/dashboard/library')
   }
 
+  const subsRes = await payload.find({
+    collection: 'subscriptions',
+    where: { user: { equals: user.id } },
+    limit: 1,
+  })
+  const sub = (subsRes.docs?.[0] as Subscription) || null
+  const subscriptionActive = isSubscriptionActive(sub)
+
   return (
     <DashboardLayout user={user} title="Read Book">
       <div className="min-h-screen bg-background">
@@ -52,6 +64,19 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
             <div className="p-6 space-y-3 rounded-2xl border bg-card border-border/50">
+              {bookDoc.subscriptionRequired && !subscriptionActive && (
+                <div className="flex justify-between items-center p-3 rounded-xl border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">
+                    You need an active subscription to access this book.
+                  </p>
+                  <a
+                    href="/dashboard/subscriptions"
+                    className="px-3 py-2 rounded-lg bg-primary text-primary-foreground"
+                  >
+                    Subscribe
+                  </a>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg border bg-input border-border">
                   <p className="text-sm text-muted-foreground">Author</p>
@@ -81,6 +106,20 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
                   })()}
                 </p>
               </div>
+              {(!bookDoc.subscriptionRequired || subscriptionActive) &&
+                typeof bookDoc.pdf === 'object' &&
+                (bookDoc.pdf as any)?.filename && (
+                  <PDFReader filename={(bookDoc.pdf as any).filename} />
+                )}
+              <BookProgressTracker
+                userId={user.id}
+                contentId={bookDoc.id}
+                subjectId={
+                  typeof bookDoc.subject === 'string'
+                    ? (bookDoc.subject as string)
+                    : ((bookDoc.subject as any)?.id as string)
+                }
+              />
             </div>
           </MotionWrapper>
         </div>

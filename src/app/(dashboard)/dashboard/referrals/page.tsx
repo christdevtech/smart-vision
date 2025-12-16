@@ -43,7 +43,7 @@ export default async function ReferralsPage() {
 
           {/* Referral Dashboard */}
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <ReferralDashboard />
+            <ReferralDashboard user={user as any} />
           </MotionWrapper>
         </div>
       </div>
