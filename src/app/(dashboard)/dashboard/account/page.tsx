@@ -27,15 +27,6 @@ export default async function AccountManagementPage() {
     sort: 'name',
   })
 
-  let profileMedia: any = null
-  if (user?.profilePic && typeof user.profilePic === 'string') {
-    try {
-      profileMedia = await payload.findByID({ collection: 'media', id: user.profilePic })
-    } catch {}
-  } else if (user?.profilePic && typeof user.profilePic === 'object') {
-    profileMedia = user.profilePic
-  }
-
   return (
     <DashboardLayout user={user} title="Account Management">
       <div className="min-h-screen bg-background">

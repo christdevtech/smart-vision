@@ -27,7 +27,6 @@ import { ContentAccess } from './collections/ContentAccess'
 import { Notifications } from './collections/Notifications'
 import { ActivityLogs } from './collections/ActivityLogs'
 import { Settings } from './Settings/config'
-import { url } from 'inspector'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)

@@ -6,7 +6,6 @@ import { redirect } from 'next/navigation'
 import config from '@/payload.config'
 import Link from 'next/link'
 import {
-  User,
   BookOpen,
   TestTube,
   Video,

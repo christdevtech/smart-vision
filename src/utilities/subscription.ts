@@ -97,7 +97,7 @@ export async function updateSubscriptionAfterPayment(
   payload: Payload,
   params: UpdateSubscriptionParams,
 ): Promise<Subscription> {
-  const { subscriptionId, plan, amount, transactionId } = params
+  const { subscriptionId, plan, transactionId } = params
 
   // Get current subscription
   const currentSubscription = await payload.findByID({

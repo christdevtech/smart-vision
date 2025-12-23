@@ -1,7 +1,6 @@
 import type { Field, GroupField } from 'payload'
 
 import deepMerge from '@/utilities/deepMerge'
-import { ChevronRight } from 'lucide-react'
 
 export type LinkAppearances = 'default' | 'outline'
 

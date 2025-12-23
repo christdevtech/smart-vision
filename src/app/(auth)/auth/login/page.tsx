@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Logo } from '@/components/Graphics/Logo/Logo'
 
@@ -10,7 +10,6 @@ function LoginContent() {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const router = useRouter()
   const searchParams = useSearchParams()
   const message = searchParams.get('message')
   const messageType = searchParams.get('type') || 'success'

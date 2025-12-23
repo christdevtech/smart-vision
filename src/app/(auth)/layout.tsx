@@ -1,6 +1,5 @@
 import React from 'react'
 import '../styles.css'
-import { HeaderServerWrapper } from '@/Header/ServerWrapper'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 
 export const metadata = {

@@ -13,8 +13,7 @@ export default function BookProgressTracker({
 }) {
   const [seconds, setSeconds] = React.useState(0)
   React.useEffect(() => {
-    let timer: any
-    timer = setInterval(() => setSeconds((s) => s + 1), 1000)
+    const timer = setInterval(() => setSeconds((s) => s + 1), 1000)
     return () => {
       if (timer) clearInterval(timer)
     }

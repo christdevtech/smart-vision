@@ -1,4 +1,4 @@
-import { Access, Where } from 'payload'
+import { Access } from 'payload'
 
 export const selfOrAdmin: Access = ({ req: { user }, data }) => {
   if (user && data && data.id === user.id) {
