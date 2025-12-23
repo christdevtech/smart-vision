@@ -7,7 +7,7 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { Calendar } from 'lucide-react'
-import PlannerForm from '@/components/Planner/PlannerForm'
+import ChatPlanner from '@/components/Planner/ChatPlanner'
 
 export default async function StudyPlannerPage() {
   const headers = await getHeaders()
@@ -55,7 +55,7 @@ export default async function StudyPlannerPage() {
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
             <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <PlannerForm
+              <ChatPlanner
                 userId={user.id}
                 academicLevels={academicLevels.docs as any}
                 subjects={subjects.docs as any}
