@@ -6,9 +6,10 @@ import { redirect } from 'next/navigation'
 import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
-import SubscriptionDashboard from '@/components/SubscriptionDashboard'
+// import SubscriptionDashboard from '@/components/SubscriptionDashboard'
 import { Crown } from 'lucide-react'
 import { getSubscriptionCosts } from '@/utilities/subscription'
+import SubscriptionDashboard from '@/components/SubscriptionDashboard'
 
 export default async function SubscriptionsPage() {
   const headers = await getHeaders()
@@ -47,7 +48,7 @@ export default async function SubscriptionsPage() {
           {/* Page Header */}
           <MotionWrapper animation="fadeIn" delay={0.1}>
             <div className="p-6 bg-gradient-to-r to-transparent rounded-2xl border from-primary/10 via-primary/5 border-border/50">
-              <div className="flex items-center gap-4">
+              <div className="flex gap-4 items-center">
                 <div className="flex justify-center items-center w-16 h-16 bg-gradient-to-br rounded-full from-primary to-secondary">
                   <Crown className="w-8 h-8 text-white" />
                 </div>
@@ -63,7 +64,7 @@ export default async function SubscriptionsPage() {
 
           {/* Subscription Dashboard */}
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <SubscriptionDashboard 
+            <SubscriptionDashboard
               user={user}
               subscriptionData={subscriptionData}
               subscription={subscription}

@@ -6,8 +6,8 @@ import { redirect } from 'next/navigation'
 import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
-import ReferralDashboard from '@/components/ReferralDashboard'
 import { Users } from 'lucide-react'
+import ReferralDashboard from '@/components/ReferralDashboard'
 
 export default async function ReferralsPage() {
   const headers = await getHeaders()
@@ -43,7 +43,7 @@ export default async function ReferralsPage() {
 
           {/* Referral Dashboard */}
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <ReferralDashboard user={user as any} />
+            <ReferralDashboard user={user} />
           </MotionWrapper>
         </div>
       </div>

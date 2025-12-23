@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { Users, Copy, Check } from 'lucide-react'
+import { User } from '@/payload-types'
 
 interface ReferralStats {
   referralCode: string
@@ -17,10 +19,11 @@ interface ReferralStats {
 }
 
 interface ReferralDashboardProps {
+  user?: User
   className?: string
 }
 
-export default function ReferralDashboard({ className = '' }: ReferralDashboardProps) {
+export default function ReferralDashboard({ user, className = '' }: ReferralDashboardProps) {
   const [stats, setStats] = useState<ReferralStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -60,13 +63,24 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
     }
   }
 
+  // Use stats if available, fallback to user prop for basic display if needed
+  const displayCode = stats?.referralCode || user?.referralCode || '—'
+  const displayCount = stats?.totalReferrals ?? user?.totalReferrals ?? 0
+  const displayLink = stats?.referralLink || ''
+
   if (loading) {
     return (
-      <div className={`bg-card border border-border rounded-xl p-6 ${className}`}>
-        <div className="animate-pulse">
-          <div className="h-6 bg-muted rounded mb-4"></div>
-          <div className="h-4 bg-muted rounded mb-2"></div>
-          <div className="h-4 bg-muted rounded w-3/4"></div>
+      <div className={`p-6 rounded-2xl border bg-card border-border/50 ${className}`}>
+        <div className="flex gap-3 items-center mb-6">
+          <Users className="w-5 h-5 text-primary" />
+          <p className="font-medium text-foreground">Your Referral Details</p>
+        </div>
+        <div className="space-y-4 animate-pulse">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="h-20 rounded-lg bg-muted/20"></div>
+            <div className="h-20 rounded-lg bg-muted/20"></div>
+          </div>
+          <div className="h-10 rounded-lg bg-muted/20"></div>
         </div>
       </div>
     )
@@ -74,11 +88,13 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
 
   if (error) {
     return (
-      <div className={`bg-destructive/10 border border-destructive/20 rounded-xl p-6 ${className}`}>
-        <p className="text-destructive">Error: {error}</p>
+      <div
+        className={`p-6 rounded-2xl border bg-destructive/10 border-destructive/20 ${className}`}
+      >
+        <p className="mb-2 text-destructive">Error loading referral data: {error}</p>
         <button
           onClick={fetchReferralStats}
-          className="mt-2 px-4 py-2 bg-destructive/20 text-destructive rounded hover:bg-destructive/30 transition-colors"
+          className="px-4 py-2 rounded transition-colors bg-destructive/20 text-destructive hover:bg-destructive/30"
         >
           Retry
         </button>
@@ -86,85 +102,64 @@ export default function ReferralDashboard({ className = '' }: ReferralDashboardP
     )
   }
 
-  if (!stats) return null
-
   return (
-    <div className={`bg-card border border-border rounded-xl p-6 ${className}`}>
-      <h3 className="text-xl font-semibold text-foreground mb-4">🎯 Referral Dashboard</h3>
+    <div className={`p-6 rounded-2xl border bg-card border-border/50 ${className}`}>
+      <div className="flex gap-3 items-center mb-6">
+        <Users className="w-5 h-5 text-primary" />
+        <p className="font-medium text-foreground">Your Referral Details</p>
+      </div>
 
-      {/* Referral Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-card rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-emerald-500">{stats.totalReferrals}</div>
-          <div className="text-sm text-muted-foreground">Total Referrals</div>
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="p-3 rounded-lg border bg-input border-border">
+          <p className="mb-1 text-sm text-muted-foreground">Referral Code</p>
+          <p className="text-lg font-medium text-foreground">{displayCode}</p>
         </div>
-        <div className="bg-card rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-primary">{stats.referralCode}</div>
-          <div className="text-sm text-muted-foreground">Your Code</div>
-        </div>
-        <div className="bg-card rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-purple-500">🎁</div>
-          <div className="text-sm text-muted-foreground">Rewards Earned</div>
+        <div className="p-3 rounded-lg border bg-input border-border">
+          <p className="mb-1 text-sm text-muted-foreground">Total Referrals</p>
+          <p className="text-lg font-medium text-foreground">{displayCount}</p>
         </div>
       </div>
 
-      {/* Referral Link */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-foreground mb-2">Your Referral Link</label>
+        <label className="block mb-2 text-sm text-muted-foreground">Share your link</label>
         <div className="flex gap-2">
-          <input
-            type="text"
-            value={stats.referralLink}
-            readOnly
-            className="flex-1 bg-input border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-primary/50"
-          />
+          <div className="overflow-hidden flex-1 p-3 text-sm whitespace-nowrap rounded-lg border bg-input border-border text-foreground text-ellipsis">
+            {displayLink || 'Link unavailable'}
+          </div>
           <button
             onClick={copyToClipboard}
-            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-              copied
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30'
-            }`}
+            disabled={!displayLink}
+            className="flex gap-2 items-center px-4 py-2 font-medium rounded-lg transition-colors bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {copied ? '✓ Copied!' : 'Copy'}
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            {copied ? 'Copied' : 'Copy'}
           </button>
         </div>
       </div>
 
       {/* Recent Referrals */}
-      {stats.referredUsers.length > 0 && (
-        <div>
-          <h4 className="text-lg font-medium text-foreground mb-3">Recent Referrals</h4>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {stats.referredUsers.slice(0, 5).map((user) => (
+      {stats?.referredUsers && stats.referredUsers.length > 0 && (
+        <div className="pt-6 mt-6 border-t border-border">
+          <h4 className="mb-3 text-sm font-medium text-foreground">Recent Referrals</h4>
+          <div className="overflow-y-auto space-y-2 max-h-40">
+            {stats.referredUsers.slice(0, 5).map((u) => (
               <div
-                key={user.id}
-                className="bg-card rounded-lg p-3 flex justify-between items-center"
+                key={u.id}
+                className="flex justify-between items-center p-3 rounded-lg border bg-input border-border"
               >
                 <div>
-                  <div className="text-foreground font-medium">
-                    {user.firstName && user.lastName
-                      ? `${user.firstName} ${user.lastName}`
-                      : user.email}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </div>
+                  <p className="text-sm font-medium text-foreground">
+                    {u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.email}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(u.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
-                <div className="text-emerald-500 text-sm font-medium">+1</div>
+                <div className="px-2 py-1 text-xs font-medium text-emerald-500 rounded-full bg-emerald-500/10">
+                  +1
+                </div>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* No Referrals Message */}
-      {stats.referredUsers.length === 0 && (
-        <div className="text-center py-8">
-          <div className="text-4xl mb-2">👥</div>
-          <div className="text-muted-foreground mb-2">No referrals yet</div>
-          <div className="text-sm text-muted-foreground/60">
-            Share your referral link to start earning rewards!
           </div>
         </div>
       )}

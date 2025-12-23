@@ -238,24 +238,26 @@ export default function SubscriptionDashboard({
       {/* Payment Form */}
       <div className="mb-6">
         <h4 className="mb-3 font-medium text-foreground">Payment Information</h4>
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="Enter phone number (e.g., 677123456)"
-          className="px-3 py-2 mb-3 w-full rounded border text-foreground bg-input border-border"
-        />
-        <button
-          onClick={initiatePayment}
-          disabled={isLoading || isPolling}
-          className="px-4 py-2 w-full rounded transition-colors text-primary-foreground bg-primary hover:bg-primary/90"
-        >
-          {isLoading
-            ? 'Initiating...'
-            : isPolling
-              ? 'Checking status...'
-              : `Subscribe Now - ${subscriptionAmount} XAF`}
-        </button>
+        <div className="grid gap-4 md:grid-cols-2">
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Enter phone number (e.g., 677123456)"
+            className="px-3 py-2 mb-3 w-full h-full rounded border text-foreground bg-input border-border"
+          />
+          <button
+            onClick={initiatePayment}
+            disabled={isLoading || isPolling}
+            className="px-4 py-2 w-full rounded transition-colors text-primary-foreground bg-primary hover:bg-primary/90"
+          >
+            {isLoading
+              ? 'Initiating...'
+              : isPolling
+                ? 'Checking status...'
+                : `Subscribe Now - ${subscriptionAmount} XAF`}
+          </button>
+        </div>
         {error && <p className="mt-2 text-destructive">{error}</p>}
         {transactionId && status && (
           <div className="p-3 mt-3 rounded-lg border bg-card border-border">
