@@ -38,7 +38,7 @@ const nextConfig = {
   },
   reactStrictMode: true,
   redirects,
-  // output: 'standalone',
+  output: 'standalone',
 }
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })
