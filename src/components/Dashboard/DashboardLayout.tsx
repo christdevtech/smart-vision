@@ -14,6 +14,7 @@ import NotificationBadge from './NotificationBadge'
 import { Media } from '../Media'
 import { ThemeSwitcher } from '../ThemeSwitcher'
 import { Logo } from '../Graphics/Logo/Logo'
+import UserMenu from './UserMenu'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -159,20 +160,7 @@ export default function DashboardLayout({
                     </p>
                     <p className="text-xs text-muted-foreground">{user.role}</p>
                   </div>
-                  <div className="flex relative justify-center items-center w-8 h-8 bg-gradient-to-br rounded-full from-primary to-secondary">
-                    {user.profilePic ? (
-                      <Media
-                        resource={user.profilePic}
-                        alt={user.firstName || 'User'}
-                        imgClassName="w-full h-full rounded-full object-cover"
-                        fill
-                      />
-                    ) : (
-                      <span className="text-sm font-semibold text-primary-foreground">
-                        {(user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase()}
-                      </span>
-                    )}
-                  </div>
+                  <UserMenu user={user} />
                 </motion.div>
               )}
             </div>
