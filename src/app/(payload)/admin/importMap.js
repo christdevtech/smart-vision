@@ -26,6 +26,8 @@ import { FixedToolbarFeatureClient as FixedToolbarFeatureClient_e70f5e05f09f93e0
 import { Icon as Icon_24569b8f3b3f02509c2425e3da0c0695 } from '@/components/Graphics/Icon/Icon'
 import { Logo as Logo_75df52f735441ae98c6c90fe5c8997e1 } from '@/components/Graphics/Logo/Logo'
 import { default as default_6f22e6cdd17ce361876861f61fb7f5e4 } from '@/components/BeforeAdminDashboard'
+import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
+import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 
 export const importMap = {
   "@/fields/slug/SlugComponent#SlugComponent": SlugComponent_92cc057d0a2abb4f6cf0307edf59f986,
@@ -55,5 +57,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#FixedToolbarFeatureClient": FixedToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/components/Graphics/Icon/Icon#Icon": Icon_24569b8f3b3f02509c2425e3da0c0695,
   "@/components/Graphics/Logo/Logo#Logo": Logo_75df52f735441ae98c6c90fe5c8997e1,
-  "@/components/BeforeAdminDashboard#default": default_6f22e6cdd17ce361876861f61fb7f5e4
+  "@/components/BeforeAdminDashboard#default": default_6f22e6cdd17ce361876861f61fb7f5e4,
+  "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24,
+  "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a
 }
