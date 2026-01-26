@@ -2,21 +2,12 @@
 
 import React from 'react'
 import { AcademicLevel, Subject, Topic, Mcq } from '@/payload-types'
+import RichText from '../RichText'
 
 function getId(val: string | { id: string } | undefined | null) {
   if (!val) return ''
   if (typeof val === 'string') return val
   return (val as any).id || ''
-}
-
-function richTextToPlain(rt: any): string {
-  try {
-    const root = rt?.root
-    if (!root || !Array.isArray(root.children)) return ''
-    return root.children.map((child: any) => (typeof child.text === 'string' ? child.text : '')).join(' ').trim()
-  } catch {
-    return ''
-  }
 }
 
 export default function QuestionBankClient({
@@ -48,7 +39,8 @@ export default function QuestionBankClient({
     try {
       const qs: string[] = []
       if (subjectId) qs.push(`where[and][0][subject][equals]=${encodeURIComponent(subjectId)}`)
-      if (academicLevelId) qs.push(`where[and][1][academicLevel][equals]=${encodeURIComponent(academicLevelId)}`)
+      if (academicLevelId)
+        qs.push(`where[and][1][academicLevel][equals]=${encodeURIComponent(academicLevelId)}`)
       const url = `/api/mcq?limit=100&${qs.join('&')}`
       const res = await fetch(url)
       const data = await res.json()
@@ -125,7 +117,12 @@ export default function QuestionBankClient({
       <div className="space-y-2">
         {questions.map((q) => (
           <div key={q.id} className="p-3 rounded-lg border bg-input border-border">
-            <p className="mb-2 text-sm font-medium">{richTextToPlain(q.question)}</p>
+            <RichText
+              data={q.question}
+              className="mb-2 text-sm font-medium"
+              enableProse={false}
+              enableGutter={false}
+            />
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {q.options.map((o) => (
                 <div
@@ -140,11 +137,12 @@ export default function QuestionBankClient({
         ))}
         {!questions.length && (
           <div className="p-3 rounded-lg border bg-input border-border">
-            <p className="text-sm text-muted-foreground">No questions loaded. Choose filters and click Load.</p>
+            <p className="text-sm text-muted-foreground">
+              No questions loaded. Choose filters and click Load.
+            </p>
           </div>
         )}
       </div>
     </div>
   )
 }
-

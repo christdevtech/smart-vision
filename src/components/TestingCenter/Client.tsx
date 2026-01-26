@@ -3,24 +3,12 @@
 import React from 'react'
 import { FileText } from 'lucide-react'
 import { AcademicLevel, Subject, Topic, ExamPaper, TestResult, Mcq, User } from '@/payload-types'
+import RichText from '../RichText'
 
 function getId(val: string | { id: string } | undefined | null) {
   if (!val) return ''
   if (typeof val === 'string') return val
   return (val as any).id || ''
-}
-
-function richTextToPlain(rt: any): string {
-  try {
-    const root = rt?.root
-    if (!root || !Array.isArray(root.children)) return ''
-    return root.children
-      .map((child: any) => (typeof child.text === 'string' ? child.text : ''))
-      .join(' ')
-      .trim()
-  } catch {
-    return ''
-  }
 }
 
 function computeGrade(score: number): TestResult['grade'] {
@@ -513,7 +501,12 @@ export default function TestingCenterClient({
           </div>
           <div className="space-y-3">
             <div className="p-3 rounded-lg border bg-input border-border">
-              <p className="text-sm text-foreground">{richTextToPlain(current.question)}</p>
+              <RichText
+                data={current.question}
+                className="text-sm text-foreground"
+                enableProse={false}
+                enableGutter={false}
+              />
             </div>
             <div className="space-y-2">
               {current.options.map((opt) => {
@@ -627,7 +620,12 @@ export default function TestingCenterClient({
               const correct = selectedText === correctText
               return (
                 <div key={q.id} className="p-3 rounded-lg border bg-input border-border">
-                  <p className="mb-2 text-sm font-medium">{richTextToPlain(q.question)}</p>
+                  <RichText
+                    data={q.question}
+                    className="mb-2 text-sm font-medium"
+                    enableProse={false}
+                    enableGutter={false}
+                  />
                   <p
                     className={`text-sm ${correct ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}
                   >
