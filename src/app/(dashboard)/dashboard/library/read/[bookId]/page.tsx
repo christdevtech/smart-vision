@@ -11,6 +11,7 @@ import BookProgressTracker from '@/components/Progress/BookProgressTracker'
 import { Subscription } from '@/payload-types'
 import { isSubscriptionActive } from '@/utilities/subscription'
 import PDFReader from '@/components/Library/PDFReader'
+import RichText from '@/components/RichText'
 
 export default async function ReadBookPage({ params }: { params: Promise<{ bookId: string }> }) {
   const headers = await getHeaders()
@@ -91,21 +92,17 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
                   <p className="text-foreground">{(bookDoc as any).isbn || '—'}</p>
                 </div>
               </div>
-              <div className="p-3 rounded-lg border bg-input border-border">
-                <p className="text-sm text-muted-foreground">Description</p>
-                <p className="text-foreground">
-                  {(() => {
-                    const root = (bookDoc as any)?.description?.root
-                    if (!root?.children) return '—'
-                    return (
-                      root.children
-                        .map((child: any) => child.text || '')
-                        .join(' ')
-                        .trim() || '—'
-                    )
-                  })()}
-                </p>
-              </div>
+              {bookDoc.description && (
+                <div className="p-3 rounded-lg border bg-input border-border">
+                  <p className="text-sm text-muted-foreground">Description</p>
+                  <RichText
+                    data={bookDoc.description}
+                    className="text-foreground"
+                    enableProse={false}
+                    enableGutter={false}
+                  />
+                </div>
+              )}
               {(!bookDoc.subscriptionRequired || subscriptionActive) &&
                 typeof bookDoc.pdf === 'object' &&
                 (bookDoc.pdf as any)?.filename && (

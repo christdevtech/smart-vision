@@ -27,6 +27,7 @@ import { ContentAccess } from './collections/ContentAccess'
 import { Notifications } from './collections/Notifications'
 import { ActivityLogs } from './collections/ActivityLogs'
 import { Settings } from './Settings/config'
+import { plugins } from './plugins'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -100,6 +101,7 @@ export default buildConfig({
   sharp,
   plugins: [
     payloadCloudPlugin(),
+    ...plugins,
     // storage-adapter-placeholder
   ],
   onInit: async (payload) => {
