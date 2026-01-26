@@ -472,6 +472,27 @@ export default function TestingCenterClient({
               </select>
             </div>
           )}
+          {mode === 'exam_paper' && selectedPaperId && (
+            <div className="md:col-span-2">
+              {(() => {
+                const p = examPapers.find((x) => x.id === selectedPaperId)
+                if (p && p.description) {
+                  return (
+                    <div className="p-3 rounded-lg border bg-input border-border">
+                      <p className="mb-1 text-xs text-muted-foreground">Description</p>
+                      <RichText
+                        data={p.description}
+                        className="text-sm text-foreground"
+                        enableProse={false}
+                        enableGutter={false}
+                      />
+                    </div>
+                  )
+                }
+                return null
+              })()}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2 items-center mt-4">

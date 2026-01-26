@@ -15,12 +15,45 @@ export default function CreateForm({
   const [goal, setGoal] = useState('')
   const [levelId, setLevelId] = useState('')
   const [subjectIds, setSubjectIds] = useState<string[]>([])
+  const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
   function toggleSubject(id: string) {
     setSubjectIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  function stringToRichText(text: string) {
+    return {
+      root: {
+        children: [
+          {
+            children: [
+              {
+                detail: 0,
+                format: 0,
+                mode: 'normal',
+                style: '',
+                text,
+                type: 'text',
+                version: 1,
+              },
+            ],
+            direction: 'ltr',
+            format: '',
+            indent: 0,
+            type: 'paragraph',
+            version: 1,
+          },
+        ],
+        direction: 'ltr',
+        format: '',
+        indent: 0,
+        type: 'root',
+        version: 1,
+      },
+    }
   }
 
   async function submit() {
@@ -39,6 +72,7 @@ export default function CreateForm({
         subjects: subjectIds,
         isActive: true,
         planType: 'regular_study',
+        notes: notes ? stringToRichText(notes) : undefined,
       }
       const res = await fetch('/api/study-plans', {
         method: 'POST',
@@ -57,6 +91,7 @@ export default function CreateForm({
       setGoal('')
       setLevelId('')
       setSubjectIds([])
+      setNotes('')
     } catch (e: any) {
       setError(e?.message || 'Failed')
     } finally {
@@ -91,6 +126,15 @@ export default function CreateForm({
             className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
           />
         </div>
+        <div className="md:col-span-2">
+          <label className="block mb-1 text-sm text-muted-foreground">Notes (optional)</label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Additional notes..."
+            className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground min-h-[100px]"
+          />
+        </div>
       </div>
       <div>
         <label className="block mb-2 text-sm text-muted-foreground">Subjects</label>
@@ -119,9 +163,10 @@ export default function CreateForm({
           {saving ? 'Saving...' : 'Create Plan'}
         </button>
         {error && <span className="text-sm text-destructive">{error}</span>}
-        {success && <span className="text-sm text-emerald-600 dark:text-emerald-300">{success}</span>}
+        {success && (
+          <span className="text-sm text-emerald-600 dark:text-emerald-300">{success}</span>
+        )}
       </div>
     </div>
   )
 }
-

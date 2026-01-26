@@ -11,6 +11,7 @@ import { Media } from '@/components/Media'
 import VideoProgressTracker from '@/components/Progress/VideoProgressTracker'
 import { Subscription } from '@/payload-types'
 import { isSubscriptionActive } from '@/utilities/subscription'
+import RichText from '@/components/RichText'
 
 export default async function WatchVideoPage({ params }: { params: Promise<{ videoId: string }> }) {
   const headers = await getHeaders()
@@ -56,7 +57,18 @@ export default async function WatchVideoPage({ params }: { params: Promise<{ vid
                   <h1 className="mb-2 text-3xl font-bold text-foreground">
                     {(videoDoc as any).title || videoId}
                   </h1>
-                  <p className="text-lg text-muted-foreground">Player and controls</p>
+                  {videoDoc.description && (
+                    <RichText
+                      data={videoDoc.description}
+                      className="text-lg text-muted-foreground"
+                      enableProse={false}
+                      enableGutter={false}
+                    />
+                  )}
+                  {/* Fallback if no description */}
+                  {!videoDoc.description && (
+                    <p className="text-lg text-muted-foreground">Player and controls</p>
+                  )}
                 </div>
               </div>
             </div>

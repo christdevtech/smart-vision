@@ -123,4 +123,9 @@ export default buildConfig({
     tasks: [],
     workflows: [],
   },
+  upload: {
+    limits: {
+      fileSize: 2147483648, // 2GB
+    },
+  },
 })
