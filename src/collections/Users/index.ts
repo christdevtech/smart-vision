@@ -105,6 +105,20 @@ export const Users: CollectionConfig = {
       required: true,
     },
     {
+      name: 'onboarded',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'subjects',
+      type: 'relationship',
+      relationTo: 'subjects',
+      hasMany: true,
+    },
+    {
       name: 'profilePic',
       type: 'upload',
       relationTo: 'media',
