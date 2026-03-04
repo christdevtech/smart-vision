@@ -21,6 +21,7 @@
     "@heroicons/react": "^2.2.0",
     "@payloadcms/db-mongodb": "3.72.0",
     "@payloadcms/email-nodemailer": "3.72.0",
+    "@payloadcms/email-resend": "3.72.0",
     "@payloadcms/next": "3.72.0",
     "@payloadcms/payload-cloud": "3.72.0",
     "@payloadcms/richtext-lexical": "3.72.0",

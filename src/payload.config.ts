@@ -1,6 +1,7 @@
 // storage-adapter-import-placeholder
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
+import { resendAdapter } from '@payloadcms/email-resend'
 import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
@@ -85,18 +86,10 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URI || '',
   }),
-  email: nodemailerAdapter({
-    defaultFromAddress: `${process.env.SMTP_FROM}`,
-    defaultFromName: `${process.env.SMTP_FROM_NAME}`,
-    // Nodemailer transportOptions
-    transportOptions: {
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      },
-    },
+  email: resendAdapter({
+    defaultFromAddress: 'admin@smartvisioncm.com',
+    defaultFromName: 'Smart Vision Cameroon',
+    apiKey: process.env.RESEND_API_KEY || '',
   }),
   sharp,
   plugins: [
