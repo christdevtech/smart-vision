@@ -24,14 +24,7 @@ import type { StudyPlan, Subject } from '@/payload-types'
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-type SessionLog = {
-  date: string
-  dayOfWeek: string
-  sessionIndex: number
-  status: 'completed' | 'missed' | 'rescheduled'
-  note?: string | null
-}
-type WeeklySession = NonNullable<StudyPlan['weeklySchedule']>[number]
+type TimetableSession = NonNullable<StudyPlan['timetable']>[number]
 type StudyGoal = NonNullable<StudyPlan['studyGoals']>[number]
 type Milestone = NonNullable<StudyPlan['milestones']>[number]
 
@@ -44,7 +37,6 @@ interface PlanDashboardProps {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const DAY_ORDER = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 const DAY_SHORT = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 const MONTH_NAMES = [
   'January',
@@ -61,12 +53,6 @@ const MONTH_NAMES = [
   'December',
 ]
 
-const SESSION_COLORS: Record<string, string> = {
-  study: 'bg-primary border-primary/30 text-primary',
-  revision: 'bg-secondary border-secondary/30 text-secondary',
-  practice: 'bg-emerald-500 border-emerald-500/30 text-emerald-600',
-  test: 'bg-orange-500 border-orange-500/30 text-orange-600',
-}
 const SESSION_BG: Record<string, string> = {
   study: 'bg-primary/10 border-primary/20 text-primary',
   revision: 'bg-secondary/10 border-secondary/20 text-secondary',
@@ -90,10 +76,6 @@ function fmt12(time: string): string {
 
 function toDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function dayOfWeekKey(d: Date): string {
-  return DAY_ORDER[d.getDay()]!
 }
 
 function daysUntil(dateStr: string): number {
@@ -132,45 +114,37 @@ export default function PlanDashboard({ plan, subjects, onAdjust }: PlanDashboar
   const [calYear, setCalYear] = useState(today.getFullYear())
   const [calMonth, setCalMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState<Date>(today)
-  const [logs, setLogs] = useState<SessionLog[]>(((plan as any).sessionLogs ?? []) as SessionLog[])
-  const [logging, setLogging] = useState<string | null>(null) // sessionKey being saved
+
+  // Timetable is the source of truth for all sessions
+  const [timetable, setTimetable] = useState<TimetableSession[]>(
+    ((plan.timetable ?? []) as TimetableSession[]).sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    ),
+  )
+  const [loggingId, setLoggingId] = useState<string | null>(null) // session ID being saved
   const [expandGoals, setExpandGoals] = useState(false)
 
-  const schedule = (plan.weeklySchedule ?? []) as WeeklySession[]
   const goals = (plan.studyGoals ?? []) as StudyGoal[]
   const milestones = ((plan.milestones ?? []) as Milestone[])
     .filter((m) => !m.isCompleted)
     .sort((a, b) => new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime())
 
-  // ------------ Log lookup helpers -----------------------------------------
-  const logKey = (date: Date, sessionIdx: number) => `${toDateKey(date)}_${sessionIdx}`
-
-  const logFor = useCallback(
-    (date: Date, sessionIdx: number): SessionLog | undefined => {
-      const dk = toDateKey(date)
-      return logs.find((l) => {
-        const ld = new Date(l.date)
-        return toDateKey(ld) === dk && l.sessionIndex === sessionIdx
-      })
-    },
-    [logs],
-  )
-
   // ------------ Per-day sessions -------------------------------------------
   const sessionsForDay = useCallback(
-    (date: Date): { session: WeeklySession; index: number }[] => {
-      const dow = dayOfWeekKey(date)
-      return schedule
-        .map((s, i) => ({ session: s, index: i }))
-        .filter(({ session }) => session.dayOfWeek === dow)
+    (date: Date) => {
+      const dk = toDateKey(date)
+      return timetable.filter((t) => {
+        const d = new Date(t.date)
+        return toDateKey(d) === dk
+      })
     },
-    [schedule],
+    [timetable],
   )
 
   // ------------ Calendar dot indicators ------------------------------------
   const calendarDots = useCallback(
     (date: Date): string[] => {
-      return sessionsForDay(date).map(({ session }) => session.sessionType ?? 'study')
+      return sessionsForDay(date).map((s) => s.sessionType ?? 'study')
     },
     [sessionsForDay],
   )
@@ -181,56 +155,57 @@ export default function PlanDashboard({ plan, subjects, onAdjust }: PlanDashboar
       const dayKey = toDateKey(date)
       const todayKey = toDateKey(today)
       if (dayKey >= todayKey) return 'none'
+
       const daySessions = sessionsForDay(date)
       if (daySessions.length === 0) return 'none'
-      const dayLogs = daySessions.map(({ index }) => logFor(date, index))
-      const completed = dayLogs.filter((l) => l?.status === 'completed').length
+
+      const completed = daySessions.filter((t) => t.status === 'completed').length
       if (completed === daySessions.length) return 'green'
       if (completed === 0) return 'red'
       return 'partial'
     },
-    [sessionsForDay, logFor, today],
+    [sessionsForDay, today],
   )
 
   // ------------ Progress stats ---------------------------------------------
   const progress = plan.progress ?? 0
   const streak = (plan as any).analytics?.currentStreak ?? 0
-  const weeklyRate = (plan as any).analytics?.weeklyCompletionRate ?? 0
-  const weekSessions = schedule.length
+
   const weekStart = new Date(today)
-  weekStart.setDate(today.getDate() - today.getDay())
+  weekStart.setDate(today.getDate() - today.getDay()) // Sunday
   weekStart.setHours(0, 0, 0, 0)
-  const weekDone = logs.filter(
-    (l) => new Date(l.date) >= weekStart && l.status === 'completed',
-  ).length
-  const missedThisWeek = logs.filter(
-    (l) => new Date(l.date) >= weekStart && l.status === 'missed',
-  ).length
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekEnd.getDate() + 7)
+
+  const thisWeekSessions = timetable.filter((t) => {
+    const d = new Date(t.date)
+    return d >= weekStart && d < weekEnd
+  })
+
+  const weekSessionsCount = thisWeekSessions.length
+  const weekDoneCount = thisWeekSessions.filter((t) => t.status === 'completed').length
+  const missedThisWeek = thisWeekSessions.filter((t) => t.status === 'missed').length
 
   // ------------ Session logging call ---------------------------------------
-  async function logSession(date: Date, sessionIdx: number, status: 'completed' | 'missed') {
-    const key = logKey(date, sessionIdx)
-    setLogging(key)
-    const dow = dayOfWeekKey(date)
+  async function logSession(sessionId: string, status: 'completed' | 'missed') {
+    if (!sessionId) return
+    setLoggingId(sessionId)
     try {
       const resp = await fetch('/api/custom/study-plans/log-session', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: date.toISOString(),
-          dayOfWeek: dow,
-          sessionIndex: sessionIdx,
-          status,
-        }),
+        body: JSON.stringify({ sessionId, status }),
       })
       if (resp.ok) {
         const data = await resp.json()
-        const newLogs = ((data.plan as any)?.sessionLogs ?? []) as SessionLog[]
-        setLogs(newLogs)
+        const updatedTimetable = ((data.plan?.timetable ?? []) as TimetableSession[]).sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+        )
+        setTimetable(updatedTimetable)
       }
     } finally {
-      setLogging(null)
+      setLoggingId(null)
     }
   }
 
@@ -293,7 +268,7 @@ export default function PlanDashboard({ plan, subjects, onAdjust }: PlanDashboar
         <div className="p-3 rounded-xl border border-border bg-input text-center">
           <CalendarDays className="w-4 h-4 text-emerald-500 mx-auto mb-1" />
           <p className="text-lg font-bold text-foreground">
-            {weekDone}/{weekSessions}
+            {weekDoneCount}/{weekSessionsCount}
           </p>
           <p className="text-xs text-muted-foreground">This week</p>
         </div>
@@ -436,27 +411,29 @@ export default function PlanDashboard({ plan, subjects, onAdjust }: PlanDashboar
             </div>
           ) : (
             <div className="space-y-2">
-              {selectedSessions.map(({ session, index }) => {
-                const log = logFor(selectedDate, index)
+              {selectedSessions.map((session, index) => {
                 const isPast = selectedDate <= today
-                const key = logKey(selectedDate, index)
-                const isLogging = logging === key
+                const isLogging = loggingId === session.id
                 const colorClass = SESSION_BG[session.sessionType ?? 'study'] ?? SESSION_BG.study
                 return (
                   <div
-                    key={index}
+                    key={session.id ?? index}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border text-sm ${colorClass}`}
                   >
                     {/* Status icon */}
                     <div className="flex-shrink-0">
-                      {log?.status === 'completed' && (
+                      {session.status === 'completed' && (
                         <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                       )}
-                      {log?.status === 'missed' && <XCircle className="w-5 h-5 text-destructive" />}
-                      {log?.status === 'rescheduled' && (
+                      {session.status === 'missed' && (
+                        <XCircle className="w-5 h-5 text-destructive" />
+                      )}
+                      {session.status === 'rescheduled' && (
                         <CalendarDays className="w-5 h-5 text-warning" />
                       )}
-                      {!log && <Circle className="w-5 h-5 opacity-50" />}
+                      {(!session.status || session.status === 'pending') && (
+                        <Circle className="w-5 h-5 opacity-50" />
+                      )}
                     </div>
 
                     {/* Session info */}
@@ -477,25 +454,25 @@ export default function PlanDashboard({ plan, subjects, onAdjust }: PlanDashboar
                     </div>
 
                     {/* Actions */}
-                    {isPast && !log && (
+                    {isPast && (!session.status || session.status === 'pending') && (
                       <div className="flex gap-1.5 flex-shrink-0">
                         <button
                           disabled={isLogging}
-                          onClick={() => logSession(selectedDate, index, 'completed')}
+                          onClick={() => session.id && logSession(session.id, 'completed')}
                           className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 text-xs font-medium hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
                         >
                           {isLogging ? '…' : 'Done ✓'}
                         </button>
                         <button
                           disabled={isLogging}
-                          onClick={() => logSession(selectedDate, index, 'missed')}
+                          onClick={() => session.id && logSession(session.id, 'missed')}
                           className="px-2.5 py-1 rounded-lg bg-destructive/20 text-destructive text-xs font-medium hover:bg-destructive/30 transition-colors disabled:opacity-50"
                         >
                           {isLogging ? '…' : 'Missed ✕'}
                         </button>
                       </div>
                     )}
-                    {log?.status === 'missed' && (
+                    {session.status === 'missed' && (
                       <button
                         onClick={() =>
                           onAdjust(
@@ -517,7 +494,7 @@ export default function PlanDashboard({ plan, subjects, onAdjust }: PlanDashboar
 
       {/* ==================== GOALS ==================== */}
       {goals.length > 0 && (
-        <div>
+        <div className="mt-8">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Target className="w-4 h-4 text-muted-foreground" />
@@ -572,7 +549,7 @@ export default function PlanDashboard({ plan, subjects, onAdjust }: PlanDashboar
 
       {/* ==================== MILESTONES ==================== */}
       {milestones.length > 0 && (
-        <div>
+        <div className="mt-8">
           <div className="flex items-center gap-2 mb-3">
             <Trophy className="w-4 h-4 text-muted-foreground" />
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">

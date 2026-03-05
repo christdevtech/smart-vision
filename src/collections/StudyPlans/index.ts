@@ -37,19 +37,57 @@ export const StudyPlans: CollectionConfig = {
       name: 'timetable',
       type: 'array',
       labels: { singular: 'Study Session', plural: 'Study Sessions' },
+      admin: {
+        description: 'Specific day-by-day unrolled study sessions',
+      },
       fields: [
         {
-          name: 'day',
+          name: 'date',
           type: 'date',
+          required: true,
         },
         {
-          name: 'session',
+          name: 'startTime',
           type: 'text',
+          required: true,
+        },
+        {
+          name: 'endTime',
+          type: 'text',
+          required: true,
         },
         {
           name: 'subject',
           type: 'relationship',
           relationTo: 'subjects',
+          required: true,
+        },
+        {
+          name: 'sessionType',
+          type: 'select',
+          options: [
+            { label: 'Study', value: 'study' },
+            { label: 'Practice', value: 'practice' },
+            { label: 'Revision', value: 'revision' },
+            { label: 'Test', value: 'test' },
+          ],
+          defaultValue: 'study',
+        },
+        {
+          name: 'status',
+          type: 'select',
+          required: true,
+          options: [
+            { label: 'Pending', value: 'pending' },
+            { label: 'Completed', value: 'completed' },
+            { label: 'Missed', value: 'missed' },
+            { label: 'Rescheduled', value: 'rescheduled' },
+          ],
+          defaultValue: 'pending',
+        },
+        {
+          name: 'note',
+          type: 'text',
         },
       ],
     },
@@ -390,57 +428,6 @@ export const StudyPlans: CollectionConfig = {
             { label: 'Mixed', value: 'mixed' },
           ],
           defaultValue: 'easy_first',
-        },
-      ],
-    },
-    {
-      name: 'sessionLogs',
-      type: 'array',
-      labels: { singular: 'Session Log', plural: 'Session Logs' },
-      admin: {
-        description: 'Record of completed, missed, or rescheduled study sessions',
-      },
-      fields: [
-        {
-          name: 'date',
-          type: 'date',
-          required: true,
-          admin: { description: 'The actual calendar date of the session' },
-        },
-        {
-          name: 'dayOfWeek',
-          type: 'select',
-          options: [
-            { label: 'Monday', value: 'monday' },
-            { label: 'Tuesday', value: 'tuesday' },
-            { label: 'Wednesday', value: 'wednesday' },
-            { label: 'Thursday', value: 'thursday' },
-            { label: 'Friday', value: 'friday' },
-            { label: 'Saturday', value: 'saturday' },
-            { label: 'Sunday', value: 'sunday' },
-          ],
-          required: true,
-        },
-        {
-          name: 'sessionIndex',
-          type: 'number',
-          required: true,
-          admin: { description: 'Index of the session in weeklySchedule array' },
-        },
-        {
-          name: 'status',
-          type: 'select',
-          required: true,
-          options: [
-            { label: 'Completed', value: 'completed' },
-            { label: 'Missed', value: 'missed' },
-            { label: 'Rescheduled', value: 'rescheduled' },
-          ],
-        },
-        {
-          name: 'note',
-          type: 'text',
-          admin: { description: 'Optional note about the session' },
         },
       ],
     },

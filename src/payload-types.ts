@@ -677,11 +677,18 @@ export interface StudyPlan {
   user: string | User;
   goals?: string | null;
   subjects?: (string | Subject)[] | null;
+  /**
+   * Specific day-by-day unrolled study sessions
+   */
   timetable?:
     | {
-        day?: string | null;
-        session?: string | null;
-        subject?: (string | null) | Subject;
+        date: string;
+        startTime: string;
+        endTime: string;
+        subject: string | Subject;
+        sessionType?: ('study' | 'practice' | 'revision' | 'test') | null;
+        status: 'pending' | 'completed' | 'missed' | 'rescheduled';
+        note?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -790,13 +797,17 @@ export interface StudyPlan {
      */
     weeklyStudyHours?: number | null;
     /**
-     * Current study streak in days
+     * Current study streak in weeks
      */
     currentStreak?: number | null;
     /**
-     * Longest study streak in days
+     * Longest study streak in weeks
      */
     longestStreak?: number | null;
+    /**
+     * Sessions completed this week as a percentage (0-100)
+     */
+    weeklyCompletionRate?: number | null;
     /**
      * Number of completed goals
      */
@@ -1862,9 +1873,13 @@ export interface StudyPlansSelect<T extends boolean = true> {
   timetable?:
     | T
     | {
-        day?: T;
-        session?: T;
+        date?: T;
+        startTime?: T;
+        endTime?: T;
         subject?: T;
+        sessionType?: T;
+        status?: T;
+        note?: T;
         id?: T;
       };
   progress?: T;
@@ -1938,6 +1953,7 @@ export interface StudyPlansSelect<T extends boolean = true> {
         weeklyStudyHours?: T;
         currentStreak?: T;
         longestStreak?: T;
+        weeklyCompletionRate?: T;
         completedGoals?: T;
         completedMilestones?: T;
         averageSessionDuration?: T;

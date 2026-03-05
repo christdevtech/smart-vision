@@ -164,9 +164,12 @@ export default function PlannerForm({
 
   function addTimetableItem() {
     const item: TimetableItem = {
-      day: '',
-      session: '',
+      date: new Date().toISOString(),
+      startTime: '09:00',
+      endTime: '10:00',
       subject: subjects[0]?.id || '',
+      sessionType: 'study',
+      status: 'pending',
     }
     setTimetable((prev) => [...prev, item])
   }
@@ -685,18 +688,24 @@ export default function PlannerForm({
             <Plus className="w-4 h-4" /> Add Session
           </button>
           {timetable.map((t, idx) => (
-            <div key={idx} className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div key={idx} className="grid grid-cols-1 gap-3 md:grid-cols-4 lg:grid-cols-5">
               <DatePicker
-                value={t.day || ''}
-                onChange={(v) => updateTimetableItem(idx, { day: v })}
+                value={t.date || ''}
+                onChange={(v) => updateTimetableItem(idx, { date: v })}
                 captionLayout="dropdown"
                 fromYear={new Date().getFullYear() - 1}
                 toYear={new Date().getFullYear() + 2}
               />
               <input
-                value={t.session || ''}
-                onChange={(e) => updateTimetableItem(idx, { session: e.target.value })}
-                placeholder="Session details"
+                value={t.startTime || ''}
+                onChange={(e) => updateTimetableItem(idx, { startTime: e.target.value })}
+                placeholder="Start 09:00"
+                className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
+              />
+              <input
+                value={t.endTime || ''}
+                onChange={(e) => updateTimetableItem(idx, { endTime: e.target.value })}
+                placeholder="End 10:00"
                 className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
               />
               <select
@@ -710,10 +719,20 @@ export default function PlannerForm({
                   </option>
                 ))}
               </select>
+              <select
+                value={t.sessionType || 'study'}
+                onChange={(e) => updateTimetableItem(idx, { sessionType: e.target.value as any })}
+                className="px-3 py-2 rounded-lg border bg-input border-border text-foreground"
+              >
+                <option value="study">Study</option>
+                <option value="practice">Practice</option>
+                <option value="revision">Revision</option>
+                <option value="test">Test</option>
+              </select>
               <button
                 type="button"
                 onClick={() => removeTimetableItem(idx)}
-                className="flex gap-2 items-center px-3 py-2 rounded-lg border bg-destructive text-destructive-foreground md:col-span-3"
+                className="flex gap-2 items-center px-3 py-2 rounded-lg border bg-destructive text-destructive-foreground md:col-span-4 lg:col-span-5"
               >
                 <Trash2 className="w-4 h-4" /> Remove
               </button>
