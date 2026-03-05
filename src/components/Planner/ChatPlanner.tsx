@@ -162,17 +162,8 @@ export default function ChatPlanner({
   async function applyPlan(plan: GeneratedPlan) {
     setSaving(true)
     try {
-      // Validate subject IDs against known subjects
-      const validSubjectIds = [
-        ...new Set(
-          (plan.weeklySchedule ?? [])
-            .map((s) =>
-              typeof s.subject === 'string' ? s.subject : ((s.subject as any)?.id ?? ''),
-            )
-            .filter((id) => subjects.some((sub) => sub.id === id)),
-        ),
-      ]
-
+      // The upsert route's sanitizeStudyPlan() handles all field validation and
+      // normalisation. We only inject academicLevel here since the AI doesn't know it.
       const academicLevelId =
         (typeof initialPlan?.academicLevel === 'string'
           ? initialPlan.academicLevel
@@ -180,63 +171,18 @@ export default function ChatPlanner({
         academicLevels[0]?.id ??
         null
 
-      // Shape the payload to exactly match the Payload StudyPlan schema
-      const payload = {
-        goals: plan.goals,
-        planType: plan.planType,
-        targetExamDate: plan.targetExamDate ?? null,
-        subjects: validSubjectIds,
-        academicLevel: academicLevelId,
-        // weeklySchedule already matches StudyPlan['weeklySchedule'] shape via GeneratedPlan type
-        weeklySchedule: plan.weeklySchedule ?? [],
-        // studyGoals: uses .title per Payload schema (GeneratedPlan derives from StudyPlan)
-        studyGoals: (plan.studyGoals ?? []).map((g) => ({
-          title: g.title,
-          description: g.description ?? null,
-          targetDate: g.targetDate ?? null,
-          priority: g.priority ?? 'medium',
-          status: g.status ?? 'not_started',
-        })),
-        milestones: (plan.milestones ?? []).map((m) => ({
-          title: m.title,
-          description: m.description ?? null,
-          targetDate: m.targetDate ?? new Date().toISOString(),
-          isCompleted: false,
-        })),
-        // studyReminders: reminderTime is a Payload date field — must be full ISO datetime
-        // Convert HH:MM from AI into next Monday at that time as the anchor datetime
-        studyReminders: (plan.studyReminders ?? []).map((r) => {
-          const [hh, mm] = (r.reminderTime ?? '08:00').split(':').map(Number)
-          const anchor = new Date()
-          // Move to next Monday
-          const dayOfWeek = anchor.getDay()
-          const daysToMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek
-          anchor.setDate(anchor.getDate() + daysToMonday)
-          anchor.setHours(hh, mm, 0, 0)
-          return {
-            title: r.title,
-            message: r.message ?? null,
-            reminderTime: anchor.toISOString(),
-            reminderType: 'study_session' as const,
-            isRecurring: true,
-            recurrencePattern: 'weekly' as const,
-            isActive: r.isActive ?? true,
-          }
-        }),
-        studyPreferences: plan.studyPreferences ?? {},
-        timetable: [],
-        isActive: true,
-      }
-
       const resp = await fetch('/api/custom/study-plans/upsert', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...plan, academicLevel: academicLevelId }),
       })
 
       if (!resp.ok) {
-        pushAssistant('⚠️ Failed to save the plan. Please try again.')
+        const err = await resp.json().catch(() => ({}))
+        pushAssistant(
+          `⚠️ Failed to save the plan: ${err.error ?? 'Unknown error'}. Please try again.`,
+        )
         return
       }
 
