@@ -6,7 +6,9 @@ export async function POST(request: NextRequest) {
   try {
     const payloadConfig = await config
     const payload = await getPayload({ config: payloadConfig })
-    const { user } = request as any
+
+    // Fixed: use payload.auth() instead of the broken request.user pattern
+    const { user } = await payload.auth({ headers: request.headers })
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -31,6 +33,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ plan }, { status: 200 })
   } catch (error) {
+    console.error('Study plan upsert error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

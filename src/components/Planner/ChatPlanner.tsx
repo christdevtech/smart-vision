@@ -1,12 +1,28 @@
 'use client'
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { AcademicLevel, Subject, Topic, StudyPlan } from '@/payload-types'
-import { MessageSquare, Send, Wand2, CheckCircle2, Clock, BookOpen } from 'lucide-react'
-import { DatePicker } from '@/components/DatePicker'
-import BadgeSelect from '@/components/BadgeSelect'
+import React, { useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Send, Sparkles, Bot, User, AlertCircle, ChevronRight } from 'lucide-react'
+import type { AcademicLevel, Subject, Topic, StudyPlan } from '@/payload-types'
+// GeneratedPlan is derived from StudyPlan in payload-types — single source of truth
+import PlanPreviewCard, { type GeneratedPlan } from './PlanPreviewCard'
 
-type ChatPlannerProps = {
+type GeminiRole = 'user' | 'model'
+
+interface GeminiMessage {
+  role: GeminiRole
+  parts: [{ text: string }]
+}
+
+interface DisplayMessage {
+  id: string
+  role: 'user' | 'assistant'
+  text: string
+  plan?: GeneratedPlan | null
+  isError?: boolean
+}
+
+interface ChatPlannerProps {
   userId: string
   academicLevels: AcademicLevel[]
   subjects: Subject[]
@@ -14,30 +30,15 @@ type ChatPlannerProps = {
   initialPlan?: StudyPlan | null
 }
 
-type ChatMessage = {
-  id: string
-  role: 'assistant' | 'user'
-  text?: string
-  node?: ReactNode
-}
+const QUICK_PROMPTS = [
+  "I want to prepare for my GCE O Level exams. I'm free weekdays 6pm–8pm.",
+  'Help me create an A Level revision plan. Exams in 3 months, available daily from 4pm.',
+  'I need to catch up on Maths and Physics — can study 2 hours every day.',
+  'Build a study plan for all my subjects across Mon, Wed, Fri evenings.',
+]
 
-function addMinutes(time: string, minutes: number) {
-  const [h, m] = time.split(':').map((v) => parseInt(v, 10))
-  const d = new Date()
-  d.setHours(h, m, 0, 0)
-  d.setMinutes(d.getMinutes() + minutes)
-  const hh = `${d.getHours()}`.padStart(2, '0')
-  const mm = `${d.getMinutes()}`.padStart(2, '0')
-  return `${hh}:${mm}`
-}
-
-function timeForPreference(pref: NonNullable<StudyPlan['studyPreferences']>['preferredStudyTime']) {
-  if (pref === 'early_morning') return '06:00'
-  if (pref === 'morning') return '09:00'
-  if (pref === 'afternoon') return '14:00'
-  if (pref === 'evening') return '18:00'
-  if (pref === 'night') return '20:00'
-  return '22:00'
+function stripJsonBlock(text: string): string {
+  return text.replace(/```json[\s\S]*?```/g, '').trim()
 }
 
 export default function ChatPlanner({
@@ -47,538 +48,377 @@ export default function ChatPlanner({
   topics,
   initialPlan,
 }: ChatPlannerProps) {
-  const [academicLevelId, setAcademicLevelId] = useState<string | undefined>(
-    (typeof initialPlan?.academicLevel === 'string'
-      ? (initialPlan?.academicLevel as string)
-      : (initialPlan?.academicLevel as any)?.id) || undefined,
-  )
-  const [planType, setPlanType] = useState<StudyPlan['planType']>(
-    initialPlan?.planType || 'regular_study',
-  )
-  const [targetExamDate, setTargetExamDate] = useState<string>(initialPlan?.targetExamDate || '')
-  const [subjectsIds, setSubjectsIds] = useState<string[]>(
-    (initialPlan?.subjects || [])
-      .map((s) => (typeof s === 'string' ? (s as string) : (s as any)?.id))
-      .filter(Boolean) as string[],
-  )
-  const [preferences, setPreferences] = useState<NonNullable<StudyPlan['studyPreferences']>>(
-    initialPlan?.studyPreferences || {
-      preferredStudyTime: 'morning',
-      sessionDuration: 60,
-      breakDuration: 15,
-      studyMethod: [],
-      difficultyPreference: 'easy_first',
-    },
-  )
-  const [generatedPlans, setGeneratedPlans] = useState<Array<Partial<StudyPlan>>>([])
-  const [selectedPlanIdx, setSelectedPlanIdx] = useState<number | null>(null)
+  const [displayMessages, setDisplayMessages] = useState<DisplayMessage[]>([])
+  const [chatHistory, setChatHistory] = useState<GeminiMessage[]>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [statusMessage, setStatusMessage] = useState('')
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [inputText, setInputText] = useState('')
+  const [savedOk, setSavedOk] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const existingGuidance = useMemo(() => {
-    const plan = initialPlan
-    if (!plan || !(plan.weeklySchedule || []).length) return null
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-    const now = new Date()
-    const today = days[now.getDay()]
-    const todaySessions = (plan.weeklySchedule || []).filter(
-      (s) => s.isActive && s.dayOfWeek === today,
-    )
-    const next = todaySessions[0] || (plan.weeklySchedule || []).find((s) => s.isActive) || null
-    if (!next) return null
-    const subjectId = typeof next.subject === 'string' ? next.subject : (next.subject as any)?.id
-    const topicsArray = Array.isArray(next.topics) ? next.topics : []
-    const firstTopic = topicsArray[0]
-    const topicId = firstTopic
-      ? typeof firstTopic === 'string'
-        ? firstTopic
-        : (firstTopic as any)?.id
-      : ''
-    return {
-      subjectId,
-      topicId,
-      sessionType: next.sessionType,
-      startTime: next.startTime,
-      dayOfWeek: next.dayOfWeek,
-    }
-  }, [initialPlan])
-
-  function pushAssistant(text?: string, node?: ReactNode) {
-    setMessages((prev) => [
-      ...prev,
-      { id: `${Date.now()}-${prev.length}`, role: 'assistant', text, node },
-    ])
-  }
-  function pushUser(text?: string, node?: ReactNode) {
-    setMessages((prev) => [
-      ...prev,
-      { id: `${Date.now()}-${prev.length}`, role: 'user', text, node },
-    ])
+  // Build a quick lookup: subject ID → display name
+  const subjectMap: Record<string, string> = {}
+  for (const s of subjects) {
+    subjectMap[s.id as string] = s.name ?? (s.id as string)
   }
 
-  function startFlow() {
-    pushAssistant(
-      'Let’s set up a study plan together. I’ll ask a few quick questions and generate options for you to choose.',
-    )
-    pushAssistant(
-      undefined,
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">Pick your academic level</p>
-        <div className="grid grid-cols-2 gap-2">
-          {academicLevels.map((l) => (
-            <button
-              key={l.id as string}
-              type="button"
-              onClick={() => handleLevelSelect(l.id as string)}
-              className={`px-3 py-2 rounded-lg border ${academicLevelId === (l.id as string) ? 'bg-primary text-primary-foreground' : 'bg-input border-border text-foreground'}`}
-            >
-              {(l as any).name || (l.id as string)}
-            </button>
-          ))}
-        </div>
-      </div>,
-    )
-  }
-
-  function handleLevelSelect(id: string) {
-    setAcademicLevelId(id)
-    pushUser(`Selected level: ${id}`)
-    pushAssistant(
-      undefined,
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">What type of plan suits you?</p>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { v: 'regular_study', label: 'Regular Study' },
-            { v: 'exam_prep', label: 'Exam Prep' },
-            { v: 'revision', label: 'Revision' },
-            { v: 'catch_up', label: 'Catch Up' },
-            { v: 'advanced', label: 'Advanced' },
-          ].map((opt) => (
-            <button
-              key={opt.v}
-              type="button"
-              onClick={() => handlePlanTypeSelect(opt.v as StudyPlan['planType'])}
-              className={`px-3 py-2 rounded-lg border ${planType === (opt.v as any) ? 'bg-primary text-primary-foreground' : 'bg-input border-border text-foreground'}`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>,
-    )
-  }
-
-  function handlePlanTypeSelect(v: StudyPlan['planType']) {
-    setPlanType(v)
-    pushUser(`Plan type: ${v}`)
-    if (v === 'exam_prep') {
+  // Greeting on mount
+  useEffect(() => {
+    const hasPlan = initialPlan?.isActive
+    if (hasPlan) {
+      const count = initialPlan?.weeklySchedule?.length ?? 0
+      const days = new Set((initialPlan?.weeklySchedule ?? []).map((s) => s.dayOfWeek)).size
       pushAssistant(
-        undefined,
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">Select your target exam date</p>
-          <div className="flex gap-2 items-center">
-            <DatePicker
-              value={targetExamDate || ''}
-              onChange={(d) => {
-                setTargetExamDate(d)
-                pushUser(`Exam date set`)
-                askSubjects()
-              }}
-              captionLayout="dropdown"
-              fromYear={new Date().getFullYear() - 2}
-              toYear={new Date().getFullYear() + 2}
-            />
-          </div>
-        </div>,
+        `👋 Welcome back! You have an active study plan with **${count} sessions across ${days} days per week**.\n\nWould you like to **refine your current plan**, or start fresh? Just describe what you'd like to change.`,
       )
     } else {
-      askSubjects()
+      pushAssistant(
+        "👋 Hi! I'm your AI study planner. I'll create a personalised study schedule just for you.\n\n**To get started, tell me:**\n- Which subjects do you want to study?\n- When are you available? (days and times)\n- How long can you study per session?\n- Do you have a target exam date?\n\nYou can answer all at once or one at a time.",
+      )
     }
+  }, [])
+
+  // Auto-scroll
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [displayMessages, loading])
+
+  function pushAssistant(text: string, plan?: GeneratedPlan | null) {
+    setDisplayMessages((prev) => [
+      ...prev,
+      { id: `a-${Date.now()}-${prev.length}`, role: 'assistant', text, plan },
+    ])
   }
 
-  function askSubjects() {
-    pushAssistant(
-      undefined,
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">Pick subjects to include</p>
-        <BadgeSelect
-          ariaLabel="Select plan subjects"
-          options={subjects.map((s) => ({
-            value: s.id as string,
-            label: (s as any).name || (s.id as string),
-          }))}
-          selected={subjectsIds}
-          onChange={(next) => {
-            setSubjectsIds(next)
-            pushUser(`Selected ${next.length} subject(s)`)
-            askPreferences()
-          }}
-        />
-      </div>,
-    )
-  }
+  async function sendMessage(text: string) {
+    if (!text.trim() || loading) return
+    const userText = text.trim()
+    setInput('')
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
 
-  function askPreferences() {
-    pushAssistant(
-      undefined,
-      <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">Tell me your preferences</p>
-        <div className="grid grid-cols-1 gap-3">
-          <div>
-            <label className="block mb-1 text-sm text-muted-foreground">Preferred Study Time</label>
-            <select
-              value={preferences.preferredStudyTime || ''}
-              onChange={(e) =>
-                setPreferences({ ...preferences, preferredStudyTime: e.target.value as any })
-              }
-              className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
-            >
-              <option value="early_morning">Early Morning</option>
-              <option value="morning">Morning</option>
-              <option value="afternoon">Afternoon</option>
-              <option value="evening">Evening</option>
-              <option value="night">Night</option>
-              <option value="late_night">Late Night</option>
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block mb-1 text-sm text-muted-foreground">Session Duration</label>
-              <input
-                type="number"
-                value={preferences.sessionDuration || 60}
-                onChange={(e) =>
-                  setPreferences({ ...preferences, sessionDuration: Number(e.target.value) })
-                }
-                className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
-              />
-            </div>
-            <div>
-              <label className="block mb-1 text-sm text-muted-foreground">Break Duration</label>
-              <input
-                type="number"
-                value={preferences.breakDuration || 15}
-                onChange={(e) =>
-                  setPreferences({ ...preferences, breakDuration: Number(e.target.value) })
-                }
-                className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block mb-1 text-sm text-muted-foreground">Study Methods</label>
-            <BadgeSelect
-              ariaLabel="Select preferred study methods"
-              options={[
-                { value: 'reading', label: 'Reading' },
-                { value: 'video', label: 'Video Learning' },
-                { value: 'practice', label: 'Practice Questions' },
-                { value: 'notes', label: 'Note Taking' },
-                { value: 'group', label: 'Group Study' },
-                { value: 'flashcards', label: 'Flashcards' },
-              ]}
-              selected={(preferences.studyMethod || []) as string[]}
-              onChange={(next) => setPreferences({ ...preferences, studyMethod: next as any })}
-            />
-          </div>
-          <div>
-            <label className="block mb-1 text-sm text-muted-foreground">
-              Difficulty Preference
-            </label>
-            <select
-              value={preferences.difficultyPreference || 'easy_first'}
-              onChange={(e) =>
-                setPreferences({ ...preferences, difficultyPreference: e.target.value as any })
-              }
-              className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
-            >
-              <option value="easy_first">Start Easy</option>
-              <option value="hard_first">Start Hard</option>
-              <option value="mixed">Mixed</option>
-            </select>
-          </div>
-          <button
-            type="button"
-            onClick={generateOptions}
-            className="px-4 py-3 mt-2 rounded-lg bg-primary text-primary-foreground"
-          >
-            Generate Plan Options
-          </button>
-        </div>
-      </div>,
-    )
-  }
+    // Add user message to display
+    setDisplayMessages((prev) => [
+      ...prev,
+      { id: `u-${Date.now()}-${prev.length}`, role: 'user', text: userText },
+    ])
 
-  function generateOptions() {
-    pushUser('Generate plan options')
-    const start = timeForPreference(preferences.preferredStudyTime || 'morning')
-    const baseDaysBalanced = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
-    const baseDaysFocused = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-    const baseDaysLight = ['monday', 'wednesday', 'friday']
-    const sd = preferences.sessionDuration || 60
-    const subjectsCycle = subjectsIds.length
-      ? subjectsIds
-      : [subjects[0]?.id as string].filter(Boolean)
-    function sessionsFor(days: string[], perDay: number) {
-      const out: NonNullable<StudyPlan['weeklySchedule']> = []
-      let si = 0
-      for (const d of days) {
-        for (let i = 0; i < perDay; i++) {
-          const st = addMinutes(start, i * (sd + (preferences.breakDuration || 15)))
-          const et = addMinutes(st, sd)
-          const subj = subjectsCycle[si % subjectsCycle.length]
-          out.push({
-            dayOfWeek: d as any,
-            startTime: st,
-            endTime: et,
-            subject: subj,
-            topics: [],
-            sessionType: 'study',
-            isActive: true,
-          })
-          si++
-        }
-      }
-      return out
-    }
-    const balanced: Partial<StudyPlan> = {
-      planType,
-      academicLevel: academicLevelId,
-      targetExamDate: targetExamDate || undefined,
-      goals: `Balanced plan covering ${subjectsCycle.length} subject(s)`,
-      subjects: subjectsCycle,
-      weeklySchedule: sessionsFor(baseDaysBalanced, 1),
-      studyGoals: [],
-      milestones: [],
-      studyReminders: [],
-      studyPreferences: preferences,
-      timetable: [],
-      isActive: true,
-    }
-    const focused: Partial<StudyPlan> = {
-      planType,
-      academicLevel: academicLevelId,
-      targetExamDate: targetExamDate || undefined,
-      goals: `Focused plan with 2 sessions/day`,
-      subjects: subjectsCycle,
-      weeklySchedule: sessionsFor(baseDaysFocused, 2),
-      studyGoals: [],
-      milestones: [],
-      studyReminders: [],
-      studyPreferences: preferences,
-      timetable: [],
-      isActive: true,
-    }
-    const light: Partial<StudyPlan> = {
-      planType,
-      academicLevel: academicLevelId,
-      targetExamDate: targetExamDate || undefined,
-      goals: `Light plan, 3 sessions/week`,
-      subjects: subjectsCycle,
-      weeklySchedule: sessionsFor(baseDaysLight, 1),
-      studyGoals: [],
-      milestones: [],
-      studyReminders: [],
-      studyPreferences: preferences,
-      timetable: [],
-      isActive: true,
-    }
-    const variants = [balanced, focused, light]
-    setGeneratedPlans(variants)
-    setSelectedPlanIdx(0)
-    pushAssistant(
-      undefined,
-      <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          Here are some plan options. Pick one to preview.
-        </p>
-        <div className="grid grid-cols-1 gap-3">
-          {variants.map((v, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => setSelectedPlanIdx(idx)}
-              className={`text-left p-3 rounded-lg border ${selectedPlanIdx === idx ? 'bg-primary text-primary-foreground' : 'bg-input border-border text-foreground'}`}
-            >
-              {(v.goals as string) || 'Plan'}
-              <p className="mt-1 text-xs opacity-80">Sessions: {(v.weeklySchedule || []).length}</p>
-            </button>
-          ))}
-        </div>
-      </div>,
-    )
-    pushAssistant(
-      undefined,
-      <div className="flex gap-2 items-center">
-        <button
-          type="button"
-          onClick={confirmAndSave}
-          disabled={selectedPlanIdx == null}
-          className="px-4 py-3 rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
-        >
-          Confirm and Save
-        </button>
-      </div>,
-    )
-  }
+    const newEntry: GeminiMessage = { role: 'user', parts: [{ text: userText }] }
+    const updatedHistory = [...chatHistory, newEntry]
 
-  async function confirmAndSave() {
-    if (selectedPlanIdx == null) return
-    setSaving(true)
-    setStatusMessage('')
-    const chosen = generatedPlans[selectedPlanIdx]
-    const payload = {
-      academicLevel: chosen.academicLevel || academicLevelId,
-      planType: chosen.planType || planType,
-      targetExamDate: chosen.targetExamDate || undefined,
-      goals: chosen.goals || undefined,
-      subjects: chosen.subjects || subjectsIds,
-      weeklySchedule: chosen.weeklySchedule || [],
-      studyGoals: chosen.studyGoals || [],
-      milestones: chosen.milestones || [],
-      studyReminders: chosen.studyReminders || [],
-      studyPreferences: chosen.studyPreferences || preferences,
-      timetable: chosen.timetable || [],
-      isActive: true,
-    }
+    setLoading(true)
     try {
-      const res = await fetch('/api/custom/study-plans/upsert', {
+      const resp = await fetch('/api/custom/study-plans/generate', {
         method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: updatedHistory,
+          context: {
+            subjects: subjects.map((s) => ({ id: s.id, name: s.name })),
+            academicLevels: academicLevels.map((l) => ({ id: l.id, name: l.name })),
+          },
+        }),
+      })
+
+      const data = await resp.json()
+
+      if (!resp.ok) {
+        setDisplayMessages((prev) => [
+          ...prev,
+          {
+            id: `err-${Date.now()}`,
+            role: 'assistant',
+            text: data.error ?? 'Something went wrong. Please try again.',
+            isError: true,
+          },
+        ])
+        return
+      }
+
+      const replyText: string = data.reply ?? ''
+      const extractedPlan: GeneratedPlan | null = data.plan ?? null
+
+      const assistantEntry: GeminiMessage = { role: 'model', parts: [{ text: replyText }] }
+      setChatHistory([...updatedHistory, assistantEntry])
+
+      const visibleText = extractedPlan ? stripJsonBlock(replyText) : replyText
+      pushAssistant(visibleText, extractedPlan)
+    } catch {
+      setDisplayMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          role: 'assistant',
+          text: 'Failed to reach the AI. Please check your connection and try again.',
+          isError: true,
+        },
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function applyPlan(plan: GeneratedPlan) {
+    setSaving(true)
+    try {
+      // Validate subject IDs against known subjects
+      const validSubjectIds = [
+        ...new Set(
+          (plan.weeklySchedule ?? [])
+            .map((s) =>
+              typeof s.subject === 'string' ? s.subject : ((s.subject as any)?.id ?? ''),
+            )
+            .filter((id) => subjects.some((sub) => sub.id === id)),
+        ),
+      ]
+
+      const academicLevelId =
+        (typeof initialPlan?.academicLevel === 'string'
+          ? initialPlan.academicLevel
+          : (initialPlan?.academicLevel as any)?.id) ??
+        academicLevels[0]?.id ??
+        null
+
+      // Shape the payload to exactly match the Payload StudyPlan schema
+      const payload = {
+        goals: plan.goals,
+        planType: plan.planType,
+        targetExamDate: plan.targetExamDate ?? null,
+        subjects: validSubjectIds,
+        academicLevel: academicLevelId,
+        // weeklySchedule already matches StudyPlan['weeklySchedule'] shape via GeneratedPlan type
+        weeklySchedule: plan.weeklySchedule ?? [],
+        // studyGoals: uses .title per Payload schema (GeneratedPlan derives from StudyPlan)
+        studyGoals: (plan.studyGoals ?? []).map((g) => ({
+          title: g.title,
+          description: g.description ?? null,
+          targetDate: g.targetDate ?? null,
+          priority: g.priority ?? 'medium',
+          status: g.status ?? 'not_started',
+        })),
+        milestones: (plan.milestones ?? []).map((m) => ({
+          title: m.title,
+          description: m.description ?? null,
+          targetDate: m.targetDate ?? new Date().toISOString(),
+          isCompleted: false,
+        })),
+        // studyReminders: uses .title and .reminderTime per Payload schema
+        studyReminders: (plan.studyReminders ?? []).map((r) => ({
+          title: r.title,
+          message: r.message ?? null,
+          reminderTime: r.reminderTime,
+          reminderType: 'study_session' as const,
+          isRecurring: true,
+          recurrencePattern: 'weekly' as const,
+          isActive: r.isActive ?? true,
+        })),
+        studyPreferences: plan.studyPreferences ?? {},
+        timetable: [],
+        isActive: true,
+      }
+
+      const resp = await fetch('/api/custom/study-plans/upsert', {
+        method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      if (!res.ok) {
-        setStatusMessage('Failed to save study plan')
-      } else {
-        setStatusMessage('Study plan saved')
-        pushAssistant('Your plan is saved. You can start following it today.')
+
+      if (!resp.ok) {
+        pushAssistant('⚠️ Failed to save the plan. Please try again.')
+        return
       }
+
+      setSavedOk(true)
+      pushAssistant(
+        '✅ Your study plan has been saved! You can start following it right away. Would you like any adjustments?',
+      )
     } catch {
-      setStatusMessage('An error occurred')
+      pushAssistant('⚠️ An error occurred while saving. Please try again.')
     } finally {
       setSaving(false)
     }
   }
 
-  useEffect(() => {
-    const msgs: ChatMessage[] = []
-    if (initialPlan?.isActive) {
-      if (existingGuidance) {
-        msgs.push({
-          id: 'guidance',
-          role: 'assistant',
-          node: (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                You have an active plan. Next session: {existingGuidance.dayOfWeek}{' '}
-                {existingGuidance.startTime}
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                <a
-                  href={`/dashboard/learning${existingGuidance.subjectId ? `/${existingGuidance.subjectId}${existingGuidance.topicId ? `/${existingGuidance.topicId}` : ''}` : ''}`}
-                  className="flex gap-2 items-center px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-                >
-                  <BookOpen className="w-4 h-4" /> Learning
-                </a>
-                <a
-                  href={`/dashboard/testing/practice`}
-                  className="flex gap-2 items-center px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-                >
-                  <CheckCircle2 className="w-4 h-4" /> Practice
-                </a>
-                <a
-                  href={`/dashboard/videos`}
-                  className="flex gap-2 items-center px-3 py-2 rounded-lg border bg-input border-border text-foreground"
-                >
-                  <Clock className="w-4 h-4" /> Videos
-                </a>
-              </div>
-            </div>
-          ),
-        })
-      }
+  function handleRegenerate() {
+    sendMessage(
+      'Please regenerate the study plan with slightly different session timings or distribution.',
+    )
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage(input)
     }
-    setMessages(msgs)
-    startFlow()
-  }, [])
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setInput(e.target.value)
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`
+    }
+  }
+
+  function renderText(text: string) {
+    return text.split('\n').map((line, i) => {
+      const parts = line.split(/\*\*(.*?)\*\*/g)
+      return (
+        <p key={i} className={line === '' ? 'h-2' : ''}>
+          {parts.map((part, j) => (j % 2 === 1 ? <strong key={j}>{part}</strong> : part))}
+        </p>
+      )
+    })
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="p-4 rounded-2xl border bg-card border-border">
-        <div className="flex gap-2 items-center mb-2">
-          <MessageSquare className="w-4 h-4 text-primary" />
-          <p className="font-medium text-foreground">Interactive Planner</p>
+    <div className="flex flex-col h-[calc(100vh-260px)] min-h-[500px] rounded-2xl border border-border bg-card overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card/95">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary">
+          <Sparkles className="w-4 h-4 text-white" />
         </div>
-        <div className="space-y-3">
-          {messages.map((m) => (
-            <div
-              key={m.id}
-              className={`max-w-[90%] rounded-2xl px-3 py-2 ${m.role === 'assistant' ? 'bg-input text-foreground' : 'bg-primary text-primary-foreground ml-auto'}`}
+        <div>
+          <p className="text-sm font-semibold text-foreground">AI Study Planner</p>
+          <p className="text-xs text-muted-foreground">Powered by Google Gemini</p>
+        </div>
+        {savedOk && (
+          <span className="ml-auto text-xs text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-full">
+            Plan saved ✓
+          </span>
+        )}
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <AnimatePresence initial={false}>
+          {displayMessages.map((msg) => (
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
             >
-              {m.text && <p className="text-sm">{m.text}</p>}
-              {m.node}
+              <div
+                className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
+                  msg.role === 'user'
+                    ? 'bg-primary/10'
+                    : msg.isError
+                      ? 'bg-destructive/10'
+                      : 'bg-gradient-to-br from-primary to-secondary'
+                }`}
+              >
+                {msg.role === 'user' ? (
+                  <User className="w-3.5 h-3.5 text-primary" />
+                ) : msg.isError ? (
+                  <AlertCircle className="w-3.5 h-3.5 text-destructive" />
+                ) : (
+                  <Bot className="w-3.5 h-3.5 text-white" />
+                )}
+              </div>
+
+              <div
+                className={`flex flex-col gap-2 max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+              >
+                <div
+                  className={`px-3 py-2 rounded-2xl text-sm leading-relaxed space-y-1 ${
+                    msg.role === 'user'
+                      ? 'bg-primary text-primary-foreground rounded-tr-sm'
+                      : msg.isError
+                        ? 'bg-destructive/10 text-destructive rounded-tl-sm border border-destructive/20'
+                        : 'bg-input text-foreground rounded-tl-sm border border-border/50'
+                  }`}
+                >
+                  {renderText(msg.text)}
+                </div>
+
+                {msg.plan && (
+                  <div className="w-full max-w-md">
+                    <PlanPreviewCard
+                      plan={msg.plan}
+                      subjectMap={subjectMap}
+                      onApply={() => applyPlan(msg.plan!)}
+                      onRegenerate={handleRegenerate}
+                      saving={saving}
+                    />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {/* Typing animation */}
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex gap-3 items-start"
+          >
+            <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+              <Bot className="w-3.5 h-3.5 text-white" />
             </div>
+            <div className="px-3 py-2.5 rounded-2xl rounded-tl-sm bg-input border border-border/50">
+              <div className="flex gap-1 items-center">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-1.5 h-1.5 rounded-full bg-primary"
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+                  />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Quick prompts — only on first message */}
+      {displayMessages.length <= 1 && (
+        <div className="px-4 pb-2 flex flex-wrap gap-2">
+          {QUICK_PROMPTS.map((prompt, i) => (
+            <button
+              key={i}
+              onClick={() => sendMessage(prompt)}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border bg-input hover:bg-accent hover:border-primary/30 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronRight className="w-3 h-3 flex-shrink-0" />
+              {prompt.slice(0, 55)}…
+            </button>
           ))}
         </div>
-        <div className="flex gap-2 mt-3">
-          <input
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="Type a message or preference..."
-            className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+      )}
+
+      {/* Input */}
+      <div className="px-4 py-3 border-t border-border bg-card/95">
+        <div className="flex gap-2 items-end">
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            value={input}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Describe your goals, available times, subjects… (Enter to send)"
+            disabled={loading}
+            className="flex-1 px-3 py-2 rounded-xl border bg-input border-border text-foreground placeholder:text-muted-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 min-h-[40px] max-h-[120px]"
           />
           <button
-            type="button"
-            onClick={() => {
-              if (!inputText.trim()) return
-              pushUser(inputText.trim())
-              setInputText('')
-            }}
-            className="px-3 py-2 rounded-lg bg-primary text-primary-foreground"
+            onClick={() => sendMessage(input)}
+            disabled={loading || !input.trim()}
+            className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors"
           >
             <Send className="w-4 h-4" />
           </button>
         </div>
+        <p className="mt-1 text-xs text-muted-foreground text-center">
+          Shift+Enter for new line • Enter to send
+        </p>
       </div>
-      {generatedPlans.length > 0 && selectedPlanIdx != null && (
-        <div className="p-4 rounded-2xl border bg-card border-border">
-          <div className="flex gap-2 items-center mb-2">
-            <Wand2 className="w-4 h-4 text-primary" />
-            <p className="font-medium text-foreground">Selected Plan Preview</p>
-          </div>
-          <div className="space-y-2">
-            {(generatedPlans[selectedPlanIdx].weeklySchedule || []).map((s, i) => (
-              <div
-                key={`${s?.dayOfWeek}-${s?.startTime}-${i}`}
-                className="p-3 rounded-lg border bg-input border-border"
-              >
-                <p className="text-sm font-medium text-foreground">
-                  {s?.dayOfWeek} • {s?.startTime}–{s?.endTime}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {typeof s?.subject === 'string' ? s?.subject : (s?.subject as any) || 'Subject'}
-                </p>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2 items-center mt-3">
-            <button
-              type="button"
-              onClick={confirmAndSave}
-              disabled={saving}
-              className="px-4 py-3 rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Confirm and Save'}
-            </button>
-            {statusMessage && (
-              <span className="text-sm text-muted-foreground">{statusMessage}</span>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
