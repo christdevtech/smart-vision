@@ -44,92 +44,106 @@ const VALID_REMINDER_TYPES = [
 ] as const
 const VALID_RECURRENCE = ['daily', 'weekly', 'monthly'] as const
 
-type ValidPlanType = (typeof VALID_PLAN_TYPES)[number]
-type ValOrDefault<T> = (arr: readonly T[], val: unknown, fallback: T) => T
+/** Returns `val` if it's in `arr`, otherwise `fallback`. */
+function pick<T>(arr: readonly T[], val: unknown, fallback: T): T {
+  return (arr as unknown[]).includes(val) ? (val as T) : fallback
+}
 
-const pick: ValOrDefault<any> = (arr, val, fallback) =>
-  (arr as any[]).includes(val) ? val : fallback
+/** MongoDB ObjectId regex — 24 hex characters. */
+const OBJECT_ID_RE = /^[a-f\d]{24}$/i
+
+function isValidObjectId(id: unknown): id is string {
+  return typeof id === 'string' && OBJECT_ID_RE.test(id)
+}
 
 /**
  * Convert any date-like value to a valid ISO datetime string.
  * Handles: "HH:MM", ISO date-only "YYYY-MM-DD", full ISO strings, null/undefined.
- * Returns null if the value cannot be parsed.
+ * Returns null if the value cannot be parsed into a valid date.
  */
 function toISODateTime(value: unknown, timeOfDay = '08:00'): string | null {
   if (!value) return null
-
   const str = String(value).trim()
 
   // "HH:MM" only — anchor to next Monday at that time
   if (/^\d{2}:\d{2}$/.test(str)) {
     const [hh, mm] = str.split(':').map(Number)
-    const date = new Date()
-    const day = date.getDay()
-    const daysToMonday = day === 0 ? 1 : 8 - day
-    date.setDate(date.getDate() + daysToMonday)
-    date.setHours(hh, mm, 0, 0)
-    return date.toISOString()
+    const d = new Date()
+    const day = d.getDay()
+    d.setDate(d.getDate() + (day === 0 ? 1 : 8 - day))
+    d.setHours(hh, mm, 0, 0)
+    return d.toISOString()
   }
 
-  // "YYYY-MM-DD" date-only — add a time component
+  // "YYYY-MM-DD" date-only — add time component
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
     const [hh, mm] = timeOfDay.split(':').map(Number)
-    const date = new Date(`${str}T00:00:00`)
-    if (isNaN(date.getTime())) return null
-    date.setHours(hh, mm, 0, 0)
-    return date.toISOString()
+    const d = new Date(`${str}T00:00:00`)
+    if (isNaN(d.getTime())) return null
+    d.setHours(hh, mm, 0, 0)
+    return d.toISOString()
   }
 
-  // Already a full ISO string or something Date can parse
-  const date = new Date(str)
-  if (isNaN(date.getTime())) return null
-  return date.toISOString()
+  // Full ISO string or anything Date can parse
+  const d = new Date(str)
+  if (isNaN(d.getTime())) return null
+  return d.toISOString()
 }
 
 /**
- * Sanitise and normalise a raw study plan body from the AI into a shape
- * that exactly matches the Payload StudyPlans collection schema.
- * This is the single source of truth for data transformation.
+ * Sanitise and normalise a raw study plan body from the AI.
+ * validSubjectIds: Set of real MongoDB ObjectIds fetched from the DB.
+ * validAcademicLevelId: A real ObjectId for the academic level (from DB or user profile).
  */
-function sanitizeStudyPlan(raw: Record<string, any>, userId: string): Record<string, any> {
+function sanitizeStudyPlan(
+  raw: Record<string, any>,
+  userId: string,
+  validSubjectIds: Set<string>,
+  validAcademicLevelId: string,
+): Record<string, any> {
+  // Extract subject ID from a slot — accepts string or {id} object, validates against DB
+  function resolveSubjectId(s: unknown): string | null {
+    const id = typeof s === 'string' ? s : (s as any)?.id
+    return isValidObjectId(id) && validSubjectIds.has(id) ? id : null
+  }
+
   return {
     user: userId,
 
     goals: typeof raw.goals === 'string' ? raw.goals.slice(0, 1000) : null,
 
-    planType: pick(VALID_PLAN_TYPES, raw.planType, 'regular_study') as ValidPlanType,
+    planType: pick(VALID_PLAN_TYPES, raw.planType, 'regular_study'),
 
     targetExamDate: toISODateTime(raw.targetExamDate),
 
-    // subjects — array of IDs (strings)
+    // subjects — validated against real DB ObjectIds
     subjects: Array.isArray(raw.subjects)
-      ? (raw.subjects as any[])
-          .map((s) => (typeof s === 'string' ? s : s?.id))
-          .filter((id): id is string => typeof id === 'string' && id.length > 0)
+      ? (raw.subjects as unknown[])
+          .map(resolveSubjectId)
+          .filter((id): id is string => id !== null)
+          .filter((id, i, arr) => arr.indexOf(id) === i) // deduplicate
       : [],
 
-    academicLevel: raw.academicLevel ?? null,
+    academicLevel: validAcademicLevelId,
 
-    // weeklySchedule
+    // weeklySchedule — sessions with invalid or unrecognised subject IDs are dropped
     weeklySchedule: Array.isArray(raw.weeklySchedule)
       ? (raw.weeklySchedule as any[])
-          .filter((s) => s && VALID_DAYS.includes(s.dayOfWeek))
-          .map((s) => ({
-            dayOfWeek: pick(VALID_DAYS, s.dayOfWeek, 'monday'),
-            startTime: typeof s.startTime === 'string' ? s.startTime : '09:00',
-            endTime: typeof s.endTime === 'string' ? s.endTime : '10:00',
-            // subject must be a string ID
-            subject:
-              typeof s.subject === 'string'
-                ? s.subject
-                : typeof s.subject?.id === 'string'
-                  ? s.subject.id
-                  : null,
-            topics: [],
-            sessionType: pick(VALID_SESSION_TYPES, s.sessionType, 'study'),
-            isActive: s.isActive !== false,
-          }))
-          .filter((s) => s.subject) // drop sessions without a valid subject
+          .map((s) => {
+            const subjectId = resolveSubjectId(s.subject)
+            if (!subjectId) return null
+            if (!VALID_DAYS.includes(s.dayOfWeek)) return null
+            return {
+              dayOfWeek: s.dayOfWeek,
+              startTime: typeof s.startTime === 'string' ? s.startTime : '09:00',
+              endTime: typeof s.endTime === 'string' ? s.endTime : '10:00',
+              subject: subjectId,
+              topics: [],
+              sessionType: pick(VALID_SESSION_TYPES, s.sessionType, 'study'),
+              isActive: s.isActive !== false,
+            }
+          })
+          .filter((s): s is NonNullable<typeof s> => s !== null)
       : [],
 
     // studyGoals
@@ -138,7 +152,7 @@ function sanitizeStudyPlan(raw: Record<string, any>, userId: string): Record<str
           title:
             typeof g.title === 'string'
               ? g.title
-              : typeof g.goal === 'string' // AI may use 'goal' — accept it as fallback
+              : typeof g.goal === 'string'
                 ? g.goal
                 : 'Study goal',
           description: typeof g.description === 'string' ? g.description : null,
@@ -148,7 +162,7 @@ function sanitizeStudyPlan(raw: Record<string, any>, userId: string): Record<str
         }))
       : [],
 
-    // milestones — targetDate is required in Payload schema
+    // milestones — targetDate is required by Payload schema; default to 30 days from now
     milestones: Array.isArray(raw.milestones)
       ? (raw.milestones as any[]).map((m) => ({
           title: typeof m.title === 'string' ? m.title : 'Milestone',
@@ -160,17 +174,16 @@ function sanitizeStudyPlan(raw: Record<string, any>, userId: string): Record<str
         }))
       : [],
 
-    // studyReminders — reminderTime is a Payload date field (full ISO datetime required)
+    // studyReminders — reminderTime is type: 'date', needs full ISO datetime
     studyReminders: Array.isArray(raw.studyReminders)
       ? (raw.studyReminders as any[]).map((r) => ({
           title:
             typeof r.title === 'string'
               ? r.title
-              : typeof r.message === 'string' // AI may use 'message' — accept as title fallback
+              : typeof r.message === 'string'
                 ? r.message.slice(0, 100)
                 : 'Study reminder',
           message: typeof r.message === 'string' ? r.message : null,
-          // HH:MM → full ISO datetime anchored to next Monday
           reminderTime:
             toISODateTime(r.reminderTime ?? r.time) ??
             new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -181,7 +194,7 @@ function sanitizeStudyPlan(raw: Record<string, any>, userId: string): Record<str
         }))
       : [],
 
-    // studyPreferences — group field, each sub-field validated individually
+    // studyPreferences — validate every sub-field
     studyPreferences: {
       preferredStudyTime: pick(
         VALID_STUDY_TIMES,
@@ -198,11 +211,11 @@ function sanitizeStudyPlan(raw: Record<string, any>, userId: string): Record<str
         raw.studyPreferences.breakDuration > 0
           ? raw.studyPreferences.breakDuration
           : 15,
-      // studyMethod is a multi-select — filter to only valid enum values
+      // studyMethod is select+hasMany — filter to only valid enum values
       studyMethod: Array.isArray(raw.studyPreferences?.studyMethod)
-        ? (raw.studyPreferences.studyMethod as string[]).filter(
+        ? (raw.studyPreferences.studyMethod as unknown[]).filter(
             (m): m is (typeof VALID_STUDY_METHODS)[number] =>
-              (VALID_STUDY_METHODS as readonly string[]).includes(m),
+              (VALID_STUDY_METHODS as readonly unknown[]).includes(m),
           )
         : [],
       difficultyPreference: pick(
@@ -231,7 +244,56 @@ export async function POST(request: NextRequest) {
     }
 
     const raw = await request.json()
-    const data = sanitizeStudyPlan(raw, user.id)
+
+    // ---- Resolve a valid academicLevel ObjectId --------------------------------
+    // Prefer what the client sent; fall back to user's profile; fall back to first in DB.
+    let academicLevelId: string | null = isValidObjectId(raw.academicLevel)
+      ? raw.academicLevel
+      : null
+
+    if (!academicLevelId) {
+      // Try user profile
+      const userAcademicLevel = (user as any).academicLevel
+      if (isValidObjectId(userAcademicLevel)) {
+        academicLevelId = userAcademicLevel
+      } else if (typeof userAcademicLevel === 'object' && isValidObjectId(userAcademicLevel?.id)) {
+        academicLevelId = userAcademicLevel.id
+      }
+    }
+
+    if (!academicLevelId) {
+      // Fall back to first academic level in DB
+      const levels = await payload.find({ collection: 'academicLevels', limit: 1 })
+      academicLevelId = (levels.docs[0]?.id as string) ?? null
+    }
+
+    if (!academicLevelId) {
+      return NextResponse.json(
+        { error: 'No academic levels found in your system. Please add one in the admin panel.' },
+        { status: 400 },
+      )
+    }
+
+    // ---- Fetch all valid subject ObjectIds from the DB -------------------------
+    const allSubjects = await payload.find({ collection: 'subjects', limit: 500 })
+    const validSubjectIds = new Set(allSubjects.docs.map((s) => s.id as string))
+
+    // ---- Sanitize and save -----------------------------------------------------
+    const data = sanitizeStudyPlan(raw, user.id, validSubjectIds, academicLevelId)
+
+    // Warn in dev if the AI produced no sessions with valid subjects
+    if (
+      data.weeklySchedule.length === 0 &&
+      Array.isArray(raw.weeklySchedule) &&
+      raw.weeklySchedule.length > 0
+    ) {
+      console.warn(
+        '[study-plans/upsert] All weeklySchedule sessions were dropped — subject IDs not recognised:',
+        (raw.weeklySchedule as any[]).map((s: any) => s.subject),
+        'Valid IDs:',
+        [...validSubjectIds],
+      )
+    }
 
     const existing = await payload.find({
       collection: 'study-plans',
@@ -247,7 +309,10 @@ export async function POST(request: NextRequest) {
         data: data as any,
       })
     } else {
-      plan = await payload.create({ collection: 'study-plans', data: data as any })
+      plan = await payload.create({
+        collection: 'study-plans',
+        data: data as any,
+      })
     }
 
     return NextResponse.json({ plan }, { status: 200 })
