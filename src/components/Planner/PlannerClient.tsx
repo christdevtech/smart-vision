@@ -20,15 +20,20 @@ export default function PlannerClient({
   topics,
   initialPlan,
 }: PlannerClientProps) {
-  // If the user has no plan yet, start in chat mode to create one
   const [mode, setMode] = useState<'dashboard' | 'chat'>(
     initialPlan?.isActive ? 'dashboard' : 'chat',
   )
-  // Track the plan locally so we can refresh after the AI saves a new one
   const [plan, setPlan] = useState<StudyPlan | null>(initialPlan)
+  const [chatPrefill, setChatPrefill] = useState<string | undefined>(undefined)
 
-  function handlePlanSaved(updatedPlan?: StudyPlan) {
-    if (updatedPlan) setPlan(updatedPlan)
+  function handleAdjust(prefill?: string) {
+    setChatPrefill(prefill)
+    setMode('chat')
+  }
+
+  function handlePlanSaved(savedPlan?: StudyPlan) {
+    if (savedPlan) setPlan(savedPlan)
+    setChatPrefill(undefined)
     setMode('dashboard')
   }
 
@@ -52,6 +57,7 @@ export default function PlannerClient({
           subjects={subjects}
           topics={topics}
           initialPlan={plan}
+          initialMessage={chatPrefill}
           onPlanSaved={handlePlanSaved}
         />
       </div>
@@ -59,10 +65,18 @@ export default function PlannerClient({
   }
 
   if (!plan) {
-    // Shouldn't hit this, but guard anyway
-    setMode('chat')
-    return null
+    // No plan yet — render chat to create one
+    return (
+      <ChatPlanner
+        userId={userId}
+        academicLevels={academicLevels}
+        subjects={subjects}
+        topics={topics}
+        initialPlan={null}
+        onPlanSaved={handlePlanSaved}
+      />
+    )
   }
 
-  return <PlanDashboard plan={plan} subjects={subjects} onAdjust={() => setMode('chat')} />
+  return <PlanDashboard plan={plan} subjects={subjects} onAdjust={handleAdjust} />
 }

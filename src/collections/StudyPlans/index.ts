@@ -394,6 +394,57 @@ export const StudyPlans: CollectionConfig = {
       ],
     },
     {
+      name: 'sessionLogs',
+      type: 'array',
+      labels: { singular: 'Session Log', plural: 'Session Logs' },
+      admin: {
+        description: 'Record of completed, missed, or rescheduled study sessions',
+      },
+      fields: [
+        {
+          name: 'date',
+          type: 'date',
+          required: true,
+          admin: { description: 'The actual calendar date of the session' },
+        },
+        {
+          name: 'dayOfWeek',
+          type: 'select',
+          options: [
+            { label: 'Monday', value: 'monday' },
+            { label: 'Tuesday', value: 'tuesday' },
+            { label: 'Wednesday', value: 'wednesday' },
+            { label: 'Thursday', value: 'thursday' },
+            { label: 'Friday', value: 'friday' },
+            { label: 'Saturday', value: 'saturday' },
+            { label: 'Sunday', value: 'sunday' },
+          ],
+          required: true,
+        },
+        {
+          name: 'sessionIndex',
+          type: 'number',
+          required: true,
+          admin: { description: 'Index of the session in weeklySchedule array' },
+        },
+        {
+          name: 'status',
+          type: 'select',
+          required: true,
+          options: [
+            { label: 'Completed', value: 'completed' },
+            { label: 'Missed', value: 'missed' },
+            { label: 'Rescheduled', value: 'rescheduled' },
+          ],
+        },
+        {
+          name: 'note',
+          type: 'text',
+          admin: { description: 'Optional note about the session' },
+        },
+      ],
+    },
+    {
       name: 'analytics',
       type: 'group',
       admin: {
@@ -404,75 +455,61 @@ export const StudyPlans: CollectionConfig = {
           name: 'totalStudyHours',
           type: 'number',
           defaultValue: 0,
-          admin: {
-            readOnly: true,
-            description: 'Total hours studied',
-          },
+          admin: { readOnly: true, description: 'Total hours studied' },
         },
         {
           name: 'weeklyStudyHours',
           type: 'number',
           defaultValue: 0,
-          admin: {
-            readOnly: true,
-            description: 'Hours studied this week',
-          },
+          admin: { readOnly: true, description: 'Hours studied this week' },
         },
         {
           name: 'currentStreak',
           type: 'number',
           defaultValue: 0,
-          admin: {
-            readOnly: true,
-            description: 'Current study streak in days',
-          },
+          admin: { readOnly: true, description: 'Current study streak in weeks' },
         },
         {
           name: 'longestStreak',
           type: 'number',
           defaultValue: 0,
+          admin: { readOnly: true, description: 'Longest study streak in weeks' },
+        },
+        {
+          name: 'weeklyCompletionRate',
+          type: 'number',
+          defaultValue: 0,
           admin: {
             readOnly: true,
-            description: 'Longest study streak in days',
+            description: 'Sessions completed this week as a percentage (0-100)',
           },
         },
         {
           name: 'completedGoals',
           type: 'number',
           defaultValue: 0,
-          admin: {
-            readOnly: true,
-            description: 'Number of completed goals',
-          },
+          admin: { readOnly: true, description: 'Number of completed goals' },
         },
         {
           name: 'completedMilestones',
           type: 'number',
           defaultValue: 0,
-          admin: {
-            readOnly: true,
-            description: 'Number of completed milestones',
-          },
+          admin: { readOnly: true, description: 'Number of completed milestones' },
         },
         {
           name: 'averageSessionDuration',
           type: 'number',
           defaultValue: 0,
-          admin: {
-            readOnly: true,
-            description: 'Average study session duration in minutes',
-          },
+          admin: { readOnly: true, description: 'Average study session duration in minutes' },
         },
         {
           name: 'lastStudySession',
           type: 'date',
-          admin: {
-            readOnly: true,
-            description: 'Last study session date',
-          },
+          admin: { readOnly: true, description: 'Last study session date' },
         },
       ],
     },
+
     {
       name: 'isActive',
       type: 'checkbox',
@@ -509,12 +546,12 @@ export const StudyPlans: CollectionConfig = {
     beforeChange: [
       ({ data, operation }) => {
         const now = new Date()
-        
+
         if (operation === 'create') {
           data.createdAt = now
         }
         data.updatedAt = now
-        
+
         return data
       },
     ],

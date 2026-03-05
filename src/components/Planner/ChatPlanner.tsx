@@ -28,6 +28,7 @@ interface ChatPlannerProps {
   subjects: Subject[]
   topics: Topic[]
   initialPlan?: StudyPlan | null
+  initialMessage?: string
   onPlanSaved?: (plan?: StudyPlan) => void
 }
 
@@ -48,6 +49,7 @@ export default function ChatPlanner({
   subjects,
   topics,
   initialPlan,
+  initialMessage,
   onPlanSaved,
 }: ChatPlannerProps) {
   const [displayMessages, setDisplayMessages] = useState<DisplayMessage[]>([])
@@ -65,7 +67,7 @@ export default function ChatPlanner({
     subjectMap[s.id as string] = s.name ?? (s.id as string)
   }
 
-  // Greeting on mount
+  // Greeting on mount + optional prefill auto-send
   useEffect(() => {
     const hasPlan = initialPlan?.isActive
     if (hasPlan) {
@@ -79,7 +81,11 @@ export default function ChatPlanner({
         "👋 Hi! I'm your AI study planner. I'll create a personalised study schedule just for you.\n\n**To get started, tell me:**\n- Which subjects do you want to study?\n- When are you available? (days and times)\n- How long can you study per session?\n- Do you have a target exam date?\n\nYou can answer all at once or one at a time.",
       )
     }
-  }, [])
+    // If a prefill was passed (e.g. reschedule flow), auto-send it after greeting
+    if (initialMessage) {
+      setTimeout(() => sendMessage(initialMessage), 300)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-scroll
   useEffect(() => {
