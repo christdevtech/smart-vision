@@ -2,12 +2,11 @@ import { headers as getHeaders } from 'next/headers.js'
 import { getPayload } from 'payload'
 import React from 'react'
 import { redirect } from 'next/navigation'
-
 import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { Calendar } from 'lucide-react'
-import ChatPlanner from '@/components/Planner/ChatPlanner'
+import PlannerClient from '@/components/Planner/PlannerClient'
 
 export default async function StudyPlannerPage() {
   const headers = await getHeaders()
@@ -15,22 +14,23 @@ export default async function StudyPlannerPage() {
   const payload = await getPayload({ config: payloadConfig })
   const { user } = await payload.auth({ headers })
 
-  // Redirect to home if not authenticated
   if (!user) {
     redirect('/auth/login')
   }
 
-  const academicLevels = await payload.find({ collection: 'academicLevels', limit: 100 })
-  const subjects = await payload.find({ collection: 'subjects', limit: 100 })
-  const topics = await payload.find({ collection: 'topics', limit: 100 })
+  const [academicLevels, subjects, topics, existingPlan] = await Promise.all([
+    payload.find({ collection: 'academicLevels', limit: 100 }),
+    payload.find({ collection: 'subjects', limit: 100 }),
+    payload.find({ collection: 'topics', limit: 100 }),
+    payload.find({
+      collection: 'study-plans',
+      where: { user: { equals: user.id } },
+      limit: 1,
+      depth: 2,
+    }),
+  ])
 
-  const existingPlan = await payload.find({
-    collection: 'study-plans',
-    where: { user: { equals: user.id } },
-    limit: 1,
-  })
-
-  const initialPlan = existingPlan.docs[0] || null
+  const initialPlan = existingPlan.docs[0] ?? null
 
   return (
     <DashboardLayout user={user} title="Study Planner">
@@ -46,7 +46,7 @@ export default async function StudyPlannerPage() {
                 <div>
                   <h1 className="mb-2 text-3xl font-bold text-foreground">Study Planner</h1>
                   <p className="text-lg text-muted-foreground">
-                    Plan your study schedule, set goals, and track deadlines
+                    Your AI-powered personalised study schedule
                   </p>
                 </div>
               </div>
@@ -55,7 +55,7 @@ export default async function StudyPlannerPage() {
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
             <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <ChatPlanner
+              <PlannerClient
                 userId={user.id}
                 academicLevels={academicLevels.docs as any}
                 subjects={subjects.docs as any}

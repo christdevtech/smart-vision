@@ -28,6 +28,7 @@ interface ChatPlannerProps {
   subjects: Subject[]
   topics: Topic[]
   initialPlan?: StudyPlan | null
+  onPlanSaved?: (plan?: StudyPlan) => void
 }
 
 const QUICK_PROMPTS = [
@@ -47,6 +48,7 @@ export default function ChatPlanner({
   subjects,
   topics,
   initialPlan,
+  onPlanSaved,
 }: ChatPlannerProps) {
   const [displayMessages, setDisplayMessages] = useState<DisplayMessage[]>([])
   const [chatHistory, setChatHistory] = useState<GeminiMessage[]>([])
@@ -186,10 +188,11 @@ export default function ChatPlanner({
         return
       }
 
+      const data = await resp.json()
       setSavedOk(true)
-      pushAssistant(
-        '✅ Your study plan has been saved! You can start following it right away. Would you like any adjustments?',
-      )
+      pushAssistant('✅ Your study plan has been saved! Switching back to your plan view…')
+      // Give the user a moment to read the message before switching views
+      setTimeout(() => onPlanSaved?.(data.plan), 1800)
     } catch {
       pushAssistant('⚠️ An error occurred while saving. Please try again.')
     } finally {
