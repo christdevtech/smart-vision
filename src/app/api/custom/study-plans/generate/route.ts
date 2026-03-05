@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import config from '@/payload.config'
 
 const SYSTEM_PROMPT = `You are an expert AI study planner for Smart Vision, an educational platform for Cameroonian students (GCE O Level, A Level, etc.).
@@ -99,8 +98,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const { GoogleGenerativeAI } = await import('@google/generative-ai')
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
     // Build context string for the system prompt
     const subjectContext = context.subjects?.length
