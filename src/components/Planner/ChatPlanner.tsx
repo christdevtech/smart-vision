@@ -203,16 +203,26 @@ export default function ChatPlanner({
           targetDate: m.targetDate ?? new Date().toISOString(),
           isCompleted: false,
         })),
-        // studyReminders: uses .title and .reminderTime per Payload schema
-        studyReminders: (plan.studyReminders ?? []).map((r) => ({
-          title: r.title,
-          message: r.message ?? null,
-          reminderTime: r.reminderTime,
-          reminderType: 'study_session' as const,
-          isRecurring: true,
-          recurrencePattern: 'weekly' as const,
-          isActive: r.isActive ?? true,
-        })),
+        // studyReminders: reminderTime is a Payload date field — must be full ISO datetime
+        // Convert HH:MM from AI into next Monday at that time as the anchor datetime
+        studyReminders: (plan.studyReminders ?? []).map((r) => {
+          const [hh, mm] = (r.reminderTime ?? '08:00').split(':').map(Number)
+          const anchor = new Date()
+          // Move to next Monday
+          const dayOfWeek = anchor.getDay()
+          const daysToMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek
+          anchor.setDate(anchor.getDate() + daysToMonday)
+          anchor.setHours(hh, mm, 0, 0)
+          return {
+            title: r.title,
+            message: r.message ?? null,
+            reminderTime: anchor.toISOString(),
+            reminderType: 'study_session' as const,
+            isRecurring: true,
+            recurrencePattern: 'weekly' as const,
+            isActive: r.isActive ?? true,
+          }
+        }),
         studyPreferences: plan.studyPreferences ?? {},
         timetable: [],
         isActive: true,
