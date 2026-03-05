@@ -1,0 +1,1 @@
+export { afterChangeTestResult } from './afterChangeTestResult'

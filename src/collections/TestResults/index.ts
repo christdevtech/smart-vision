@@ -2,6 +2,7 @@ import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
 import { selfOrAdmin } from '@/access/selfOrAdmin'
 import { authenticated } from '@/access/authenticated'
+import { afterChangeTestResult } from './hooks'
 
 export const TestResults: CollectionConfig = {
   slug: 'test-results',
@@ -264,4 +265,7 @@ export const TestResults: CollectionConfig = {
     },
   ],
   timestamps: true,
+  hooks: {
+    afterChange: [afterChangeTestResult],
+  },
 }

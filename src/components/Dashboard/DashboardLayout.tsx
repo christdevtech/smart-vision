@@ -35,7 +35,7 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { unreadCount } = useNotifications()
+  const { unreadCount } = useNotifications(user?.id)
 
   // Handle mobile detection
   useEffect(() => {
@@ -189,6 +189,7 @@ export default function DashboardLayout({
       <NotificationCenter
         isOpen={isNotificationCenterOpen}
         onClose={() => setIsNotificationCenterOpen(false)}
+        userId={user?.id}
       />
     </div>
   )

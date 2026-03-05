@@ -15,6 +15,7 @@ import {
   Download,
   Crown,
   FileQuestion,
+  Bell,
   X,
   ChevronRight,
 } from 'lucide-react'
@@ -116,6 +117,13 @@ export function SidebarNavigation({
         activeIcon: BarChart3,
       },
       {
+        href: '/dashboard/notifications',
+        label: 'Notifications',
+        icon: Bell,
+        activeIcon: Bell,
+        badge: notificationCount > 0 ? notificationCount : undefined,
+      },
+      {
         href: '/dashboard/referrals',
         label: 'Referrals',
         icon: Users,
@@ -134,7 +142,7 @@ export function SidebarNavigation({
         activeIcon: User,
       },
     ],
-    [],
+    [notificationCount],
   )
 
   const isRouteActive = (href: string) => {

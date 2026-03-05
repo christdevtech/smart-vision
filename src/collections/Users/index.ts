@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { beforeChangeUser } from './hooks'
+import { beforeChangeUser, afterChangeUser } from './hooks'
 import { anyone } from '@/access/anyone'
 import { authenticated } from '@/access/authenticated'
 import { selfOrAdmin } from '@/access/selfOrAdmin'
@@ -129,6 +129,7 @@ export const Users: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [beforeChangeUser],
+    afterChange: [afterChangeUser],
   },
   timestamps: true,
 }

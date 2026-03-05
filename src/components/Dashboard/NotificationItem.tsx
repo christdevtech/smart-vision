@@ -1,9 +1,10 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Notification } from '@/payload-types'
-import { Clock, X, ExternalLink } from 'lucide-react'
+import { Clock, X } from 'lucide-react'
 
 interface NotificationItemProps {
   notification: Notification
@@ -13,51 +14,58 @@ interface NotificationItemProps {
 
 const priorityColors = {
   low: 'border-l-muted-foreground',
-  medium: 'border-l-warning',
+  normal: 'border-l-warning',
   high: 'border-l-warning',
-  urgent: 'border-l-destructive'
+  urgent: 'border-l-destructive',
 }
 
-const typeIcons = {
+const typeIcons: Record<string, string> = {
   system: '⚙️',
   payment: '💳',
+  subscription: '👑',
   content: '📚',
   achievement: '🏆',
   reminder: '⏰',
-  update: '🔄'
+  referral: '🤝',
+  study_plan: '📅',
+  test_result: '📊',
+  general: '📢',
 }
 
 export const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
   onMarkAsRead,
-  onDelete
+  onDelete,
 }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-    
+
     if (diffInHours < 1) return 'Just now'
     if (diffInHours < 24) return `${diffInHours}h ago`
     if (diffInHours < 48) return 'Yesterday'
     return date.toLocaleDateString()
   }
 
-  const priorityColor = priorityColors[notification.priority as keyof typeof priorityColors] || priorityColors.medium
+  const priorityColor =
+    priorityColors[notification.priority as keyof typeof priorityColors] || priorityColors.normal
   const typeIcon = typeIcons[notification.type as keyof typeof typeIcons] || '📢'
+
+  const isInternalLink = notification.actionLink && !notification.actionLink.startsWith('http')
 
   return (
     <motion.div
       className={`
         relative p-4 border-l-4 ${priorityColor}
-        ${notification.isRead ? 'bg-dashboard-card/50' : 'bg-dashboard-card'}
+        ${notification.isRead ? 'bg-card/50 opacity-75' : 'bg-card'}
         border border-border rounded-r-lg
         hover:bg-accent/50 transition-colors duration-200
       `}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: 300 }}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.01 }}
       layout
     >
       {/* Unread indicator */}
@@ -67,14 +75,16 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 
       <div className="flex items-start gap-3">
         {/* Type icon */}
-        <div className="flex-shrink-0 text-lg">
-          {typeIcon}
-        </div>
+        <div className="flex-shrink-0 text-lg">{typeIcon}</div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
-            <h4 className={`text-sm font-medium ${notification.isRead ? 'text-muted-foreground' : 'text-foreground'}`}>
+            <h4
+              className={`text-sm font-medium ${
+                notification.isRead ? 'text-muted-foreground' : 'text-foreground'
+              }`}
+            >
               {notification.title}
             </h4>
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
@@ -85,32 +95,42 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
               <button
                 onClick={onDelete}
                 className="text-muted-foreground hover:text-destructive transition-colors"
+                aria-label="Delete notification"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
-          
-          <p className={`mt-1 text-sm ${notification.isRead ? 'text-muted-foreground' : 'text-foreground/80'}`}>
+
+          <p
+            className={`mt-1 text-sm ${
+              notification.isRead ? 'text-muted-foreground' : 'text-foreground/80'
+            }`}
+          >
             {notification.message}
           </p>
 
           {/* Action buttons */}
-          <div className="mt-3 flex items-center gap-2">
-            {notification.actionLink && (
-              <button
-                onClick={() => {
-                  if (notification.actionLink) {
-                    window.open(notification.actionLink, '_blank')
-                  }
-                }}
-                className="flex items-center gap-1 text-xs bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1 rounded-lg transition-colors"
-              >
-                <ExternalLink className="w-3 h-3" />
-                {notification.actionLabel || 'View Details'}
-              </button>
-            )}
-            
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
+            {notification.actionLink &&
+              (isInternalLink ? (
+                <Link
+                  href={notification.actionLink}
+                  className="flex items-center gap-1 text-xs bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1 rounded-lg transition-colors"
+                >
+                  {notification.actionLabel || 'View Details'}
+                </Link>
+              ) : (
+                <a
+                  href={notification.actionLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1 rounded-lg transition-colors"
+                >
+                  {notification.actionLabel || 'View Details'}
+                </a>
+              ))}
+
             {!notification.isRead && (
               <button
                 onClick={onMarkAsRead}

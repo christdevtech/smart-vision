@@ -1,6 +1,5 @@
 // storage-adapter-import-placeholder
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
-import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { resendAdapter } from '@payloadcms/email-resend'
 import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'

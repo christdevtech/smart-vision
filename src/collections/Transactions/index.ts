@@ -8,6 +8,7 @@ import {
   getSubscriptionCosts,
 } from '@/utilities/subscription'
 import { updateSubscriptions } from './hooks/updateSubscriptions'
+import { afterChangeTransaction } from './hooks/afterChangeTransaction'
 
 export const Transactions: CollectionConfig = {
   slug: 'transactions',
@@ -179,6 +180,6 @@ export const Transactions: CollectionConfig = {
     },
   ],
   hooks: {
-    afterChange: [updateSubscriptions],
+    afterChange: [updateSubscriptions, afterChangeTransaction],
   },
 }

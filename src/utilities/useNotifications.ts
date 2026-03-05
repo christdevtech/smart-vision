@@ -3,7 +3,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Notification } from '../payload-types'
 
-export type NotificationFilter = 'all' | 'unread' | 'system' | 'payment' | 'content' | 'achievement'
+export type NotificationFilter =
+  | 'all'
+  | 'unread'
+  | 'system'
+  | 'payment'
+  | 'content'
+  | 'achievement'
+  | 'subscription'
+  | 'referral'
+  | 'study_plan'
+  | 'test_result'
+  | 'reminder'
 
 interface UseNotificationsReturn {
   notifications: Notification[]
@@ -21,25 +32,33 @@ interface UseNotificationsReturn {
   filteredNotifications: Notification[]
 }
 
-export function useNotifications(): UseNotificationsReturn {
+export function useNotifications(userId?: string | null): UseNotificationsReturn {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<NotificationFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Fetch notifications from API
+  // Fetch notifications from API — filtered to current user via Payload REST query params
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const response = await fetch('/api/notifications', {
+      const params = new URLSearchParams({
+        sort: '-createdAt',
+        limit: '50',
+        'where[isActive][equals]': 'true',
+      })
+
+      if (userId) {
+        params.set('where[recipient][equals]', userId)
+      }
+
+      const response = await fetch(`/api/notifications?${params.toString()}`, {
         method: 'GET',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       })
 
       if (!response.ok) {
@@ -54,34 +73,24 @@ export function useNotifications(): UseNotificationsReturn {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [userId])
 
-  // Mark notification as read
+  // Mark a single notification as read
   const markAsRead = useCallback(async (id: string) => {
     try {
       const response = await fetch(`/api/notifications/${id}`, {
         method: 'PATCH',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          isRead: true,
-          readAt: new Date().toISOString(),
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isRead: true, readAt: new Date().toISOString() }),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to mark notification as read')
-      }
+      if (!response.ok) throw new Error('Failed to mark notification as read')
 
-      // Update local state
-      setNotifications(prev =>
-        prev.map(notification =>
-          notification.id === id
-            ? { ...notification, isRead: true, readAt: new Date().toISOString() }
-            : notification
-        )
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n,
+        ),
       )
     } catch (err) {
       console.error('Error marking notification as read:', err)
@@ -89,35 +98,27 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [])
 
-  // Mark all notifications as read
+  // Mark all unread notifications as read
   const markAllAsRead = useCallback(async () => {
+    const unreadIds = notifications.filter((n) => !n.isRead).map((n) => n.id)
+    if (unreadIds.length === 0) return
+
     try {
-      const unreadIds = notifications
-        .filter(n => !n.isRead)
-        .map(n => n.id)
-
-      if (unreadIds.length === 0) return
-
       const response = await fetch('/api/custom/notifications/mark-all-read', {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: unreadIds }),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to mark all notifications as read')
-      }
+      if (!response.ok) throw new Error('Failed to mark all notifications as read')
 
-      // Update local state
-      setNotifications(prev =>
-        prev.map(notification => ({
-          ...notification,
+      setNotifications((prev) =>
+        prev.map((n) => ({
+          ...n,
           isRead: true,
-          readAt: notification.readAt || new Date().toISOString(),
-        }))
+          readAt: n.readAt || new Date().toISOString(),
+        })),
       )
     } catch (err) {
       console.error('Error marking all notifications as read:', err)
@@ -125,7 +126,7 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [notifications])
 
-  // Delete notification
+  // Delete a notification
   const deleteNotification = useCallback(async (id: string) => {
     try {
       const response = await fetch(`/api/notifications/${id}`, {
@@ -133,59 +134,43 @@ export function useNotifications(): UseNotificationsReturn {
         credentials: 'include',
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to delete notification')
-      }
+      if (!response.ok) throw new Error('Failed to delete notification')
 
-      // Update local state
-      setNotifications(prev => prev.filter(notification => notification.id !== id))
+      setNotifications((prev) => prev.filter((n) => n.id !== id))
     } catch (err) {
       console.error('Error deleting notification:', err)
       setError(err instanceof Error ? err.message : 'Failed to delete notification')
     }
   }, [])
 
-  // Refresh notifications
+  // Refresh
   const refreshNotifications = useCallback(async () => {
     await fetchNotifications()
   }, [fetchNotifications])
 
-  // Filter and search notifications
-  const filteredNotifications = notifications.filter(notification => {
-    // Apply filter
+  // Filter + search
+  const filteredNotifications = notifications.filter((notification) => {
     if (filter === 'unread' && notification.isRead) return false
     if (filter !== 'all' && filter !== 'unread' && notification.type !== filter) return false
 
-    // Apply search
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
+      const q = searchQuery.toLowerCase()
       return (
-        notification.title.toLowerCase().includes(query) ||
-        notification.message.toLowerCase().includes(query)
+        notification.title.toLowerCase().includes(q) ||
+        notification.message.toLowerCase().includes(q)
       )
     }
-
     return true
   })
 
-  // Calculate unread count
-  const unreadCount = notifications.filter(n => !n.isRead).length
+  const unreadCount = notifications.filter((n) => !n.isRead).length
 
-  // Initial fetch and setup polling for real-time updates
+  // Initial load + 30s polling
   useEffect(() => {
     fetchNotifications()
-
-    // Set up polling for real-time updates (every 30 seconds)
     const interval = setInterval(fetchNotifications, 30000)
-
     return () => clearInterval(interval)
   }, [fetchNotifications])
-
-  // Set up WebSocket connection for real-time notifications (if available)
-  useEffect(() => {
-    // This would be implemented if WebSocket support is added
-    // For now, we rely on polling
-  }, [])
 
   return {
     notifications,

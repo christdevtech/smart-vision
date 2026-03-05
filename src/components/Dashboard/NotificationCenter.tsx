@@ -1,28 +1,30 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Bell, Check, Trash2, Settings } from 'lucide-react'
+import { X, Bell, Check, ExternalLink } from 'lucide-react'
 import { useNotifications } from '@/utilities/useNotifications'
 import { NotificationItem } from './NotificationItem'
 
 interface NotificationCenterProps {
   isOpen: boolean
   onClose: () => void
+  userId?: string | null
 }
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   isOpen,
   onClose,
+  userId,
 }) => {
-  const { notifications, markAsRead, deleteNotification, markAllAsRead } = useNotifications()
-  const [filter, setFilter] = useState<'all' | 'unread'>('all')
+  const { notifications, markAsRead, deleteNotification, markAllAsRead, loading } =
+    useNotifications(userId)
+  const [filter, setFilter] = React.useState<'all' | 'unread'>('all')
 
-  const filteredNotifications = notifications.filter(notification => 
-    filter === 'all' || !notification.isRead
-  )
+  const filteredNotifications = notifications.filter((n) => (filter === 'all' ? true : !n.isRead))
 
-  const unreadCount = notifications.filter(n => !n.isRead).length
+  const unreadCount = notifications.filter((n) => !n.isRead).length
 
   return (
     <AnimatePresence>
@@ -89,7 +91,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             </div>
 
             {/* Actions */}
-            {notifications.length > 0 && (
+            {unreadCount > 0 && (
               <div className="flex items-center gap-2 p-4 border-b border-border">
                 <button
                   onClick={markAllAsRead}
@@ -98,24 +100,24 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                   <Check className="w-4 h-4" />
                   Mark All Read
                 </button>
-                <button className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm rounded-lg transition-colors">
-                  <Settings className="w-4 h-4" />
-                  Settings
-                </button>
               </div>
             )}
 
             {/* Notifications List */}
             <div className="flex-1 overflow-y-auto">
-              {filteredNotifications.length === 0 ? (
+              {loading ? (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm">Loading…</p>
+                </div>
+              ) : filteredNotifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <Bell className="w-12 h-12 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">No notifications</p>
                   <p className="text-sm text-center px-4">
-                    {filter === 'unread' 
+                    {filter === 'unread'
                       ? "You're all caught up! No unread notifications."
-                      : "You'll see notifications here when you have them."
-                    }
+                      : "You'll see notifications here when you have them."}
                   </p>
                 </div>
               ) : (
@@ -130,6 +132,18 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Footer — View All link */}
+            <div className="border-t border-border p-3 flex-shrink-0">
+              <Link
+                href="/dashboard/notifications"
+                onClick={onClose}
+                className="flex items-center justify-center gap-2 w-full py-2 text-sm text-primary hover:bg-accent rounded-lg transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                View all notifications
+              </Link>
             </div>
           </motion.div>
         </>
