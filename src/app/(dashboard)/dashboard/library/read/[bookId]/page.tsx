@@ -9,7 +9,7 @@ import { BookOpen, Lock } from 'lucide-react'
 import { Book } from '@/payload-types'
 import BookProgressTracker from '@/components/Progress/BookProgressTracker'
 import { Subscription } from '@/payload-types'
-import { isSubscriptionActive } from '@/utilities/subscription'
+import { isSubscriptionActive, hasTierAccess, SubscriptionPlan } from '@/utilities/subscription'
 import PDFReader from '@/components/Library/PDFReader'
 import RichText from '@/components/RichText'
 import Link from 'next/link'
@@ -71,17 +71,17 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
   const sub = (subsRes.docs?.[0] as Subscription) || null
   const subscriptionActive = isSubscriptionActive(sub)
 
-  // Bug fix 2: check the book's subscriptionTiers against the user's actual plan
-  // A user must have the right plan level — not just any active subscription
-  const userPlan: string = (sub as any)?.plan ?? 'free'
-  const bookTiers: string[] = (bookDoc.subscriptionTiers as string[]) ?? []
+  // Rank-based tier check: a higher-tier user is never blocked from lower-tier content.
+  // e.g. annual ⊇ monthly ⊇ free
+  const userPlan: SubscriptionPlan = sub?.plan ?? 'free'
+  const bookTiers: SubscriptionPlan[] = (bookDoc.subscriptionTiers as SubscriptionPlan[]) ?? []
 
-  // Access is granted when:
-  // (a) book requires no subscription, OR
-  // (b) book is subscription-gated AND user has an active subscription whose plan matches a tier
-  const hasTierAccess =
-    !bookDoc.subscriptionRequired ||
-    (subscriptionActive && (bookTiers.length === 0 || bookTiers.includes(userPlan)))
+  const tierAccess = hasTierAccess(
+    userPlan,
+    bookTiers,
+    bookDoc.subscriptionRequired,
+    subscriptionActive,
+  )
 
   // Resolve PDF URL — try populated object first, fall back gracefully
   const pdfMedia = bookDoc.pdf as any
@@ -131,7 +131,7 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
               )}
 
               {/* Tier mismatch message (has subscription but wrong tier) */}
-              {bookDoc.subscriptionRequired && subscriptionActive && !hasTierAccess && (
+              {bookDoc.subscriptionRequired && subscriptionActive && !tierAccess && (
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-4 rounded-xl border bg-input border-border">
                   <div>
                     <p className="text-sm font-medium text-foreground">Upgrade Required</p>
@@ -180,9 +180,9 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
               )}
 
               {/* PDF Reader — only when access is granted AND pdf is available */}
-              {hasTierAccess && pdfFilename ? (
+              {tierAccess && pdfFilename ? (
                 <PDFReader filename={pdfFilename} />
-              ) : hasTierAccess && !pdfFilename ? (
+              ) : tierAccess && !pdfFilename ? (
                 <div className="p-4 rounded-lg border bg-input border-border text-center">
                   <p className="text-sm text-muted-foreground">
                     PDF file is not available for this book. Please contact support.

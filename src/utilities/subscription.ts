@@ -1,22 +1,23 @@
-import { Setting, Subscription } from '@/payload-types'
+import { Setting, Subscription, Transaction } from '@/payload-types'
 import { Payload } from 'payload'
 
-export interface SubscriptionPlan {
-  type: 'monthly' | 'yearly'
-  duration: number // in days
-  amount: number
-}
+/**
+ * Derived types from the generated Payload schema.
+ * These stay in sync automatically whenever payload generate:types is re-run.
+ */
+export type SubscriptionPlan = Subscription['plan'] // 'free' | 'monthly' | 'annual'
+export type SubscriptionStatus = NonNullable<Subscription['paymentStatus']> // 'pending' | 'paid' | 'failed' | 'expired'
 
 export interface CreateSubscriptionParams {
   userId: string
-  plan: 'monthly' | 'annual'
+  plan: SubscriptionPlan
   amount: number
   transactionId?: string
 }
 
 export interface UpdateSubscriptionParams {
   subscriptionId: string
-  plan: 'monthly' | 'annual'
+  plan: SubscriptionPlan
   amount: number
   transactionId?: string
 }
@@ -27,7 +28,7 @@ export interface UpdateSubscriptionParams {
 export function determineSubscriptionPlan(
   amount: number,
   subscriptionCosts: Setting['subscriptionCosts'],
-): 'monthly' | 'annual' | null {
+): Exclude<SubscriptionPlan, 'free'> | null {
   const monthlyAmount = subscriptionCosts?.monthly || 3000
   const yearlyAmount = subscriptionCosts?.yearly || 30000
 
@@ -48,7 +49,10 @@ export function determineSubscriptionPlan(
 /**
  * Calculates subscription end date based on plan
  */
-export function calculateSubscriptionEndDate(startDate: Date, plan: 'monthly' | 'annual'): Date {
+export function calculateSubscriptionEndDate(
+  startDate: Date,
+  plan: Exclude<SubscriptionPlan, 'free'>,
+): Date {
   const endDate = new Date(startDate)
 
   if (plan === 'monthly') {
@@ -67,27 +71,28 @@ export async function createSubscription(
   payload: Payload,
   params: CreateSubscriptionParams,
 ): Promise<Subscription> {
-  const { userId, plan, amount, transactionId } = params
+  const { userId, plan, amount: _amount, transactionId } = params
 
   const startDate = new Date()
-  const endDate = calculateSubscriptionEndDate(startDate, plan)
+  // Free plan has no end date concept — default to 1 year ahead
+  const endDate =
+    plan === 'free'
+      ? new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+      : calculateSubscriptionEndDate(startDate, plan)
 
-  const subscriptionData: any = {
+  const subscriptionData = {
     user: userId,
     plan,
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),
-    paymentStatus: 'pending',
+    paymentStatus: 'pending' as SubscriptionStatus,
+    ...(transactionId ? { transactions: [transactionId] } : {}),
   }
 
-  if (transactionId) {
-    subscriptionData.transactions = [transactionId]
-  }
-
-  return await payload.create({
+  return (await payload.create({
     collection: 'subscriptions',
     data: subscriptionData,
-  })
+  })) as Subscription
 }
 
 /**
@@ -100,10 +105,10 @@ export async function updateSubscriptionAfterPayment(
   const { subscriptionId, plan, transactionId } = params
 
   // Get current subscription
-  const currentSubscription = await payload.findByID({
+  const currentSubscription = (await payload.findByID({
     collection: 'subscriptions',
     id: subscriptionId,
-  })
+  })) as Subscription
 
   if (!currentSubscription) {
     throw new Error('Subscription not found')
@@ -117,9 +122,18 @@ export async function updateSubscriptionAfterPayment(
     startDate = new Date(currentSubscription.endDate)
   }
 
-  const endDate = calculateSubscriptionEndDate(startDate, plan)
+  const endDate =
+    plan === 'free'
+      ? new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+      : calculateSubscriptionEndDate(startDate, plan)
 
-  const updateData: any = {
+  const updateData: {
+    plan: SubscriptionPlan
+    startDate: string
+    endDate: string
+    paymentStatus: SubscriptionStatus
+    transactions?: string[]
+  } = {
     plan,
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),
@@ -128,17 +142,19 @@ export async function updateSubscriptionAfterPayment(
 
   // Add transaction to the list if provided
   if (transactionId) {
-    const existingTransactions = currentSubscription.transactions || []
-    if (!existingTransactions.includes(transactionId)) {
-      updateData.transactions = [...existingTransactions, transactionId]
+    const existing = (currentSubscription.transactions ?? []).map((t) =>
+      typeof t === 'string' ? t : (t as Transaction).id,
+    )
+    if (!existing.includes(transactionId)) {
+      updateData.transactions = [...existing, transactionId]
     }
   }
 
-  return await payload.update({
+  return (await payload.update({
     collection: 'subscriptions',
     id: subscriptionId,
     data: updateData,
-  })
+  })) as Subscription
 }
 
 /**
@@ -147,7 +163,7 @@ export async function updateSubscriptionAfterPayment(
 export async function findOrCreateUserSubscription(
   payload: Payload,
   userId: string,
-  plan: 'monthly' | 'annual',
+  plan: SubscriptionPlan,
   amount: number,
   transactionId?: string,
 ): Promise<Subscription> {
@@ -163,8 +179,7 @@ export async function findOrCreateUserSubscription(
   })
 
   if (existingSubscriptions.docs.length > 0) {
-    // Update existing subscription
-    const subscription = existingSubscriptions.docs[0]
+    const subscription = existingSubscriptions.docs[0] as Subscription
     return await updateSubscriptionAfterPayment(payload, {
       subscriptionId: subscription.id,
       plan,
@@ -172,7 +187,6 @@ export async function findOrCreateUserSubscription(
       transactionId,
     })
   } else {
-    // Create new subscription
     return await createSubscription(payload, {
       userId,
       plan,
@@ -183,9 +197,9 @@ export async function findOrCreateUserSubscription(
 }
 
 /**
- * Checks if a subscription is currently active
+ * Checks if a subscription is currently active (paid & not expired).
  */
-export function isSubscriptionActive(subscription: any): boolean {
+export function isSubscriptionActive(subscription: Subscription | null | undefined): boolean {
   if (!subscription || subscription.paymentStatus !== 'paid') {
     return false
   }
@@ -220,4 +234,41 @@ export async function getSubscriptionCosts(
       yearly: 30000,
     }
   }
+}
+
+/**
+ * Subscription plan hierarchy.
+ * Higher rank = more privileged. A user at rank N can access all content at rank ≤ N.
+ */
+export const PLAN_RANK: Record<SubscriptionPlan, number> = {
+  free: 0,
+  monthly: 1,
+  annual: 2,
+}
+
+/**
+ * Rank-based tier access check.
+ *
+ * A higher-tier subscriber is never blocked from lower-tier content:
+ *   annual ⊇ monthly ⊇ free
+ *
+ * Rules:
+ * - subscriptionRequired is false → always granted.
+ * - bookTiers is empty → any active subscription suffices.
+ * - Otherwise: userRank >= minRank(bookTiers) && subscriptionActive.
+ */
+export function hasTierAccess(
+  userPlan: SubscriptionPlan,
+  bookTiers: SubscriptionPlan[],
+  subscriptionRequired: boolean | null | undefined,
+  subscriptionActive: boolean,
+): boolean {
+  if (!subscriptionRequired) return true
+
+  if (bookTiers.length === 0) return subscriptionActive
+
+  const userRank = PLAN_RANK[userPlan]
+  const minRequiredRank = Math.min(...bookTiers.map((t) => PLAN_RANK[t]))
+
+  return subscriptionActive && userRank >= minRequiredRank
 }
