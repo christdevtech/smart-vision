@@ -21,15 +21,17 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      ...[NEXT_PUBLIC_SERVER_URL, 'https://smartvisioncm.com'].map((item) => {
-        const url = new URL(item)
+      ...[NEXT_PUBLIC_SERVER_URL, 'https://smartvisioncm.com', 'https://www.smartvisioncm.com'].map(
+        (item) => {
+          const url = new URL(item)
 
-        return {
-          hostname: url.hostname,
-          protocol: url.protocol.replace(':', ''),
-          pathname: '/api/media/file/**',
-        }
-      }),
+          return {
+            hostname: url.hostname,
+            protocol: url.protocol.replace(':', ''),
+            pathname: '/api/media/file/**',
+          }
+        },
+      ),
     ],
     // Add this to handle dynamic query parameters
     dangerouslyAllowSVG: true,
