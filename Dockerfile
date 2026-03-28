@@ -55,7 +55,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Copy native sharp modules from deps stage for Payload and Next image optimization
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules/sharp ./node_modules/sharp
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules/@img ./node_modules/@img
+# COPY --from=deps --chown=nextjs:nodejs /app/node_modules/@img ./node_modules/@img
 
 USER nextjs
 
