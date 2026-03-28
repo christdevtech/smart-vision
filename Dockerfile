@@ -20,9 +20,13 @@ RUN corepack enable pnpm
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
+ARG NEXT_PUBLIC_SERVER_URL
+ARG DATABASE_URI
+ARG PAYLOAD_SECRET
+
+ENV NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_SERVER_URL}
+ENV DATABASE_URI=${DATABASE_URI}
+ENV PAYLOAD_SECRET=${PAYLOAD_SECRET}
 # ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN pnpm run build
@@ -49,14 +53,17 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy native sharp modules from deps stage for Payload and Next image optimization
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/sharp ./node_modules/sharp
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/@img ./node_modules/@img
+
 USER nextjs
 
 EXPOSE 3000
 
 ENV PORT 3000
-# set hostname to localhost
-ENV HOSTNAME "0.0.0.0"
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
-CMD ["node", "server.js"]
+CMD HOSTNAME="0.0.0.0" node server.js
+
