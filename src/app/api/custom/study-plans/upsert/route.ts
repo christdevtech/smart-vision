@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { unrollTimetable, computeEndDate } from '@/utilities/unrollTimetable'
 
 // ---------------------------------------------------------------------------
 // Schema constants — kept in sync with StudyPlans collection definition
@@ -298,24 +299,32 @@ export async function POST(request: NextRequest) {
     }
     data.subjects = Array.from(subjectSet)
 
-    // 2. Compute date bounds and unroll the weekly schedule
-    const startDate = new Date()
-    startDate.setUTCHours(0, 0, 0, 0)
-    let endDate = new Date(startDate)
-
-    // Default to +12 weeks if no exam date
-    if (data.planType === 'exam_prep' && data.targetExamDate) {
-      const examDate = new Date(data.targetExamDate as string)
-      if (examDate > startDate) endDate = examDate
-      else endDate.setUTCDate(endDate.getUTCDate() + 12 * 7)
-    } else {
-      endDate.setUTCDate(endDate.getUTCDate() + 12 * 7)
+    // 2. Reject plans where all AI-generated sessions were dropped (invalid subject IDs)
+    if (
+      data.weeklySchedule.length === 0 &&
+      Array.isArray(raw.weeklySchedule) &&
+      raw.weeklySchedule.length > 0
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'None of the study sessions could be matched to valid subjects. ' +
+            'Please try regenerating the plan.',
+          details: {
+            droppedSubjects: (raw.weeklySchedule as any[]).map((s: any) => s.subject),
+            validSubjectIds: [...validSubjectIds],
+          },
+        },
+        { status: 422 },
+      )
     }
 
-    const unrolledTimetable: any[] = []
-    const dayDelta = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+    // 3. Unroll weekly schedule into concrete day-by-day timetable sessions
+    const startDate = new Date()
+    startDate.setUTCHours(0, 0, 0, 0)
+    const endDate = computeEndDate(startDate, data.planType, data.targetExamDate as string | null)
 
-    // 3. Keep past timetable elements (so we don't wipe progress if adjusting a plan)
+    // Keep past timetable elements so we don't wipe progress if adjusting a plan
     const existing = await payload.find({
       collection: 'study-plans',
       where: { user: { equals: user.id } },
@@ -323,50 +332,12 @@ export async function POST(request: NextRequest) {
     })
     const existingPlan = existing.docs[0]
 
-    if (existingPlan?.timetable) {
-      const pastItems = (existingPlan.timetable as any[]).filter((t: any) => {
-        const itemDate = new Date(t.date)
-        return itemDate < startDate
-      })
-      unrolledTimetable.push(...pastItems)
-    }
-
-    // 4. Generate the unrolled timetable from today to endDate
-
-    // We iterate from start to end
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const dow = dayDelta[d.getDay()]
-      const dayStr = d.toISOString()
-
-      const daySessions = data.weeklySchedule.filter((s: any) => s.dayOfWeek === dow && s.isActive)
-      for (const session of daySessions) {
-        unrolledTimetable.push({
-          date: dayStr,
-          startTime: session.startTime,
-          endTime: session.endTime,
-          subject: session.subject,
-          sessionType: session.sessionType,
-          status: 'pending',
-          note: null,
-        })
-      }
-    }
-
-    data.timetable = unrolledTimetable
-
-    // Warn in dev if the AI produced no sessions with valid subjects
-    if (
-      data.weeklySchedule.length === 0 &&
-      Array.isArray(raw.weeklySchedule) &&
-      raw.weeklySchedule.length > 0
-    ) {
-      console.warn(
-        '[study-plans/upsert] All weeklySchedule sessions were dropped — subject IDs not recognised:',
-        (raw.weeklySchedule as any[]).map((s: any) => s.subject),
-        'Valid IDs:',
-        [...validSubjectIds],
-      )
-    }
+    data.timetable = unrollTimetable({
+      weeklySchedule: data.weeklySchedule,
+      startDate,
+      endDate,
+      existingPastSessions: (existingPlan?.timetable as any[]) ?? [],
+    })
 
     let plan
     if (existingPlan) {

@@ -2,6 +2,7 @@ import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
 import { selfOrAdmin } from '@/access/selfOrAdmin'
 import { authenticated } from '@/access/authenticated'
+import { generateReminders } from './hooks/afterChangeStudyPlan'
 
 export const StudyPlans: CollectionConfig = {
   slug: 'study-plans',
@@ -542,5 +543,6 @@ export const StudyPlans: CollectionConfig = {
         return data
       },
     ],
+    afterChange: [generateReminders],
   },
 }

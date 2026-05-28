@@ -228,6 +228,42 @@ export default function PlanDashboard({ plan, subjects, onAdjust }: PlanDashboar
   const isSelected = (d: Date | null) => d && toDateKey(d) === toDateKey(selectedDate)
   const selectedSessions = sessionsForDay(selectedDate)
 
+  // ---- Empty-state: no sessions in the plan ----
+  if (timetable.length === 0) {
+    return (
+      <div className="space-y-6">
+        {/* Header — same as main dashboard */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Your Study Plan</h2>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {plan.goals ?? 'Active study plan'}
+            </p>
+          </div>
+        </div>
+
+        {/* Empty state card */}
+        <div className="flex flex-col items-center justify-center p-8 rounded-2xl border border-border bg-input text-center space-y-4">
+          <CalendarDays className="w-12 h-12 text-muted-foreground" />
+          <div>
+            <p className="text-lg font-semibold text-foreground">No sessions in your plan</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Your study plan doesn&apos;t have any scheduled sessions yet. Use the AI assistant to
+              generate a new timetable.
+            </p>
+          </div>
+          <button
+            onClick={() => onAdjust()}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Sparkles className="w-4 h-4" />
+            Generate Timetable
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* ---- Header ---- */}

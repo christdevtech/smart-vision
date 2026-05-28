@@ -5,9 +5,14 @@ import config from '@/payload.config'
 // Cron endpoint — checks for study reminders due within the next 30 minutes
 // and sends an in-app notification.
 //
-// Trigger options:
-//   Vercel: add "*/30 * * * *" in vercel.json crons config pointing to this path
-//   VPS: call this route every 30 min via node-cron or system cron
+// Trigger: Google Cloud Scheduler job calling this endpoint every 30 minutes:
+//   gcloud scheduler jobs create http study-reminders-cron \
+//     --schedule="*/30 * * * *" \
+//     --uri="https://smartvisioncm.com/api/cron/study-reminders" \
+//     --http-method=GET \
+//     --headers="Authorization=Bearer <CRON_SECRET>" \
+//     --time-zone="Africa/Douala" \
+//     --attempt-deadline=300s
 //
 // Security: requires Authorization: Bearer <CRON_SECRET> header.
 
