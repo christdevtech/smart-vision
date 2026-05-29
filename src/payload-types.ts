@@ -476,11 +476,16 @@ export interface Video {
   id: string;
   title: string;
   video: string | Media;
+  /**
+   * Upload a thumbnail image for the video (Optional)
+   */
+  thumbnail?: (string | null) | Media;
   slug?: string | null;
   slugLock?: boolean | null;
   academicLevel: string | AcademicLevel;
   subject: string | Subject;
   topic?: (string | Topic)[] | null;
+  subscriptionRequired?: boolean | null;
   description?: {
     root: {
       type: string;
@@ -1720,11 +1725,13 @@ export interface McqSelect<T extends boolean = true> {
 export interface VideosSelect<T extends boolean = true> {
   title?: T;
   video?: T;
+  thumbnail?: T;
   slug?: T;
   slugLock?: T;
   academicLevel?: T;
   subject?: T;
   topic?: T;
+  subscriptionRequired?: T;
   description?: T;
   updatedAt?: T;
   createdAt?: T;

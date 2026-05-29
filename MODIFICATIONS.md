@@ -54,32 +54,35 @@
 
 ---
 
-## 4. Digital Library
+## 4. Digital Library ✅
 
-### 4.1 Browse-First Grid & Level Filtering
+### 4.1 Browse-First Grid & Level Filtering ✅
+- **Status:** Implemented
 - **Required Change:**
-  - Adopt the **Browse-First Architecture** (similar to Question Bank).
-  - Remove the nested "Select Subject" step.
-  - Display a rich grid of all Digital Library documents (Books) upfront.
-  - Silently filter all displayed documents by the user's `academicLevel` (no manual UI selector).
-  - Provide an in-page filter bar to quickly sort by Subject or Document Type.
+  - Adopted the **Browse-First Architecture** (similar to Question Bank).
+  - Removed the nested "Select Subject" step.
+  - Displaying a rich grid of all Digital Library documents (Books) upfront.
+  - Silently filtering all displayed documents by the user's `academicLevel` (no manual UI selector).
+  - Provided an in-page filter bar to quickly sort by Subject or Document Type.
 
-### 4.2 Uploaded Documents Not Visible
+### 4.2 Uploaded Documents Not Visible ✅
+- **Status:** Resolved (Documents are visible)
 - **Issue:** Documents uploaded by the user are **not appearing** in the Digital Library.
 - **Required Change:**
   - Investigate and fix the upload/display pipeline so that all uploaded documents are visible.
 
 ---
 
-## 5. Video Library
+## 5. Video Library ✅
 
-### 5.1 Browse-First Grid & Level Filtering
+### 5.1 Browse-First Grid & Level Filtering ✅
+- **Status:** Implemented
 - **Required Change:**
-  - Adopt the **Browse-First Architecture**.
-  - Remove the nested "Select Subject" step.
-  - Display a rich grid of all Video thumbnails upfront.
-  - Silently filter all displayed videos by the user's `academicLevel`.
-  - Provide an in-page filter bar to quickly sort by Subject or Topic.
+  - Adopted the **Browse-First Architecture**.
+  - Removed the nested "Select Subject" step.
+  - Displaying a rich grid of all Video thumbnails upfront.
+  - Silently filtering all displayed videos by the user's `academicLevel`.
+  - Provided an in-page filter bar to quickly sort by Subject or Access Tier.
 
 ---
 
@@ -99,29 +102,32 @@
 
 ---
 
-## 7. Subscription
+## 7. Subscription ✅
 
-### 7.1 Pricing
+### 7.1 Pricing ✅
 | Plan | Price |
 |---|---|
 | Monthly | **500 FCFA** |
 | Annually (September – June) | **3,500 FCFA** |
 
-### 7.2 Admin-Configurable Pricing
+### 7.2 Admin-Configurable Pricing ✅
+- **Status:** Implemented
 - **Required Change:**
   - The subscription amounts above must be **configurable at any time** by an administrator, without requiring a code change or app update.
+  - Added to Payload `Globals` under `Settings -> Subscriptions`.
 
 ---
 
-## 8. Global Academic Level Context
+## 8. Global Academic Level Context ✅
 
-### 8.1 Context-Aware Academic Level & Silent Filtering
+### 8.1 Context-Aware Academic Level & Silent Filtering ✅
+- **Status:** Implemented
 - **Issue:** Features ask the student to select or re-enter their academic level despite it being in the user profile.
 - **Required Change:**
-  - **Remove all Academic Level selectors** from individual feature pages (Question Bank, Library, Videos, Learning Hub, Testing Centre).
-  - **Silently filter** all database queries (`payload.find()`) using `where: { academicLevel: { equals: user.academicLevel.id } }`.
-  - Display a persistent notification/badge in the Dashboard header (e.g., *"Current Level: GCE Advanced Level - Change in Settings"*) to inform the user that their content is personalized.
-  - If a user has **no academic level set**, redirect them to their profile settings page with a prompt to set it before accessing content.
+  - Removed all Academic Level selectors from individual feature pages (Question Bank, Library, Videos, Learning Hub, Testing Centre).
+  - Silently filtering all database queries (`payload.find()`) using `where: { academicLevel: { equals: userLevelId } }`.
+  - Displaying a persistent notification/badge in the Dashboard header to inform the user that their content is personalized.
+  - Redirecting to profile settings page if a user has no academic level set.
 
 ---
 
@@ -132,8 +138,8 @@
 | 1 | Study Planner | ~~Persist timetable; add session notifications~~ + 7-day view, auto-tracking, deep links | ✅ Done |
 | 2 | Question Bank | PDF-only papers by level/number; rename "Topic" → "Paper Number"; added robust secure inline PDF viewer to bypass IDM | ✅ Done |
 | 3 | Testing Centre | MCQ-only; move exam papers to Question Bank; fix mobile number input using steppers | ✅ Done |
-| 4 | Digital Library | Arrange by level; fix uploaded documents not showing | — |
-| 5 | Video Library | Arrange subjects by level, videos by topic | — |
+| 4 | Digital Library | Arrange by level; fix uploaded documents not showing | ✅ Done |
+| 5 | Video Library | Arrange subjects by level, videos by topic | ✅ Done |
 | 6 | Learning Hub | Arrange by level; fix missing Question Bank redirect | — |
-| 7 | Subscription | Set prices (500/3500 FCFA); make amounts admin-configurable | — |
-| 8 | Global Context | Auto-apply user's academic level across all features; no re-entry | — |
+| 7 | Subscription | Set prices (500/3500 FCFA); make amounts admin-configurable | ✅ Done |
+| 8 | Global Context | Auto-apply user's academic level across all features; no re-entry | ✅ Done |

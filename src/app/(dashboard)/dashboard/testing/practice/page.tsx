@@ -6,7 +6,7 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { FileCheck } from 'lucide-react'
-import { AcademicLevel, Subscription } from '@/payload-types'
+import { Subscription } from '@/payload-types'
 import { isSubscriptionActive } from '@/utilities/subscription'
 import TestingCenterClient from '@/components/TestingCenter/Client'
 
@@ -20,13 +20,11 @@ export default async function PracticePage() {
     redirect('/auth/login')
   }
 
-  const [levelsRes, subjectsRes, topicsRes, subsRes] = await Promise.all([
-    payload.find({ collection: 'academicLevels', limit: 200 }),
+  const [subjectsRes, topicsRes, subsRes] = await Promise.all([
     payload.find({ collection: 'subjects', limit: 200 }),
     payload.find({ collection: 'topics', limit: 500 }),
     payload.find({ collection: 'subscriptions', where: { user: { equals: user.id } }, limit: 1 }),
   ])
-  const levels = (levelsRes.docs || []) as AcademicLevel[]
   const subs = subsRes.docs?.[0] as Subscription | undefined
   const subscriptionActive = isSubscriptionActive(subs)
 
@@ -52,7 +50,6 @@ export default async function PracticePage() {
             <TestingCenterClient
               user={user as any}
               subscriptionActive={subscriptionActive}
-              academicLevels={levels}
               subjects={subjectsRes.docs as any}
               topics={topicsRes.docs as any}
             />

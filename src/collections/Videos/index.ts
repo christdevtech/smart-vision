@@ -27,6 +27,14 @@ export const Videos: CollectionConfig = {
       relationTo: 'media',
       required: true,
     },
+    {
+      name: 'thumbnail',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Upload a thumbnail image for the video (Optional)',
+      },
+    },
     ...slugField('title'),
     { name: 'academicLevel', type: 'relationship', relationTo: 'academicLevels', required: true },
     {
@@ -47,7 +55,11 @@ export const Videos: CollectionConfig = {
         }
       },
     },
-
+    {
+      name: 'subscriptionRequired',
+      type: 'checkbox',
+      defaultValue: false,
+    },
     {
       name: 'description',
       type: 'richText',

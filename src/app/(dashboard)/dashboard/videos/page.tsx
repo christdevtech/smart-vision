@@ -7,8 +7,9 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { Play } from 'lucide-react'
-import { Subject } from '@/payload-types'
-import Link from 'next/link'
+import { Subject, Video, Subscription } from '@/payload-types'
+import { isSubscriptionActive } from '@/utilities/subscription'
+import VideoClient from '@/components/VideoLibrary/VideoClient'
 
 export default async function VideoLibraryPage() {
   const headers = await getHeaders()
@@ -27,11 +28,28 @@ export default async function VideoLibraryPage() {
     redirect('/dashboard/account?setup=level')
   }
 
-  const subjectsRes = await payload.find({
-    collection: 'subjects',
-    limit: 200,
-  })
+  const [vidsRes, subjectsRes, subsRes] = await Promise.all([
+    payload.find({
+      collection: 'videos',
+      where: { academicLevel: { equals: userLevelId } },
+      limit: 500,
+      depth: 2,
+    }),
+    payload.find({
+      collection: 'subjects',
+      limit: 200,
+    }),
+    payload.find({
+      collection: 'subscriptions',
+      where: { user: { equals: user.id } },
+      limit: 1,
+    }),
+  ])
+
+  const videos = vidsRes.docs as Video[]
   const subjects = subjectsRes.docs as Subject[]
+  const subs = subsRes.docs?.[0] as Subscription | undefined
+  const subscriptionActive = isSubscriptionActive(subs)
 
   return (
     <DashboardLayout user={user} title="Video Library">
@@ -56,23 +74,12 @@ export default async function VideoLibraryPage() {
 
           {/* Content Area */}
           <MotionWrapper animation="fadeIn" delay={0.2}>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {subjects.map((s) => (
-                <Link
-                  key={s.id}
-                  href={`/dashboard/videos/${s.slug || s.id}`}
-                  className="p-4 rounded-2xl border bg-card border-border hover:bg-accent transition-colors"
-                >
-                  <p className="text-lg font-medium text-foreground">{(s as any).name || s.id}</p>
-                  <p className="text-sm text-muted-foreground">Tap to view videos</p>
-                </Link>
-              ))}
-              {!subjects.length && (
-                <div className="p-6 rounded-2xl border bg-card border-border/50">
-                  <p className="text-muted-foreground">No subjects available yet.</p>
-                </div>
-              )}
-            </div>
+            <VideoClient
+              videos={videos}
+              subjects={subjects}
+              user={user as any}
+              subscriptionActive={subscriptionActive}
+            />
           </MotionWrapper>
         </div>
       </div>

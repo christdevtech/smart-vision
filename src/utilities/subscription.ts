@@ -29,8 +29,8 @@ export function determineSubscriptionPlan(
   amount: number,
   subscriptionCosts: Setting['subscriptionCosts'],
 ): Exclude<SubscriptionPlan, 'free'> | null {
-  const monthlyAmount = subscriptionCosts?.monthly || 3000
-  const yearlyAmount = subscriptionCosts?.yearly || 30000
+  const monthlyAmount = subscriptionCosts?.monthly || 500
+  const yearlyAmount = subscriptionCosts?.yearly || 3500
 
   // Allow for small variations in amount (±5%)
   const tolerance = 0.05
@@ -223,15 +223,15 @@ export async function getSubscriptionCosts(
 
     return (
       settings?.subscriptionCosts || {
-        monthly: 3000,
-        yearly: 30000,
+        monthly: 500,
+        yearly: 3500,
       }
     )
   } catch (error) {
     console.error('Error fetching subscription costs:', error)
     return {
-      monthly: 3000,
-      yearly: 30000,
+      monthly: 500,
+      yearly: 3500,
     }
   }
 }
