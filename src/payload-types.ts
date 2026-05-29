@@ -321,6 +321,10 @@ export interface ExamPaper {
   year: number;
   paperType: '1' | '2' | '3';
   pdf: string | Media;
+  /**
+   * Cover image or thumbnail for this exam paper. If not provided, a placeholder is shown in the Question Bank.
+   */
+  thumbnail?: (string | null) | Media;
   categories?: (string | Category)[] | null;
   /**
    * Description of the exam paper
@@ -1670,6 +1674,7 @@ export interface ExamPapersSelect<T extends boolean = true> {
   year?: T;
   paperType?: T;
   pdf?: T;
+  thumbnail?: T;
   categories?: T;
   description?: T;
   duration?: T;

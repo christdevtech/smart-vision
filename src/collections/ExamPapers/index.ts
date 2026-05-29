@@ -55,6 +55,15 @@ export const ExamPapers: CollectionConfig = {
       relationTo: 'media',
       required: true,
     },
+    {
+      name: 'thumbnail',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description:
+          'Cover image or thumbnail for this exam paper. If not provided, a placeholder is shown in the Question Bank.',
+      },
+    },
 
     {
       name: 'categories',

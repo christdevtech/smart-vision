@@ -32,9 +32,9 @@ export default async function TestingCenterPage() {
                   <FileText className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="mb-2 text-3xl font-bold text-foreground">Testing Center</h1>
+                  <h1 className="mb-2 text-3xl font-bold text-foreground">Testing Centre</h1>
                   <p className="text-lg text-muted-foreground">
-                    Take tests, quizzes, and assessments to track your progress
+                    Practice with multiple-choice questions to test your knowledge
                   </p>
                 </div>
               </div>

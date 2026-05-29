@@ -8,7 +8,8 @@ import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { FileQuestion } from 'lucide-react'
 import QuestionBankClient from '@/components/QuestionBank/Client'
-import { AcademicLevel } from '@/payload-types'
+import { Subscription } from '@/payload-types'
+import { isSubscriptionActive } from '@/utilities/subscription'
 
 export default async function QuestionBankPage() {
   const headers = await getHeaders()
@@ -21,12 +22,24 @@ export default async function QuestionBankPage() {
     redirect('/auth/login')
   }
 
-  const [levelsRes, subjectsRes, topicsRes] = await Promise.all([
-    payload.find({ collection: 'academicLevels', limit: 200 }),
+  const [subjectsRes, papersRes, subsRes] = await Promise.all([
     payload.find({ collection: 'subjects', limit: 200 }),
-    payload.find({ collection: 'topics', limit: 500 }),
+    payload.find({
+      collection: 'exam-papers',
+      where: { isActive: { equals: true } },
+      limit: 500,
+      depth: 2, // Populate subject, thumbnail, pdf, answerKeyPdf
+      sort: 'subject',
+    }),
+    payload.find({
+      collection: 'subscriptions',
+      where: { user: { equals: user.id } },
+      limit: 1,
+    }),
   ])
-  const levels = (levelsRes.docs || []) as AcademicLevel[]
+
+  const subs = subsRes.docs?.[0] as Subscription | undefined
+  const subscriptionActive = isSubscriptionActive(subs)
 
   return (
     <DashboardLayout user={user} title="Question Bank">
@@ -40,9 +53,9 @@ export default async function QuestionBankPage() {
                   <FileQuestion className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="mb-2 text-3xl font-bold text-foreground">Comprehensive Question Bank</h1>
+                  <h1 className="mb-2 text-3xl font-bold text-foreground">Question Bank</h1>
                   <p className="text-lg text-muted-foreground">
-                    Browse and practice with curated questions. Offline access requires subscription.
+                    Browse exam papers by subject and paper number
                   </p>
                 </div>
               </div>
@@ -52,9 +65,10 @@ export default async function QuestionBankPage() {
           {/* Content Area */}
           <MotionWrapper animation="fadeIn" delay={0.2}>
             <QuestionBankClient
-              academicLevels={levels}
+              examPapers={papersRes.docs as any}
               subjects={subjectsRes.docs as any}
-              topics={topicsRes.docs as any}
+              user={user as any}
+              subscriptionActive={subscriptionActive}
             />
           </MotionWrapper>
         </div>

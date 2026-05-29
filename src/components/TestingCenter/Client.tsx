@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
-import { FileText } from 'lucide-react'
-import { AcademicLevel, Subject, Topic, ExamPaper, TestResult, Mcq, User } from '@/payload-types'
+import { FileText, Minus, Plus } from 'lucide-react'
+import { AcademicLevel, Subject, Topic, TestResult, Mcq, User } from '@/payload-types'
 import RichText from '../RichText'
 
 function getId(val: string | { id: string } | undefined | null) {
@@ -22,6 +22,8 @@ function computeGrade(score: number): TestResult['grade'] {
   return 'F'
 }
 
+const QUESTION_PRESETS = [5, 10, 20, 30, 50]
+
 export default function TestingCenterClient({
   user,
   subscriptionActive,
@@ -35,7 +37,6 @@ export default function TestingCenterClient({
   subjects: Subject[]
   topics: Topic[]
 }) {
-  const [mode, setMode] = React.useState<'practice' | 'exam_paper'>('practice')
   const [academicLevelId, setAcademicLevelId] = React.useState<string>(
     () => getId(user.academicLevel) || '',
   )
@@ -43,9 +44,6 @@ export default function TestingCenterClient({
   const [topicId, setTopicId] = React.useState<string>('')
   const [difficulty, setDifficulty] = React.useState<'easy' | 'medium' | 'hard' | ''>('')
   const [availableTopics, setAvailableTopics] = React.useState<Topic[]>([])
-  const [examPaper, setExamPaper] = React.useState<ExamPaper | null>(null)
-  const [examPapers, setExamPapers] = React.useState<ExamPaper[]>([])
-  const [selectedPaperId, setSelectedPaperId] = React.useState<string>('')
   const [numQuestions, setNumQuestions] = React.useState<number>(20)
   const [showConfirm, setShowConfirm] = React.useState(false)
 
@@ -57,7 +55,6 @@ export default function TestingCenterClient({
   const [selections, setSelections] = React.useState<Record<string, string>>({})
   const [questionTimes, setQuestionTimes] = React.useState<Record<string, number>>({})
   const [startedAt, setStartedAt] = React.useState<number | null>(null)
-  const [lastTick, setLastTick] = React.useState<number | null>(null)
   const [submitted, setSubmitted] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [averageScore, setAverageScore] = React.useState<number | null>(null)
@@ -70,38 +67,12 @@ export default function TestingCenterClient({
     }
   }, [subjectId, topics])
 
-  React.useEffect(() => {
-    async function fetchExamPapers() {
-      if (mode !== 'exam_paper') return
-      if (!academicLevelId || !subjectId) {
-        setExamPapers([])
-        setSelectedPaperId('')
-        return
-      }
-      try {
-        const res = await fetch(
-          `/api/exam-papers?limit=50&where[academicLevel][equals]=${encodeURIComponent(academicLevelId)}&where[subject][equals]=${encodeURIComponent(subjectId)}`,
-        )
-        const data = await res.json()
-        const docs: ExamPaper[] = data?.docs || []
-        setExamPapers(docs)
-        if (!docs.find((p) => p.id === selectedPaperId)) {
-          setSelectedPaperId('')
-        }
-      } catch {
-        setExamPapers([])
-        setSelectedPaperId('')
-      }
-    }
-    fetchExamPapers()
-  }, [mode, academicLevelId, subjectId])
-
+  // Persist config to localStorage
   React.useEffect(() => {
     const key = 'testing-config'
     try {
       const saved = JSON.parse(localStorage.getItem(key) || 'null')
       if (saved && saved.userId === user.id) {
-        setMode(saved.mode || 'practice')
         setAcademicLevelId(saved.academicLevelId || academicLevelId)
         setSubjectId(saved.subjectId || '')
         setTopicId(saved.topicId || '')
@@ -117,7 +88,6 @@ export default function TestingCenterClient({
     const key = 'testing-config'
     const payload = {
       userId: user.id,
-      mode,
       academicLevelId,
       subjectId,
       topicId,
@@ -127,18 +97,16 @@ export default function TestingCenterClient({
     try {
       localStorage.setItem(key, JSON.stringify(payload))
     } catch {}
-  }, [user.id, mode, academicLevelId, subjectId, topicId, difficulty, numQuestions])
+  }, [user.id, academicLevelId, subjectId, topicId, difficulty, numQuestions])
 
+  // Timer for per-question time tracking
   React.useEffect(() => {
     let timer: any
     if (startedAt !== null && questions[currentIndex]) {
-      const now = Date.now()
-      setLastTick(now)
       timer = setInterval(() => {
         setQuestionTimes((prev) => {
           const qid = questions[currentIndex].id
-          const dt = 1
-          const next = { ...prev, [qid]: (prev[qid] || 0) + dt }
+          const next = { ...prev, [qid]: (prev[qid] || 0) + 1 }
           return next
         })
       }, 1000)
@@ -179,26 +147,13 @@ export default function TestingCenterClient({
       setError('Select academic level and subject to start.')
       return
     }
-    if (mode === 'exam_paper' && !selectedPaperId) {
-      setError('Select an exam paper to start.')
-      return
-    }
 
     setLoading(true)
     try {
-      if (mode === 'exam_paper') {
-        const epRes = await fetch(`/api/exam-papers/${encodeURIComponent(selectedPaperId)}`)
-        const epData = await epRes.json()
-        const ep: ExamPaper | null = epData || null
-        setExamPaper(ep)
-      } else {
-        setExamPaper(null)
-      }
-
       const qs: string[] = []
       qs.push(`where[and][0][subject][equals]=${encodeURIComponent(subjectId)}`)
       qs.push(`where[and][1][academicLevel][equals]=${encodeURIComponent(academicLevelId)}`)
-      if (mode !== 'exam_paper' && difficulty)
+      if (difficulty)
         qs.push(`where[and][2][difficulty][equals]=${encodeURIComponent(difficulty)}`)
       const url = `/api/mcq?limit=100&${qs.join('&')}`
       const res = await fetch(url)
@@ -282,11 +237,10 @@ export default function TestingCenterClient({
 
       const body: Partial<TestResult> = {
         user: user.id,
-        testType: mode === 'exam_paper' ? 'exam_paper' : 'practice',
+        testType: 'practice',
         subject: subjectId,
         topics: topicId ? [topicId] : [],
         academicLevel: academicLevelId,
-        examPaper: examPaper ? examPaper.id : undefined,
         questions: items as any,
         totalQuestions,
         correctAnswers,
@@ -294,7 +248,7 @@ export default function TestingCenterClient({
         skippedQuestions: skipped,
         scorePercentage,
         grade,
-        timeLimit: examPaper?.duration || null,
+        timeLimit: null,
         timeUsed: timeUsedMinutes,
         startedAt: new Date(startedAt || Date.now()).toISOString(),
         completedAt: new Date().toISOString(),
@@ -356,21 +310,7 @@ export default function TestingCenterClient({
         <div className="flex justify-between items-center mb-3">
           <div className="flex gap-2 items-center">
             <FileText className="w-4 h-4 text-primary" />
-            <p className="font-medium text-foreground">Test Configuration</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setMode('practice')}
-              className={`px-3 py-2 rounded-lg border ${mode === 'practice' ? 'bg-primary text-primary-foreground border-primary' : 'bg-secondary text-foreground border-border'}`}
-            >
-              Practice
-            </button>
-            <button
-              onClick={() => setMode('exam_paper')}
-              className={`px-3 py-2 rounded-lg border ${mode === 'exam_paper' ? 'bg-primary text-primary-foreground border-primary' : 'bg-secondary text-foreground border-border'}`}
-            >
-              Exam Paper
-            </button>
+            <p className="font-medium text-foreground">Practice Configuration</p>
           </div>
         </div>
 
@@ -405,100 +345,85 @@ export default function TestingCenterClient({
               ))}
             </select>
           </div>
-          <div>
-            <label className="block mb-1 text-sm text-muted-foreground">Number of Questions</label>
-            <input
-              type="number"
-              min={1}
-              value={numQuestions}
-              onChange={(e) => {
-                const v = parseInt(e.target.value || '0', 10)
-                setNumQuestions(Number.isNaN(v) ? 20 : Math.max(1, v))
-              }}
-              className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
-            />
-          </div>
-          {mode !== 'exam_paper' && (
-            <>
-              <div>
-                <label className="block mb-1 text-sm text-muted-foreground">Topic (optional)</label>
-                <select
-                  value={topicId}
-                  onChange={(e) => setTopicId(e.target.value)}
-                  className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+
+          {/* Number of Questions — mobile-friendly preset buttons + stepper */}
+          <div className="md:col-span-2">
+            <label className="block mb-2 text-sm text-muted-foreground">
+              Number of Questions
+            </label>
+            {/* Quick-pick presets */}
+            <div className="flex flex-wrap gap-2 mb-2">
+              {QUESTION_PRESETS.map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setNumQuestions(n)}
+                  className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors
+                    ${
+                      numQuestions === n
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-secondary text-foreground border-border hover:bg-accent'
+                    }`}
                 >
-                  <option value="">All topics</option>
-                  {availableTopics.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {(t as any).name || t.id}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block mb-1 text-sm text-muted-foreground">
-                  Difficulty (optional)
-                </label>
-                <select
-                  value={difficulty}
-                  onChange={(e) => setDifficulty((e.target.value as any) || '')}
-                  className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
-                >
-                  <option value="">All</option>
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
-              </div>
-            </>
-          )}
-          {mode === 'exam_paper' && (
-            <div className="md:col-span-2">
-              <label className="block mb-1 text-sm text-muted-foreground">Exam Paper</label>
-              <select
-                value={selectedPaperId}
-                onChange={(e) => setSelectedPaperId(e.target.value)}
-                className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+                  {n}
+                </button>
+              ))}
+            </div>
+            {/* Fine-tune stepper */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setNumQuestions((n) => Math.max(1, n - 1))}
+                className="w-10 h-10 rounded-xl border bg-secondary border-border text-foreground text-lg font-bold flex items-center justify-center active:scale-95 transition-transform"
               >
-                <option value="">Select exam paper</option>
-                {examPapers.map((p) => {
-                  const paperLabel = `${(p as any).title || 'Exam Paper'}${(p as any).year ? ` (${(p as any).year})` : ''}${(p as any).paperType ? ` - Paper ${(p as any).paperType}` : ''}`
-                  return (
-                    <option key={p.id} value={p.id}>
-                      {paperLabel}
-                    </option>
-                  )
-                })}
-              </select>
+                <Minus className="w-4 h-4" />
+              </button>
+              <span className="text-lg font-semibold text-foreground w-10 text-center tabular-nums">
+                {numQuestions}
+              </span>
+              <button
+                onClick={() => setNumQuestions((n) => n + 1)}
+                className="w-10 h-10 rounded-xl border bg-secondary border-border text-foreground text-lg font-bold flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
             </div>
-          )}
-          {mode === 'exam_paper' && selectedPaperId && (
-            <div className="md:col-span-2">
-              {(() => {
-                const p = examPapers.find((x) => x.id === selectedPaperId)
-                if (p && p.description) {
-                  return (
-                    <div className="p-3 rounded-lg border bg-input border-border">
-                      <p className="mb-1 text-xs text-muted-foreground">Description</p>
-                      <RichText
-                        data={p.description}
-                        className="text-sm text-foreground"
-                        enableProse={false}
-                        enableGutter={false}
-                      />
-                    </div>
-                  )
-                }
-                return null
-              })()}
-            </div>
-          )}
+          </div>
+
+          <div>
+            <label className="block mb-1 text-sm text-muted-foreground">Topic (optional)</label>
+            <select
+              value={topicId}
+              onChange={(e) => setTopicId(e.target.value)}
+              className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+            >
+              <option value="">All topics</option>
+              {availableTopics.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {(t as any).name || t.id}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block mb-1 text-sm text-muted-foreground">
+              Difficulty (optional)
+            </label>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty((e.target.value as any) || '')}
+              className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
+            >
+              <option value="">All</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
         </div>
 
         <div className="flex gap-2 items-center mt-4">
           <button
             onClick={startTest}
-            disabled={!canStart || loading || (mode === 'exam_paper' && !selectedPaperId)}
+            disabled={!canStart || loading}
             className={`px-4 py-2 rounded-lg ${canStart ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} disabled:opacity-50`}
           >
             {loading ? 'Loading...' : 'Start Test'}

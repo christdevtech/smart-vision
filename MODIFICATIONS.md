@@ -1,22 +1,26 @@
 # SmartVision App — Client Modification Requests
 
 > **Date:** 28 May 2026  
-> **Status:** Pending Implementation
+> **Status:** In Progress
 
 ---
 
-## 1. Study Planner
+## 1. Study Planner ✅
 
-### 1.1 Persist & Display Generated Timetable
-- **Issue:** After using the AI assistant to create a study plan, the generated timetable is **not visible** when the user revisits the feature.
-- **Required Change:**
-  - The AI-generated timetable must be **persisted** and displayed whenever the Study Planner feature is opened.
-  - If an in-app download option is provided, the downloaded timetable should appear under the **Downloaded** folder.
+### 1.1 Persist & Display Generated Timetable ✅
+- **Status:** Implemented
+- Timetable is persisted in the `study-plans` collection and displayed via a **7-day rolling view** (replaced monthly calendar)
+- Auto-extension logic re-unrolls expired timetables on page load
 
-### 1.2 Session Notifications
-- **Required Change:**
-  - Students should receive a **push notification before each scheduled session**.
-  - Alternatively, a single notification summarising **all sessions programmed for that day** should be sent (e.g., at the start of the day).
+### 1.2 Session Notifications ✅ (Partial)
+- **Status:** Auto-tracking notifications implemented
+- When a student studies on the platform (≥5 min engagement), their planner session is auto-marked and a notification is created ("📍 Attendance marked for [Subject] study session")
+- Push notifications for upcoming sessions still pending (separate infrastructure concern)
+
+### 1.3 Additional Improvements (implemented)
+- **7-day rolling planner** replaced the monthly calendar as the primary view
+- **"Study Now" deep links** from planner sessions and dashboard directly to `/dashboard/learning/[subject]`
+- **Automated session tracking** via `UserProgress` → `StudyPlan` hook bridge
 
 ---
 
@@ -112,7 +116,7 @@
 
 | # | Feature | Changes | Priority |
 |---|---|---|---|
-| 1 | Study Planner | Persist timetable; add session notifications | — |
+| 1 | Study Planner | ~~Persist timetable; add session notifications~~ + 7-day view, auto-tracking, deep links | ✅ Done |
 | 2 | Question Bank | PDF-only papers by level/number; rename "Topic" → "Paper Number" | — |
 | 3 | Testing Centre | MCQ-only; move exam papers to Question Bank; fix mobile number input | — |
 | 4 | Digital Library | Arrange by level; fix uploaded documents not showing | — |
