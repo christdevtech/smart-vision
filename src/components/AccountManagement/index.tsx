@@ -350,7 +350,7 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
           <div className="flex gap-4 items-center">
             <div className="relative">
               <div
-                className="overflow-hidden relative w-24 h-24 rounded-full cursor-pointer group bg-border"
+                className="overflow-hidden relative w-48 h-48 rounded-full cursor-pointer group bg-border"
                 aria-label="Profile Picture"
                 onClick={() => setProfileMenuOpen((v) => !v)}
               >
