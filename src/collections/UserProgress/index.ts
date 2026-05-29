@@ -2,6 +2,7 @@ import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
 import { selfOrAdmin } from '@/access/selfOrAdmin'
 import { authenticated } from '@/access/authenticated'
+import { autoTrackStudySession } from '@/utilities/autoTrackStudySession'
 
 export const UserProgress: CollectionConfig = {
   slug: 'user-progress',
@@ -169,6 +170,43 @@ export const UserProgress: CollectionConfig = {
       ],
     },
   ],
+  hooks: {
+    afterChange: [
+      async ({ doc, req, context }) => {
+        // Prevent recursive hooks (auto-tracking updates the study plan,
+        // which should not re-trigger this hook)
+        if (context?.skipAutoTrack) return
+
+        // Only auto-track if the progress entry has a subject
+        const subjectId =
+          typeof doc.subject === 'string'
+            ? doc.subject
+            : (doc.subject as any)?.id
+        if (!subjectId) return
+
+        const userId =
+          typeof doc.user === 'string'
+            ? doc.user
+            : (doc.user as any)?.id
+        if (!userId) return
+
+        try {
+          await autoTrackStudySession({
+            userId,
+            subjectId,
+            timeSpentMinutes: doc.timeSpent ?? 0,
+            req,
+          })
+        } catch (err) {
+          // Auto-tracking is non-critical — log but don't fail the progress save
+          req.payload.logger.error({
+            msg: 'Auto-track study session failed',
+            err: err instanceof Error ? err : new Error(String(err)),
+          })
+        }
+      },
+    ],
+  },
   indexes: [
     {
       unique: true,

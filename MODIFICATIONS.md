@@ -96,6 +96,18 @@
 
 ---
 
+## 8. Global Academic Level Context
+
+### 8.1 Context-Aware Academic Level
+- **Issue:** The student's academic level is already stored in their user profile (`users.academicLevel`), but some features (e.g., Study Planner creation, content browsing) still ask the student to select or re-enter their academic level.
+- **Required Change:**
+  - **All pages and features** must read the student's academic level from their authenticated user document.
+  - Content listings (Learning Hub, Video Library, Digital Library, Question Bank, Testing Centre) should **automatically filter by the user's academic level** without requiring manual selection.
+  - The Study Planner should **pre-fill** the academic level from the user profile when creating a plan, not ask for it again.
+  - If the student's academic level is not yet set, prompt them to set it **once** (e.g., in onboarding or profile settings), then use it everywhere.
+
+---
+
 ## Summary Table
 
 | # | Feature | Changes | Priority |
@@ -107,3 +119,4 @@
 | 5 | Video Library | Arrange subjects by level, videos by topic | — |
 | 6 | Learning Hub | Arrange by level; fix missing Question Bank redirect | — |
 | 7 | Subscription | Set prices (500/3500 FCFA); make amounts admin-configurable | — |
+| 8 | Global Context | Auto-apply user's academic level across all features; no re-entry | — |

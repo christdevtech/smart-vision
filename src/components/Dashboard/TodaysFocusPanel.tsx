@@ -25,6 +25,12 @@ function getSubjectName(subject: string | Subject | null | undefined): string {
   return subject.name ?? 'Study'
 }
 
+function getSubjectSlug(subject: string | Subject | null | undefined): string | null {
+  if (!subject) return null
+  if (typeof subject === 'string') return null
+  return subject.slug ?? null
+}
+
 export default function TodaysFocusPanel({
   studyPlan,
   studyStreakDays,
@@ -54,10 +60,14 @@ export default function TodaysFocusPanel({
   // Next session
   if (nextSession) {
     const subjectName = getSubjectName(nextSession.subject)
+    const subjectSlug = getSubjectSlug(nextSession.subject)
+    const studyHref = subjectSlug
+      ? `/dashboard/learning/${subjectSlug}`
+      : '/dashboard/planner'
     lines.push({
       icon: <Clock className="w-4 h-4 text-primary" />,
       text: `Next session: ${subjectName} (${nextSession.startTime} – ${nextSession.endTime})`,
-      href: '/dashboard/planner',
+      href: studyHref,
     })
   }
 

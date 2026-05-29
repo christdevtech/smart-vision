@@ -78,7 +78,7 @@ export default async function DashboardPage() {
         isActive: { equals: true },
       },
       limit: 1,
-      depth: 1,
+      depth: 2, // Populate timetable[].subject with slug for deep linking
     }),
 
     // Unread notifications (last 3)
