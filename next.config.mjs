@@ -17,6 +17,12 @@ const nextConfig = {
       '.mjs': ['.mts', '.mjs'],
     }
 
+    // Required for react-pdf — pdfjs-dist references 'canvas' which is Node-only
+    webpackConfig.resolve.alias = {
+      ...webpackConfig.resolve.alias,
+      canvas: false,
+    }
+
     return webpackConfig
   },
   images: {

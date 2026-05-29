@@ -24,30 +24,33 @@
 
 ---
 
-## 2. Question Bank
+## 2. Question Bank ✅
 
-### 2.1 Content Scope
-- **Required Change:**
-  - The Question Bank should contain **only uploaded PDF question papers**.
-  - Papers must be **arranged/grouped by level and paper number**.
+### 2.1 Content Scope & Dedicated Viewer ✅
+- **Status:** Implemented
+- The Question Bank contains only uploaded PDF question papers, displayed in a browse-first grid.
+- Replaced the inline viewer with a **dedicated single-page viewer** (`/dashboard/question-bank/[paperId]`).
+- Implemented a highly robust **Secure PDF Proxy + Canvas Renderer**:
+  - The server encodes PDFs as a JSON Base64 response (`/api/secure-pdf/[mediaId]`) to completely bypass aggressive download managers like IDM.
+  - `react-pdf` renders the decoded bytes into HTML5 canvas elements, preventing native browser downloads, right-click saves, and print options.
+- The UI differentiates between free and premium papers, showing a golden 👑 for premium content.
 
-### 2.2 UI Label Change
-- **Required Change:**
-  - Rename the **"Topic"** field/box to **"Paper Number"**.
+### 2.2 UI Label Change ✅
+- **Status:** Implemented
+- Renamed "Topic" to "Paper Number".
 
 ---
 
-## 3. Testing Centre
+## 3. Testing Centre ✅
 
-### 3.1 MCQ-Only Practice
-- **Required Change:**
-  - The Testing Centre should be used **exclusively for MCQ practice**.
-  - The **"Exam Paper"** section/option currently in the Testing Centre must be **moved to the Question Bank** feature.
+### 3.1 MCQ-Only Practice ✅
+- **Status:** Implemented
+- Stripped out "Exam Papers" logic. The Testing Centre is now exclusively focused on MCQ practice.
+- Browsing Exam Papers is completely moved to the Question Bank.
 
-### 3.2 Question Count Selector (Mobile UX)
-- **Issue:** On mobile phones, it is difficult to change the number of questions from the default value (e.g., changing `1` to another number).
-- **Required Change:**
-  - Replace or improve the number input control so it is **easily usable on mobile devices** (e.g., use a dropdown, stepper buttons, or a slider).
+### 3.2 Question Count Selector (Mobile UX) ✅
+- **Status:** Implemented
+- Replaced the standard number input with **Mobile-Friendly Stepper Buttons** (+ / -) for easy interaction on touch screens.
 
 ---
 
@@ -117,8 +120,8 @@
 | # | Feature | Changes | Priority |
 |---|---|---|---|
 | 1 | Study Planner | ~~Persist timetable; add session notifications~~ + 7-day view, auto-tracking, deep links | ✅ Done |
-| 2 | Question Bank | PDF-only papers by level/number; rename "Topic" → "Paper Number" | — |
-| 3 | Testing Centre | MCQ-only; move exam papers to Question Bank; fix mobile number input | — |
+| 2 | Question Bank | PDF-only papers by level/number; rename "Topic" → "Paper Number"; added robust secure inline PDF viewer to bypass IDM | ✅ Done |
+| 3 | Testing Centre | MCQ-only; move exam papers to Question Bank; fix mobile number input using steppers | ✅ Done |
 | 4 | Digital Library | Arrange by level; fix uploaded documents not showing | — |
 | 5 | Video Library | Arrange subjects by level, videos by topic | — |
 | 6 | Learning Hub | Arrange by level; fix missing Question Bank redirect | — |
