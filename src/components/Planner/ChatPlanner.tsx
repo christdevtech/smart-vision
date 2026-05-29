@@ -24,7 +24,7 @@ interface DisplayMessage {
 
 interface ChatPlannerProps {
   userId: string
-  academicLevels: AcademicLevel[]
+  userLevelId: string
   subjects: Subject[]
   topics: Topic[]
   initialPlan?: StudyPlan | null
@@ -45,7 +45,7 @@ function stripJsonBlock(text: string): string {
 
 export default function ChatPlanner({
   userId,
-  academicLevels,
+  userLevelId,
   subjects,
   topics,
   initialPlan,
@@ -124,7 +124,6 @@ export default function ChatPlanner({
           messages: updatedHistory,
           context: {
             subjects: subjects.map((s) => ({ id: s.id, name: s.name })),
-            academicLevels: academicLevels.map((l) => ({ id: l.id, name: l.name })),
           },
         }),
       })
@@ -172,12 +171,7 @@ export default function ChatPlanner({
     try {
       // The upsert route's sanitizeStudyPlan() handles all field validation and
       // normalisation. We only inject academicLevel here since the AI doesn't know it.
-      const academicLevelId =
-        (typeof initialPlan?.academicLevel === 'string'
-          ? initialPlan.academicLevel
-          : (initialPlan?.academicLevel as any)?.id) ??
-        academicLevels[0]?.id ??
-        null
+      const academicLevelId = userLevelId
 
       const resp = await fetch('/api/custom/study-plans/upsert', {
         method: 'POST',

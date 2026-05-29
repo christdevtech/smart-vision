@@ -5,15 +5,14 @@ import { AcademicLevel, Subject } from '@/payload-types'
 
 export default function CreateForm({
   userId,
-  levels,
+  userLevelId,
   subjects,
 }: {
   userId: string
-  levels: AcademicLevel[]
+  userLevelId: string
   subjects: Subject[]
 }) {
   const [goal, setGoal] = useState('')
-  const [levelId, setLevelId] = useState('')
   const [subjectIds, setSubjectIds] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -59,15 +58,15 @@ export default function CreateForm({
   async function submit() {
     setError('')
     setSuccess('')
-    if (!userId || !levelId || subjectIds.length === 0) {
-      setError('Select academic level and at least one subject.')
+    if (!userId || !userLevelId || subjectIds.length === 0) {
+      setError('At least one subject is required.')
       return
     }
     setSaving(true)
     try {
       const body = {
         user: userId,
-        academicLevel: levelId,
+        academicLevel: userLevelId,
         goals: goal || '',
         subjects: subjectIds,
         isActive: true,
@@ -89,7 +88,6 @@ export default function CreateForm({
       }
       setSuccess('Study plan created')
       setGoal('')
-      setLevelId('')
       setSubjectIds([])
       setNotes('')
     } catch (e: any) {
@@ -102,21 +100,7 @@ export default function CreateForm({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <div>
-          <label className="block mb-1 text-sm text-muted-foreground">Academic Level</label>
-          <select
-            value={levelId}
-            onChange={(e) => setLevelId(e.target.value)}
-            className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
-          >
-            <option value="">Select level</option>
-            {levels.map((l) => (
-              <option key={l.id} value={l.id}>
-                {(l as any).name || l.id}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Academic Level UI removed — context is handled globally */}
         <div>
           <label className="block mb-1 text-sm text-muted-foreground">Study Goal</label>
           <input

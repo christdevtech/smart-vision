@@ -21,6 +21,12 @@ export default async function VideoLibraryPage() {
     redirect('/auth/login')
   }
 
+  // Global Context: Enforce Academic Level
+  const userLevelId = typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
+  if (!userLevelId) {
+    redirect('/dashboard/account?setup=level')
+  }
+
   const subjectsRes = await payload.find({
     collection: 'subjects',
     limit: 200,

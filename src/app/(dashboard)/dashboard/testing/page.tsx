@@ -21,6 +21,12 @@ export default async function TestingCenterPage() {
     redirect('/auth/login')
   }
 
+  // Global Context: Enforce Academic Level
+  const userLevelId = typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
+  if (!userLevelId) {
+    redirect('/dashboard/account?setup=level')
+  }
+
   return (
     <DashboardLayout user={user} title="Testing Center">
       <div className="min-h-screen bg-background">
@@ -43,8 +49,7 @@ export default async function TestingCenterPage() {
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
             {await (async () => {
-              const [levelsRes, subjectsRes, topicsRes, subsRes] = await Promise.all([
-                payload.find({ collection: 'academicLevels', limit: 200 }),
+              const [subjectsRes, topicsRes, subsRes] = await Promise.all([
                 payload.find({ collection: 'subjects', limit: 200 }),
                 payload.find({ collection: 'topics', limit: 500 }),
                 payload.find({
@@ -53,14 +58,12 @@ export default async function TestingCenterPage() {
                   limit: 1,
                 }),
               ])
-              const levels = (levelsRes.docs || []) as AcademicLevel[]
               const subs = subsRes.docs?.[0] as Subscription | undefined
               const subscriptionActive = isSubscriptionActive(subs)
               return (
                 <TestingCenterClient
                   user={user as any}
                   subscriptionActive={subscriptionActive}
-                  academicLevels={levels}
                   subjects={subjectsRes.docs as any}
                   topics={topicsRes.docs as any}
                 />

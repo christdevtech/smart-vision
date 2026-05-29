@@ -22,11 +22,23 @@ export default async function QuestionBankPage() {
     redirect('/auth/login')
   }
 
+  // Global Context: Enforce Academic Level
+  const userLevelId = typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
+  if (!userLevelId) {
+    redirect('/dashboard/account?setup=level')
+  }
+
   const [subjectsRes, papersRes, subsRes] = await Promise.all([
+    // TODO: Ideally filter subjects to only those that have papers for this level, but for now we'll fetch all
     payload.find({ collection: 'subjects', limit: 200 }),
     payload.find({
       collection: 'exam-papers',
-      where: { isActive: { equals: true } },
+      where: {
+        and: [
+          { isActive: { equals: true } },
+          { academicLevel: { equals: userLevelId } },
+        ],
+      },
       limit: 500,
       depth: 2, // Populate subject, thumbnail, pdf, answerKeyPdf
       sort: 'subject',

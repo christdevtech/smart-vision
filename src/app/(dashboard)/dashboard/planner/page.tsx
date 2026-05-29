@@ -19,8 +19,13 @@ export default async function StudyPlannerPage() {
     redirect('/auth/login')
   }
 
-  const [academicLevels, subjects, topics, existingPlan] = await Promise.all([
-    payload.find({ collection: 'academicLevels', limit: 100 }),
+  // Global Context: Enforce Academic Level
+  const userLevelId = typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
+  if (!userLevelId) {
+    redirect('/dashboard/account?setup=level')
+  }
+
+  const [subjects, topics, existingPlan] = await Promise.all([
     payload.find({ collection: 'subjects', limit: 100 }),
     payload.find({ collection: 'topics', limit: 100 }),
     payload.find({
@@ -93,7 +98,7 @@ export default async function StudyPlannerPage() {
             <div className="p-6 rounded-2xl border bg-card border-border/50">
               <PlannerClient
                 userId={user.id}
-                academicLevels={academicLevels.docs as any}
+                userLevelId={userLevelId}
                 subjects={subjects.docs as any}
                 topics={topics.docs as any}
                 initialPlan={initialPlan as any}

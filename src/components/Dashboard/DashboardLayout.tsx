@@ -15,6 +15,7 @@ import { Media } from '../Media'
 import { ThemeSwitcher } from '../ThemeSwitcher'
 import { Logo } from '../Graphics/Logo/Logo'
 import UserMenu from './UserMenu'
+import Link from 'next/link'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -130,6 +131,18 @@ export default function DashboardLayout({
 
             {/* Right Section */}
             <div className="flex gap-3 items-center">
+              {/* Academic Level Context Badge */}
+              {user && (
+                <Link href="/dashboard/account?setup=level" className="hidden md:flex items-center space-x-2 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 hover:bg-primary/20 transition-colors">
+                  <span className="text-xs font-medium text-primary">
+                    {typeof user.academicLevel === 'object' && user.academicLevel?.name
+                      ? `Current Level: ${user.academicLevel.name}`
+                      : 'Level Not Set'}
+                  </span>
+                  <span className="text-[10px] text-primary/70">(Change)</span>
+                </Link>
+              )}
+
               {/* Notification Button */}
               <motion.button
                 className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"

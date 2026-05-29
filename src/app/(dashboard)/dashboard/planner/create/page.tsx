@@ -19,11 +19,13 @@ export default async function PlannerCreatePage() {
     redirect('/auth/login')
   }
 
-  const [levelsRes, subjectsRes] = await Promise.all([
-    payload.find({ collection: 'academicLevels', limit: 200 }),
-    payload.find({ collection: 'subjects', limit: 200 }),
-  ])
-  const levels = (levelsRes.docs || []) as AcademicLevel[]
+  // Global Context: Enforce Academic Level
+  const userLevelId = typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
+  if (!userLevelId) {
+    redirect('/dashboard/account?setup=level')
+  }
+
+  const subjectsRes = await payload.find({ collection: 'subjects', limit: 200 })
   return (
     <DashboardLayout user={user} title="Create Study Plan">
       <div className="min-h-screen bg-background">
@@ -44,7 +46,7 @@ export default async function PlannerCreatePage() {
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
             <div className="p-6 rounded-2xl border bg-card border-border/50">
-              <CreateForm userId={user.id} levels={levels} subjects={subjectsRes.docs as any} />
+              <CreateForm userId={user.id} userLevelId={userLevelId} subjects={subjectsRes.docs as any} />
             </div>
           </MotionWrapper>
         </div>

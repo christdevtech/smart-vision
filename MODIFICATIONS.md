@@ -56,36 +56,46 @@
 
 ## 4. Digital Library
 
-### 4.1 Level-Based Subject Arrangement
+### 4.1 Browse-First Grid & Level Filtering
 - **Required Change:**
-  - Subjects must be **arranged/grouped according to levels**.
+  - Adopt the **Browse-First Architecture** (similar to Question Bank).
+  - Remove the nested "Select Subject" step.
+  - Display a rich grid of all Digital Library documents (Books) upfront.
+  - Silently filter all displayed documents by the user's `academicLevel` (no manual UI selector).
+  - Provide an in-page filter bar to quickly sort by Subject or Document Type.
 
 ### 4.2 Uploaded Documents Not Visible
 - **Issue:** Documents uploaded by the user are **not appearing** in the Digital Library.
 - **Required Change:**
-  - Investigate and fix the upload/display pipeline so that **all uploaded documents are visible** to the user.
+  - Investigate and fix the upload/display pipeline so that all uploaded documents are visible.
 
 ---
 
 ## 5. Video Library
 
-### 5.1 Level & Topic Organisation
+### 5.1 Browse-First Grid & Level Filtering
 - **Required Change:**
-  - Subjects should be **arranged according to levels**.
-  - Within each subject, videos should be **arranged according to topics**.
+  - Adopt the **Browse-First Architecture**.
+  - Remove the nested "Select Subject" step.
+  - Display a rich grid of all Video thumbnails upfront.
+  - Silently filter all displayed videos by the user's `academicLevel`.
+  - Provide an in-page filter bar to quickly sort by Subject or Topic.
 
 ---
 
 ## 6. Learning Hub / Study Material
 
-### 6.1 Level-Based Subject Arrangement
+### 6.1 Centralized Study Hub (Nested Structure)
 - **Required Change:**
-  - Subjects must be **arranged according to levels**.
+  - **Retain the nested structure** (`Subject -> Centralized Hub`).
+  - **Main Page (`/dashboard/learning`)**: List Subject cards filtered by `academicLevel`. **Hide empty subjects** (subjects with no resources). Display resource counts on the cards (e.g., "5 Books, 12 Videos").
+  - **Centralized Hub (`/dashboard/learning/[subjectId]`)**: Aggregate ALL resources (Topics, Videos, Books, Past Papers) for that specific subject in one view.
+  - Implement a powerful in-page filter (by resource type, topic, year) to allow deep-dive studying without navigating away.
 
 ### 6.2 Fix Question Bank Redirect
 - **Issue:** The Learning Hub currently redirects users to other features **but not to the Question Bank**.
 - **Required Change:**
-  - Ensure there is a clear navigation path / redirect **from the Learning Hub to the Question Bank**.
+  - Ensure Past Papers are accessible directly from the Centralized Hub.
 
 ---
 
@@ -105,13 +115,13 @@
 
 ## 8. Global Academic Level Context
 
-### 8.1 Context-Aware Academic Level
-- **Issue:** The student's academic level is already stored in their user profile (`users.academicLevel`), but some features (e.g., Study Planner creation, content browsing) still ask the student to select or re-enter their academic level.
+### 8.1 Context-Aware Academic Level & Silent Filtering
+- **Issue:** Features ask the student to select or re-enter their academic level despite it being in the user profile.
 - **Required Change:**
-  - **All pages and features** must read the student's academic level from their authenticated user document.
-  - Content listings (Learning Hub, Video Library, Digital Library, Question Bank, Testing Centre) should **automatically filter by the user's academic level** without requiring manual selection.
-  - The Study Planner should **pre-fill** the academic level from the user profile when creating a plan, not ask for it again.
-  - If the student's academic level is not yet set, prompt them to set it **once** (e.g., in onboarding or profile settings), then use it everywhere.
+  - **Remove all Academic Level selectors** from individual feature pages (Question Bank, Library, Videos, Learning Hub, Testing Centre).
+  - **Silently filter** all database queries (`payload.find()`) using `where: { academicLevel: { equals: user.academicLevel.id } }`.
+  - Display a persistent notification/badge in the Dashboard header (e.g., *"Current Level: GCE Advanced Level - Change in Settings"*) to inform the user that their content is personalized.
+  - If a user has **no academic level set**, redirect them to their profile settings page with a prompt to set it before accessing content.
 
 ---
 

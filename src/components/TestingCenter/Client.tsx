@@ -27,19 +27,15 @@ const QUESTION_PRESETS = [5, 10, 20, 30, 50]
 export default function TestingCenterClient({
   user,
   subscriptionActive,
-  academicLevels,
   subjects,
   topics,
 }: {
   user: User
   subscriptionActive: boolean
-  academicLevels: AcademicLevel[]
   subjects: Subject[]
   topics: Topic[]
 }) {
-  const [academicLevelId, setAcademicLevelId] = React.useState<string>(
-    () => getId(user.academicLevel) || '',
-  )
+  const academicLevelId = getId(user.academicLevel) || ''
   const [subjectId, setSubjectId] = React.useState<string>('')
   const [topicId, setTopicId] = React.useState<string>('')
   const [difficulty, setDifficulty] = React.useState<'easy' | 'medium' | 'hard' | ''>('')
@@ -73,7 +69,6 @@ export default function TestingCenterClient({
     try {
       const saved = JSON.parse(localStorage.getItem(key) || 'null')
       if (saved && saved.userId === user.id) {
-        setAcademicLevelId(saved.academicLevelId || academicLevelId)
         setSubjectId(saved.subjectId || '')
         setTopicId(saved.topicId || '')
         setDifficulty(saved.difficulty || '')
@@ -315,21 +310,7 @@ export default function TestingCenterClient({
         </div>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div>
-            <label className="block mb-1 text-sm text-muted-foreground">Academic Level</label>
-            <select
-              value={academicLevelId}
-              onChange={(e) => setAcademicLevelId(e.target.value)}
-              className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground"
-            >
-              <option value="">Select level</option>
-              {academicLevels.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {(l as any).name || l.id}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Academic Level UI removed — context is handled globally */}
           <div>
             <label className="block mb-1 text-sm text-muted-foreground">Subject</label>
             <select

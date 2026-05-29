@@ -7,7 +7,7 @@ import ChatPlanner from '@/components/Planner/ChatPlanner'
 
 interface PlannerClientProps {
   userId: string
-  academicLevels: AcademicLevel[]
+  userLevelId: string
   subjects: Subject[]
   topics: Topic[]
   initialPlan: StudyPlan | null
@@ -15,7 +15,7 @@ interface PlannerClientProps {
 
 export default function PlannerClient({
   userId,
-  academicLevels,
+  userLevelId,
   subjects,
   topics,
   initialPlan,
@@ -53,7 +53,7 @@ export default function PlannerClient({
         )}
         <ChatPlanner
           userId={userId}
-          academicLevels={academicLevels}
+          userLevelId={userLevelId}
           subjects={subjects}
           topics={topics}
           initialPlan={plan}
@@ -69,7 +69,7 @@ export default function PlannerClient({
     return (
       <ChatPlanner
         userId={userId}
-        academicLevels={academicLevels}
+        userLevelId={userLevelId}
         subjects={subjects}
         topics={topics}
         initialPlan={null}
