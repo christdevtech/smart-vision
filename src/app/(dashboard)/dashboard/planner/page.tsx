@@ -26,7 +26,7 @@ export default async function StudyPlannerPage() {
   }
 
   const [subjects, topics, existingPlan] = await Promise.all([
-    payload.find({ collection: 'subjects', limit: 100 }),
+    payload.find({ collection: 'subjects', where: { academicLevels: { in: [userLevelId] } }, limit: 100 }),
     payload.find({ collection: 'topics', limit: 100 }),
     payload.find({
       collection: 'study-plans',

@@ -29,6 +29,7 @@ export default async function LearningHubPage() {
 
   const subjectsRes = await payload.find({
     collection: 'subjects',
+    where: { academicLevels: { in: [userLevelId] } },
     limit: 200,
   })
   const subjects = subjectsRes.docs as Subject[]

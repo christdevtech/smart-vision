@@ -1,7 +1,7 @@
 import { admin } from '@/access/admin'
-import { anyone } from '@/access/anyone'
 import { slugField } from '@/fields/slug'
 import { CollectionConfig } from 'payload'
+import { readSubjects } from './access/readSubjects'
 
 export const Subjects: CollectionConfig = {
   slug: 'subjects',
@@ -11,7 +11,7 @@ export const Subjects: CollectionConfig = {
   },
   access: {
     create: admin,
-    read: anyone,
+    read: readSubjects,
     delete: admin,
     update: admin,
   },
@@ -20,6 +20,15 @@ export const Subjects: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
+    },
+    {
+      name: 'academicLevels',
+      type: 'relationship',
+      relationTo: 'academicLevels',
+      hasMany: true,
+      admin: {
+        position: 'sidebar',
+      },
     },
     ...slugField('name'),
   ],

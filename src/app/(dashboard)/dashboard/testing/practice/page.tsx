@@ -20,8 +20,14 @@ export default async function PracticePage() {
     redirect('/auth/login')
   }
 
+  // Global Context: Enforce Academic Level
+  const userLevelId = typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
+  if (!userLevelId) {
+    redirect('/dashboard/account?setup=level')
+  }
+
   const [subjectsRes, topicsRes, subsRes] = await Promise.all([
-    payload.find({ collection: 'subjects', limit: 200 }),
+    payload.find({ collection: 'subjects', where: { academicLevels: { in: [userLevelId] } }, limit: 200 }),
     payload.find({ collection: 'topics', limit: 500 }),
     payload.find({ collection: 'subscriptions', where: { user: { equals: user.id } }, limit: 1 }),
   ])

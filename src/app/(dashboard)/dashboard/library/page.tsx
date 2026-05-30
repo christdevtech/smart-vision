@@ -37,6 +37,7 @@ export default async function DigitalLibraryPage() {
     }),
     payload.find({
       collection: 'subjects',
+      where: { academicLevels: { in: [userLevelId] } },
       limit: 200,
     }),
     payload.find({

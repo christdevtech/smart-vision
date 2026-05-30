@@ -50,7 +50,7 @@ export default async function TestingCenterPage() {
           <MotionWrapper animation="fadeIn" delay={0.2}>
             {await (async () => {
               const [subjectsRes, topicsRes, subsRes] = await Promise.all([
-                payload.find({ collection: 'subjects', limit: 200 }),
+                payload.find({ collection: 'subjects', where: { academicLevels: { in: [userLevelId] } }, limit: 200 }),
                 payload.find({ collection: 'topics', limit: 500 }),
                 payload.find({
                   collection: 'subscriptions',

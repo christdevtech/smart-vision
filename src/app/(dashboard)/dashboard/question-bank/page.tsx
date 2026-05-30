@@ -30,7 +30,7 @@ export default async function QuestionBankPage() {
 
   const [subjectsRes, papersRes, subsRes] = await Promise.all([
     // TODO: Ideally filter subjects to only those that have papers for this level, but for now we'll fetch all
-    payload.find({ collection: 'subjects', limit: 200 }),
+    payload.find({ collection: 'subjects', where: { academicLevels: { in: [userLevelId] } }, limit: 200 }),
     payload.find({
       collection: 'exam-papers',
       where: {
