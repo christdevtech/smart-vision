@@ -209,6 +209,7 @@ export interface AcademicLevel {
 export interface Subject {
   id: string;
   name: string;
+  academicLevels?: (string | AcademicLevel)[] | null;
   slug?: string | null;
   slugLock?: boolean | null;
   updatedAt: string;
@@ -1661,6 +1662,7 @@ export interface AcademicLevelsSelect<T extends boolean = true> {
  */
 export interface SubjectsSelect<T extends boolean = true> {
   name?: T;
+  academicLevels?: T;
   slug?: T;
   slugLock?: T;
   updatedAt?: T;

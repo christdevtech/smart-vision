@@ -125,7 +125,7 @@ export default function ProtectedPDFViewer({ url }: ProtectedPDFViewerProps) {
   return (
     <div
       ref={containerRef}
-      className="flex flex-col"
+      className="flex flex-col w-full max-w-full overflow-hidden"
       onContextMenu={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
       style={{ userSelect: 'none', WebkitUserSelect: 'none' } as React.CSSProperties}
@@ -181,15 +181,16 @@ export default function ProtectedPDFViewer({ url }: ProtectedPDFViewerProps) {
 
       {/* PDF canvas area */}
       <div
-        className="overflow-auto flex justify-center bg-neutral-100 dark:bg-neutral-900/50"
+        className="overflow-auto bg-neutral-100 dark:bg-neutral-900/50 w-full text-center"
         style={{ height: '75vh', minHeight: '500px' }}
       >
-        {loading && !pdfUrl && (
-          <div className="flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            <p className="text-sm text-muted-foreground">Loading document…</p>
-          </div>
-        )}
+        <div className="inline-block text-left pb-8 px-2 md:px-4 min-w-fit">
+          {loading && !pdfUrl && (
+            <div className="flex flex-col items-center justify-center gap-3 mt-12 text-center w-full">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              <p className="text-sm text-muted-foreground">Loading document…</p>
+            </div>
+          )}
 
         {pdfUrl && (
           <Document
@@ -217,6 +218,7 @@ export default function ProtectedPDFViewer({ url }: ProtectedPDFViewerProps) {
             />
           </Document>
         )}
+        </div>
       </div>
     </div>
   )

@@ -69,7 +69,7 @@ export default function DashboardLayout({
       )}
 
       {/* Main Content Area */}
-      <div className={`flex flex-col flex-1 h-screen ${showSidebar && !isMobile ? 'ml-0' : ''}`}>
+      <div className={`flex flex-col flex-1 min-w-0 h-screen ${showSidebar && !isMobile ? 'ml-0' : ''}`}>
         {/* Enhanced Header with Dashboard Features */}
         <motion.header
           className="z-40 flex-shrink-0 border-b shadow-sm bg-card border-border"
@@ -181,7 +181,7 @@ export default function DashboardLayout({
         </motion.header>
 
         {/* Main Content */}
-        <main className={`overflow-y-auto flex-1 ${className}`}>
+        <main className={`overflow-y-auto overflow-x-hidden flex-1 w-full ${className}`}>
           <PageTransition>
             <MotionWrapper animation="fadeIn" className="min-h-full">
               {children}
