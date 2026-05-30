@@ -83,12 +83,10 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
     subscriptionActive,
   )
 
-  // Resolve PDF URL — try populated object first, fall back gracefully
+  // Use the extensionless secure proxy to fetch PDF bytes
   const pdfMedia = bookDoc.pdf as any
-  const pdfFilename: string | null =
-    typeof pdfMedia === 'object' && pdfMedia !== null
-      ? (pdfMedia.filename ?? pdfMedia.url ?? null)
-      : null
+  const pdfMediaId = typeof pdfMedia === 'object' && pdfMedia !== null ? pdfMedia.id : null
+  const pdfUrl: string | null = pdfMediaId ? `/api/secure-pdf/${pdfMediaId}` : null
 
   return (
     <DashboardLayout user={user} title="Read Book">
@@ -180,9 +178,9 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
               )}
 
               {/* PDF Reader — only when access is granted AND pdf is available */}
-              {tierAccess && pdfFilename ? (
-                <PDFReader filename={pdfFilename} />
-              ) : tierAccess && !pdfFilename ? (
+              {tierAccess && pdfUrl ? (
+                <PDFReader pdfUrl={pdfUrl} />
+              ) : tierAccess && !pdfUrl ? (
                 <div className="p-4 rounded-lg border bg-input border-border text-center">
                   <p className="text-sm text-muted-foreground">
                     PDF file is not available for this book. Please contact support.
