@@ -28,9 +28,15 @@ const generateUniqueCode = async (payload: any): Promise<string> => {
   return code!
 }
 
-export const beforeChangeUser: CollectionBeforeChangeHook = async ({ data, req, operation }) => {
-  // Auto-generate referralCode for new users
-  if (operation === 'create' || !data.referralCode) {
+export const beforeChangeUser: CollectionBeforeChangeHook = async ({
+  data,
+  originalDoc,
+  req,
+  operation,
+}) => {
+  // Generate once for new users and backfill legacy users that do not have a code.
+  // Update payloads are partial, so checking data.referralCode alone would regenerate the code.
+  if (operation === 'create' || !originalDoc?.referralCode) {
     data.referralCode = await generateUniqueCode(req.payload)
   }
 

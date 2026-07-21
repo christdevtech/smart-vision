@@ -36,6 +36,11 @@ Validation performed:
 - Integration/E2E tests were inspected but not executed against the ambient database because the integration suite creates and deletes users through the configured application database rather than an isolated test database.
 - No CI workflow exists under `.github/workflows`.
 
+## Remediation status
+
+- **G-01 — accepted scope:** `cloudbuild.yaml` is present only as an ignored local deployment file and is not tracked in the current repository. Per the repository owner's decision, no credential rotation or history rewrite is included.
+- **G-02 — implemented:** public registrations are forced to the `user` role with server-owned defaults; privileged user fields reject public create/update input; ordinary authenticated users cannot create additional accounts; and the profile endpoint accepts only validated profile fields rather than forwarding arbitrary objects to Payload.
+
 ## What is already implemented
 
 The following capabilities are useful foundations and should be retained while hardening them:

@@ -1,10 +1,12 @@
-import type { CollectionConfig } from 'payload'
-import { beforeChangeUser, afterChangeUser } from './hooks'
-import { anyone } from '@/access/anyone'
-import { authenticated } from '@/access/authenticated'
-import { selfOrAdmin } from '@/access/selfOrAdmin'
-import { admin } from '@/access/admin'
+import type { CollectionConfig, FieldAccess } from 'payload'
+import { afterChangeUser, beforeChangeUser, enforcePublicUserDefaults } from './hooks'
 import { deleteUser, readUser, updateUser, userCreate } from '@/access/userAccess'
+
+const adminFieldAccess: FieldAccess = ({ req: { user } }) =>
+  Boolean(user && ['admin', 'super-admin'].includes(user.role))
+
+const authenticatedFieldAccess: FieldAccess = ({ req: { user } }) => Boolean(user)
+const serverOnlyFieldAccess: FieldAccess = () => false
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -35,20 +37,36 @@ export const Users: CollectionConfig = {
     {
       name: 'phoneNumber',
       type: 'text',
+      access: {
+        create: adminFieldAccess,
+        update: authenticatedFieldAccess,
+      },
     },
     {
       name: 'dateOfBirth',
       type: 'date',
+      access: {
+        create: adminFieldAccess,
+        update: authenticatedFieldAccess,
+      },
     },
     {
       name: 'academicLevel',
       type: 'relationship',
       relationTo: 'academicLevels',
+      access: {
+        create: adminFieldAccess,
+        update: authenticatedFieldAccess,
+      },
     },
     {
       name: 'isActive',
       type: 'checkbox',
       defaultValue: true,
+      access: {
+        create: adminFieldAccess,
+        update: adminFieldAccess,
+      },
     },
     {
       name: 'referralCode',
@@ -58,11 +76,19 @@ export const Users: CollectionConfig = {
         readOnly: true,
         position: 'sidebar',
       },
+      access: {
+        create: serverOnlyFieldAccess,
+        update: serverOnlyFieldAccess,
+      },
     },
     {
       name: 'referredBy',
       type: 'relationship',
       relationTo: 'users',
+      access: {
+        create: serverOnlyFieldAccess,
+        update: serverOnlyFieldAccess,
+      },
     },
     {
       name: 'totalReferrals',
@@ -71,12 +97,20 @@ export const Users: CollectionConfig = {
       admin: {
         readOnly: true,
       },
+      access: {
+        create: serverOnlyFieldAccess,
+        update: serverOnlyFieldAccess,
+      },
     },
     {
       name: 'lastActiveAt',
       type: 'date',
       admin: {
         readOnly: true,
+      },
+      access: {
+        create: serverOnlyFieldAccess,
+        update: serverOnlyFieldAccess,
       },
     },
     {
@@ -93,13 +127,9 @@ export const Users: CollectionConfig = {
         position: 'sidebar',
       },
       access: {
-        create: () => true,
+        create: adminFieldAccess,
         read: () => true,
-        update: ({ req: { user } }) => {
-          if (user) {
-            return Boolean(['admin', 'super-admin'].includes(user?.role))
-          } else return false
-        },
+        update: adminFieldAccess,
       },
       defaultValue: 'user',
       required: true,
@@ -111,12 +141,20 @@ export const Users: CollectionConfig = {
       admin: {
         position: 'sidebar',
       },
+      access: {
+        create: serverOnlyFieldAccess,
+        update: serverOnlyFieldAccess,
+      },
     },
     {
       name: 'subjects',
       type: 'relationship',
       relationTo: 'subjects',
       hasMany: true,
+      access: {
+        create: adminFieldAccess,
+        update: authenticatedFieldAccess,
+      },
     },
     {
       name: 'profilePic',
@@ -125,10 +163,14 @@ export const Users: CollectionConfig = {
       admin: {
         position: 'sidebar',
       },
+      access: {
+        create: adminFieldAccess,
+        update: authenticatedFieldAccess,
+      },
     },
   ],
   hooks: {
-    beforeChange: [beforeChangeUser],
+    beforeChange: [enforcePublicUserDefaults, beforeChangeUser],
     afterChange: [afterChangeUser],
   },
   timestamps: true,

@@ -1,7 +1,9 @@
 import { Access } from 'payload'
 
-export const userCreate: Access = () => {
-  return true
+export const userCreate: Access = ({ req: { user } }) => {
+  if (!user) return true
+
+  return ['admin', 'super-admin'].includes(user.role)
 }
 
 export const readUser: Access = ({ req: { user }, data }) => {
