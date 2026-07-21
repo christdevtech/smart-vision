@@ -1,0 +1,9 @@
+[
+  {
+    "AllowedOrigins": ["https://smartvisioncm.com", "https://www.smartvisioncm.com"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["Content-Type"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]

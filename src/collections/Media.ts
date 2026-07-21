@@ -42,8 +42,9 @@ export const Media: CollectionConfig = {
     },
   ],
   upload: {
-    // Upload to the public/media directory in Next.js making them publicly accessible even outside of Payload
+    // Used only for local development. The R2 adapter disables local storage when configured.
     staticDir: path.resolve(dirname, '../../public/media'),
+    mimeTypes: ['image/*', 'video/*', 'application/pdf'],
     adminThumbnail: 'thumbnail',
     focalPoint: true,
     imageSizes: [
