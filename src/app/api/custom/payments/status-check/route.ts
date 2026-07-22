@@ -8,6 +8,7 @@ import {
   getRetryAfterSeconds,
   PAYMENT_POLL_INTERVAL_MS,
 } from '@/utilities/paymentSecurity'
+import { processVerifiedPaymentStatus } from '@/services/paymentSettlement'
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,57 +49,27 @@ export async function POST(request: NextRequest) {
       try {
         if (!transaction.fapshiTransId) throw new Error('Missing Fapshi transaction ID')
 
-        const fapshiTransaction = await fapshiService.getPaymentStatus(transaction.fapshiTransId)
-        const now = new Date().toISOString()
-
-        if (!fapshiTransaction.transId) {
-          await payload.update({
-            collection: 'transactions',
-            id: transaction.id,
-            data: {
-              lastStatusCheck: now,
-              statusCheckCount: (transaction.statusCheckCount || 0) + 1,
-              notes: 'Transaction not found in Fapshi API',
-            },
-          })
-
-          results.push({ transactionId: transaction.id, error: 'Provider transaction not found' })
-          continue
-        }
-
-        const newStatus = fapshiService.mapFapshiStatus(fapshiTransaction.status)
-        const updateData: Record<string, unknown> = {
-          lastStatusCheck: now,
-          statusCheckCount: (transaction.statusCheckCount || 0) + 1,
-        }
-
-        if (newStatus !== transaction.status) {
-          updateData.status = newStatus
-          updateData.revenue = fapshiTransaction.revenue
-          updateData.paymentMedium = fapshiTransaction.medium
-          updateData.financialTransId = fapshiTransaction.financialTransId
-
-          if (fapshiTransaction.status === 'SUCCESSFUL' && !transaction.dateConfirmed) {
-            updateData.dateConfirmed = fapshiTransaction.dateConfirmed || now
-          }
-        }
-
-        // Transaction hooks perform the corresponding subscription update once the
-        // provider-confirmed status is persisted.
-        await payload.update({
-          collection: 'transactions',
-          id: transaction.id,
-          data: updateData,
-        })
+        const providerTransaction = await fapshiService.getPaymentStatus(transaction.fapshiTransId)
+        const result = await processVerifiedPaymentStatus(
+          payload,
+          transaction,
+          providerTransaction,
+          'batch',
+        )
 
         results.push({
           transactionId: transaction.id,
           oldStatus: transaction.status,
-          newStatus,
-          updated: newStatus !== transaction.status,
+          newStatus: result.status,
+          updated: result.updated,
+          settled: result.settled,
+          alreadySettled: result.alreadySettled,
         })
       } catch (error) {
-        console.error(`Error checking status for transaction ${transaction.id}:`, error)
+        payload.logger.error({
+          msg: `Payment status check failed for transaction ${transaction.id}`,
+          err: error,
+        })
 
         await payload.update({
           collection: 'transactions',
@@ -155,7 +126,6 @@ export async function GET(request: NextRequest) {
     }
 
     const retryAfter = getRetryAfterSeconds(transaction.lastStatusCheck, PAYMENT_POLL_INTERVAL_MS)
-
     if (retryAfter > 0) {
       return NextResponse.json(
         { error: 'Payment status was checked too recently', status: transaction.status },
@@ -164,44 +134,21 @@ export async function GET(request: NextRequest) {
     }
 
     const fapshiService = createFapshiService()
-    const fapshiTransaction = await fapshiService.getPaymentStatus(transaction.fapshiTransId)
-
-    if (!fapshiTransaction.transId) {
-      return NextResponse.json(
-        { error: 'Transaction not found in payment provider' },
-        { status: 404 },
-      )
-    }
-
-    const newStatus = fapshiService.mapFapshiStatus(fapshiTransaction.status)
-    const now = new Date().toISOString()
-    const updateData: Record<string, unknown> = {
-      lastStatusCheck: now,
-      statusCheckCount: (transaction.statusCheckCount || 0) + 1,
-    }
-
-    if (newStatus !== transaction.status) {
-      updateData.status = newStatus
-      updateData.revenue = fapshiTransaction.revenue
-      updateData.paymentMedium = fapshiTransaction.medium
-      updateData.financialTransId = fapshiTransaction.financialTransId
-
-      if (fapshiTransaction.status === 'SUCCESSFUL' && !transaction.dateConfirmed) {
-        updateData.dateConfirmed = fapshiTransaction.dateConfirmed || now
-      }
-    }
-
-    await payload.update({
-      collection: 'transactions',
-      id: transaction.id,
-      data: updateData,
-    })
+    const providerTransaction = await fapshiService.getPaymentStatus(transaction.fapshiTransId)
+    const result = await processVerifiedPaymentStatus(
+      payload,
+      transaction,
+      providerTransaction,
+      'manual',
+    )
 
     return NextResponse.json({
       transactionId: transaction.id,
       oldStatus: transaction.status,
-      newStatus,
-      updated: newStatus !== transaction.status,
+      newStatus: result.status,
+      updated: result.updated,
+      settled: result.settled,
+      alreadySettled: result.alreadySettled,
     })
   } catch (error) {
     console.error('Manual status check error:', error)

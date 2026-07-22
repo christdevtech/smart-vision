@@ -16,7 +16,7 @@ export const afterChangeTransaction: CollectionAfterChangeHook = async ({
   try {
     if (doc.status === 'successful') {
       // Payment success notification
-      const planLabel = doc.amount >= 10000 ? 'Annual' : doc.amount >= 5000 ? 'Monthly' : 'Free'
+      const planLabel = doc.plan === 'annual' ? 'Annual' : 'Monthly'
 
       await req.payload.create({
         collection: 'notifications',
@@ -39,6 +39,7 @@ export const afterChangeTransaction: CollectionAfterChangeHook = async ({
             tags: [{ tag: 'payment' }, { tag: 'subscription' }],
           },
         },
+        req,
       })
     } else if (doc.status === 'failed') {
       // Payment failure notification
@@ -62,6 +63,7 @@ export const afterChangeTransaction: CollectionAfterChangeHook = async ({
             tags: [{ tag: 'payment' }, { tag: 'failed' }],
           },
         },
+        req,
       })
     } else if (doc.status === 'expired') {
       await req.payload.create({
@@ -83,6 +85,7 @@ export const afterChangeTransaction: CollectionAfterChangeHook = async ({
             tags: [{ tag: 'subscription' }, { tag: 'expired' }],
           },
         },
+        req,
       })
     }
   } catch (error) {

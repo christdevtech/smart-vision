@@ -51,13 +51,13 @@ The following jobs are configured to run automatically using Payload's `autoRun`
   - Checks all pending/initiated transactions
   - Updates status based on Fapshi API responses
   - Updates related subscriptions when payments are confirmed
-  
 - **Payment Reconciliation Workflow**: Every 6 hours (`0 */6 * * *`)
   - Reconciles transactions from the last 24 hours
   - Identifies and corrects discrepancies
   - Marks transactions as reconciled
 
 **Key Features:**
+
 - **Built-in Scheduling**: Uses Payload's native cron scheduling
 - **Task Management**: Proper task/workflow separation following Payload best practices
 - **Error Handling**: Built-in retry mechanisms and failure callbacks
@@ -65,6 +65,7 @@ The following jobs are configured to run automatically using Payload's `autoRun`
 - **No External Dependencies**: No need for external cron services
 
 **Job Structure:**
+
 ```
 src/jobs/
 ├── tasks/
@@ -125,7 +126,20 @@ different user is returned as not found.
 
 **POST** `/api/custom/payments/webhook/fapshi`
 
-Automatically handles Fapshi webhook notifications. No manual interaction required.
+Fapshi does not currently document a webhook signature. The application therefore treats the
+callback only as a status-change signal: it looks up a transaction that the platform initiated,
+re-queries `/payment-status/{transId}` using server-held Fapshi credentials, and rejects any
+provider response whose transaction ID, external ID, user ID, or amount differs from the local
+record. Callback fields never directly activate a subscription.
+
+A verified successful payment must create a unique `payment-settlements` ledger entry before it
+can change subscription dates. The ledger creation, subscription update, and transaction update
+share the Payload request transaction. Duplicate webhooks, browser polls, and concurrent workers
+therefore resolve to the existing settlement without extending the subscription again.
+
+Before the first deployment of this schema, back up the database and confirm that existing
+non-empty `transactionId`, `fapshiTransId`, and `externalId` values contain no duplicates. The new
+unique indexes intentionally fail deployment if historical transaction identifiers conflict.
 
 ### Status Checking
 
@@ -193,13 +207,14 @@ Automated endpoint for cron jobs (requires `CRON_SECRET` authorization).
 2. **Webhook Processing**
 
    ```
-   Fapshi → /api/custom/payments/webhook/fapshi → Database → Subscription Update
+   Fapshi webhook signal → authenticated Fapshi status query → identity/amount match
+   → unique settlement ledger → atomic subscription + transaction update
    ```
 
 3. **Status Polling**
 
    ```
-   Payload Jobs → payment-status-workflow → payment-status-check task → Fapshi API → Database
+   Browser or authorized batch route → Fapshi status query → shared payment state machine
    ```
 
 4. **Reconciliation**

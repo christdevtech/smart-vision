@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
         ...(subscriptionId ? { subscription: subscriptionId } : {}),
         transactionId: externalId,
         amount,
+        plan: input.plan,
         status: 'created',
         phone: formattedPhone,
         paymentMedium: input.medium,

@@ -79,6 +79,7 @@ export interface Config {
     'study-plans': StudyPlan;
     categories: Category;
     transactions: Transaction;
+    'payment-settlements': PaymentSettlement;
     topics: Topic;
     'user-progress': UserProgress;
     'test-results': TestResult;
@@ -104,6 +105,7 @@ export interface Config {
     'study-plans': StudyPlansSelect<false> | StudyPlansSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
+    'payment-settlements': PaymentSettlementsSelect<false> | PaymentSettlementsSelect<true>;
     topics: TopicsSelect<false> | TopicsSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
     'test-results': TestResultsSelect<false> | TestResultsSelect<true>;
@@ -626,6 +628,10 @@ export interface Transaction {
   externalId?: string | null;
   amount: number;
   /**
+   * Subscription plan priced when the payment was initiated
+   */
+  plan?: ('monthly' | 'annual') | null;
+  /**
    * Amount received after Fapshi fees deduction
    */
   revenue?: number | null;
@@ -647,6 +653,18 @@ export interface Transaction {
    * Date when payment was confirmed
    */
   dateConfirmed?: string | null;
+  /**
+   * Last time this transaction was verified directly with Fapshi
+   */
+  providerVerifiedAt?: string | null;
+  /**
+   * Immutable settlement ledger entry that activated this payment
+   */
+  settlement?: (string | null) | PaymentSettlement;
+  /**
+   * Time this payment was applied to a subscription
+   */
+  settledAt?: string | null;
   /**
    * Whether webhook notification was received
    */
@@ -675,6 +693,27 @@ export interface Transaction {
    * Additional notes or error messages
    */
   notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-settlements".
+ */
+export interface PaymentSettlement {
+  id: string;
+  transaction: string | Transaction;
+  providerTransactionId: string;
+  externalId: string;
+  user: string | User;
+  amount: number;
+  plan: 'monthly' | 'annual';
+  revenue?: number | null;
+  paymentMedium?: ('mobile money' | 'orange money') | null;
+  financialTransId?: string | null;
+  providerConfirmedAt: string;
+  verifiedAt: string;
+  source: 'webhook' | 'manual' | 'batch' | 'reconciliation';
   updatedAt: string;
   createdAt: string;
 }
@@ -1544,6 +1583,10 @@ export interface PayloadLockedDocument {
         value: string | Transaction;
       } | null)
     | ({
+        relationTo: 'payment-settlements';
+        value: string | PaymentSettlement;
+      } | null)
+    | ({
         relationTo: 'topics';
         value: string | Topic;
       } | null)
@@ -2000,6 +2043,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   fapshiTransId?: T;
   externalId?: T;
   amount?: T;
+  plan?: T;
   revenue?: T;
   status?: T;
   paymentMedium?: T;
@@ -2007,6 +2051,9 @@ export interface TransactionsSelect<T extends boolean = true> {
   financialTransId?: T;
   dateInitiated?: T;
   dateConfirmed?: T;
+  providerVerifiedAt?: T;
+  settlement?: T;
+  settledAt?: T;
   webhookReceived?: T;
   webhookReceivedAt?: T;
   lastStatusCheck?: T;
@@ -2014,6 +2061,26 @@ export interface TransactionsSelect<T extends boolean = true> {
   reconciled?: T;
   reconciledAt?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-settlements_select".
+ */
+export interface PaymentSettlementsSelect<T extends boolean = true> {
+  transaction?: T;
+  providerTransactionId?: T;
+  externalId?: T;
+  user?: T;
+  amount?: T;
+  plan?: T;
+  revenue?: T;
+  paymentMedium?: T;
+  financialTransId?: T;
+  providerConfirmedAt?: T;
+  verifiedAt?: T;
+  source?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -1,5 +1,5 @@
 import { Setting, Subscription, Transaction } from '@/payload-types'
-import { Payload } from 'payload'
+import { Payload, PayloadRequest } from 'payload'
 
 /**
  * Derived types from the generated Payload schema.
@@ -13,6 +13,7 @@ export interface CreateSubscriptionParams {
   plan: SubscriptionPlan
   amount: number
   transactionId?: string
+  paymentStatus?: SubscriptionStatus
 }
 
 export interface UpdateSubscriptionParams {
@@ -70,8 +71,9 @@ export function calculateSubscriptionEndDate(
 export async function createSubscription(
   payload: Payload,
   params: CreateSubscriptionParams,
+  req?: PayloadRequest,
 ): Promise<Subscription> {
-  const { userId, plan, amount: _amount, transactionId } = params
+  const { userId, plan, amount: _amount, transactionId, paymentStatus = 'pending' } = params
 
   const startDate = new Date()
   // Free plan has no end date concept — default to 1 year ahead
@@ -85,13 +87,14 @@ export async function createSubscription(
     plan,
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),
-    paymentStatus: 'pending' as SubscriptionStatus,
+    paymentStatus,
     ...(transactionId ? { transactions: [transactionId] } : {}),
   }
 
   return (await payload.create({
     collection: 'subscriptions',
     data: subscriptionData,
+    ...(req ? { req } : {}),
   })) as Subscription
 }
 
@@ -101,6 +104,7 @@ export async function createSubscription(
 export async function updateSubscriptionAfterPayment(
   payload: Payload,
   params: UpdateSubscriptionParams,
+  req?: PayloadRequest,
 ): Promise<Subscription> {
   const { subscriptionId, plan, transactionId } = params
 
@@ -108,10 +112,21 @@ export async function updateSubscriptionAfterPayment(
   const currentSubscription = (await payload.findByID({
     collection: 'subscriptions',
     id: subscriptionId,
+    ...(req ? { req } : {}),
   })) as Subscription
 
   if (!currentSubscription) {
     throw new Error('Subscription not found')
+  }
+
+  const existingTransactionIds = (currentSubscription.transactions ?? []).map((transaction) =>
+    typeof transaction === 'string' ? transaction : (transaction as Transaction).id,
+  )
+
+  // Defense in depth: a transaction already recorded on the subscription must never
+  // extend it again, even if a caller bypasses the settlement ledger.
+  if (transactionId && existingTransactionIds.includes(transactionId)) {
+    return currentSubscription
   }
 
   const now = new Date()
@@ -142,18 +157,14 @@ export async function updateSubscriptionAfterPayment(
 
   // Add transaction to the list if provided
   if (transactionId) {
-    const existing = (currentSubscription.transactions ?? []).map((t) =>
-      typeof t === 'string' ? t : (t as Transaction).id,
-    )
-    if (!existing.includes(transactionId)) {
-      updateData.transactions = [...existing, transactionId]
-    }
+    updateData.transactions = [...existingTransactionIds, transactionId]
   }
 
   return (await payload.update({
     collection: 'subscriptions',
     id: subscriptionId,
     data: updateData,
+    ...(req ? { req } : {}),
   })) as Subscription
 }
 
@@ -166,6 +177,7 @@ export async function findOrCreateUserSubscription(
   plan: SubscriptionPlan,
   amount: number,
   transactionId?: string,
+  req?: PayloadRequest,
 ): Promise<Subscription> {
   // Check if user already has a subscription
   const existingSubscriptions = await payload.find({
@@ -176,23 +188,34 @@ export async function findOrCreateUserSubscription(
       },
     },
     limit: 1,
+    sort: '-createdAt',
+    ...(req ? { req } : {}),
   })
 
   if (existingSubscriptions.docs.length > 0) {
     const subscription = existingSubscriptions.docs[0] as Subscription
-    return await updateSubscriptionAfterPayment(payload, {
-      subscriptionId: subscription.id,
-      plan,
-      amount,
-      transactionId,
-    })
+    return await updateSubscriptionAfterPayment(
+      payload,
+      {
+        subscriptionId: subscription.id,
+        plan,
+        amount,
+        transactionId,
+      },
+      req,
+    )
   } else {
-    return await createSubscription(payload, {
-      userId,
-      plan,
-      amount,
-      transactionId,
-    })
+    return await createSubscription(
+      payload,
+      {
+        userId,
+        plan,
+        amount,
+        transactionId,
+        paymentStatus: 'paid',
+      },
+      req,
+    )
   }
 }
 

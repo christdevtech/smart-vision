@@ -20,6 +20,7 @@ import { Subscriptions } from './collections/Subscriptions'
 import { StudyPlans } from './collections/StudyPlans'
 import { Categories } from './collections/Category'
 import { Transactions } from './collections/Transactions'
+import { PaymentSettlements } from './collections/PaymentSettlements'
 import { Topics } from './collections/Topics'
 import { UserProgress } from './collections/UserProgress'
 import { TestResults } from './collections/TestResults'
@@ -69,6 +70,7 @@ export default buildConfig({
     StudyPlans,
     Categories,
     Transactions,
+    PaymentSettlements,
     Topics,
     UserProgress,
     TestResults,

@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+
 interface FapshiConfig {
   apiUser: string
   apiKey: string
@@ -16,7 +18,7 @@ interface FapshiPaymentRequest {
   message?: string
 }
 
-interface FapshiTransaction {
+export interface FapshiTransaction {
   transId: string
   status: 'CREATED' | 'PENDING' | 'SUCCESSFUL' | 'FAILED' | 'EXPIRED'
   medium: string
@@ -32,6 +34,21 @@ interface FapshiTransaction {
   financialTransId: string
   dateInitiated: string
   dateConfirmed: string
+}
+
+export type FapshiStatus = FapshiTransaction['status']
+export type InternalPaymentStatus = 'created' | 'pending' | 'successful' | 'failed' | 'expired'
+
+export function mapFapshiStatus(status: FapshiStatus): InternalPaymentStatus {
+  const statusMap: Record<FapshiStatus, InternalPaymentStatus> = {
+    CREATED: 'created',
+    PENDING: 'pending',
+    SUCCESSFUL: 'successful',
+    FAILED: 'failed',
+    EXPIRED: 'expired',
+  }
+
+  return statusMap[status]
 }
 
 interface FapshiSearchParams {
@@ -177,15 +194,8 @@ export class FapshiService {
   /**
    * Map Fapshi status to internal status
    */
-  mapFapshiStatus(fapshiStatus: string): string {
-    const statusMap: Record<string, string> = {
-      CREATED: 'created',
-      PENDING: 'pending',
-      SUCCESSFUL: 'successful',
-      FAILED: 'failed',
-      EXPIRED: 'expired',
-    }
-    return statusMap[fapshiStatus] || 'unknown'
+  mapFapshiStatus(fapshiStatus: FapshiStatus): InternalPaymentStatus {
+    return mapFapshiStatus(fapshiStatus)
   }
 }
 
@@ -209,11 +219,7 @@ export function createFapshiService(): FapshiService {
 
 // Utility function to generate unique external ID
 export function generateExternalId(prefix: string = 'sv'): string {
-  const timestamp = Date.now()
-  const random = Math.floor(Math.random() * 10000)
-    .toString()
-    .padStart(4, '0')
-  return `${prefix}_${timestamp}_${random}`
+  return `${prefix}_${randomUUID()}`
 }
 
 // Utility function to validate phone number format

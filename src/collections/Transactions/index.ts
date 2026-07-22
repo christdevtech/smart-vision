@@ -2,12 +2,6 @@ import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
 import { adminFieldAccess } from '@/access/ownerAccess'
 import { readTransactions } from '@/access/transactionAccess'
-import {
-  determineSubscriptionPlan,
-  findOrCreateUserSubscription,
-  getSubscriptionCosts,
-} from '@/utilities/subscription'
-import { updateSubscriptions } from './hooks/updateSubscriptions'
 import { afterChangeTransaction } from './hooks/afterChangeTransaction'
 
 export const Transactions: CollectionConfig = {
@@ -46,11 +40,14 @@ export const Transactions: CollectionConfig = {
       name: 'transactionId',
       type: 'text',
       required: true,
-      // unique: true,
+      unique: true,
+      index: true,
     },
     {
       name: 'fapshiTransId',
       type: 'text',
+      unique: true,
+      index: true,
       label: 'Fapshi Transaction ID',
       admin: {
         description: 'Transaction ID from Fapshi (e.g., fp_1234567890)',
@@ -59,6 +56,8 @@ export const Transactions: CollectionConfig = {
     {
       name: 'externalId',
       type: 'text',
+      unique: true,
+      index: true,
       label: 'External ID',
       admin: {
         description: 'Your system order/transaction ID for reconciliation',
@@ -68,6 +67,14 @@ export const Transactions: CollectionConfig = {
       name: 'amount',
       type: 'number',
       required: true,
+    },
+    {
+      name: 'plan',
+      type: 'select',
+      options: ['monthly', 'annual'],
+      admin: {
+        description: 'Subscription plan priced when the payment was initiated',
+      },
     },
     {
       name: 'revenue',
@@ -131,6 +138,30 @@ export const Transactions: CollectionConfig = {
       },
     },
     {
+      name: 'providerVerifiedAt',
+      type: 'date',
+      admin: {
+        description: 'Last time this transaction was verified directly with Fapshi',
+      },
+    },
+    {
+      name: 'settlement',
+      type: 'relationship',
+      relationTo: 'payment-settlements',
+      unique: true,
+      index: true,
+      admin: {
+        description: 'Immutable settlement ledger entry that activated this payment',
+      },
+    },
+    {
+      name: 'settledAt',
+      type: 'date',
+      admin: {
+        description: 'Time this payment was applied to a subscription',
+      },
+    },
+    {
       name: 'webhookReceived',
       type: 'checkbox',
       defaultValue: false,
@@ -184,6 +215,6 @@ export const Transactions: CollectionConfig = {
     },
   ],
   hooks: {
-    afterChange: [updateSubscriptions, afterChangeTransaction],
+    afterChange: [afterChangeTransaction],
   },
 }
