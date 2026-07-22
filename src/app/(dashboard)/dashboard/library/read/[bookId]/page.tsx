@@ -8,11 +8,11 @@ import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { BookOpen, Lock } from 'lucide-react'
 import { Book } from '@/payload-types'
 import BookProgressTracker from '@/components/Progress/BookProgressTracker'
-import { Subscription } from '@/payload-types'
-import { isSubscriptionActive, hasTierAccess, SubscriptionPlan } from '@/utilities/subscription'
 import PDFReader from '@/components/Library/PDFReader'
 import RichText from '@/components/RichText'
 import Link from 'next/link'
+import { resolveContentAccess, resolveContentMedia } from '@/services/contentAuthorization'
+import { createSecurePDFURL } from '@/utilities/mediaDelivery'
 
 export default async function ReadBookPage({ params }: { params: Promise<{ bookId: string }> }) {
   const headers = await getHeaders()
@@ -25,14 +25,13 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
     redirect('/auth/login')
   }
 
-  // Fetch the book with depth:2 to ensure pdf->media is fully populated
-  const res = await payload.find({
-    collection: 'books',
-    where: { id: { equals: bookId } },
-    limit: 1,
-    depth: 2,
+  const contentAccess = await resolveContentAccess({
+    contentId: bookId,
+    contentType: 'book',
+    payload,
+    user,
   })
-  const bookDoc = (res.docs?.[0] as Book) || null
+  const bookDoc = contentAccess.content as Book | null
 
   if (!bookDoc) {
     redirect('/dashboard/library')
@@ -62,33 +61,32 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
   }
 
   // Fetch user's subscription
-  const subsRes = await payload.find({
-    collection: 'subscriptions',
-    where: { user: { equals: user.id } },
-    limit: 1,
-    sort: '-createdAt',
-    user,
-    overrideAccess: false,
-  })
-  const sub = (subsRes.docs?.[0] as Subscription) || null
-  const subscriptionActive = isSubscriptionActive(sub)
+  const subscriptionActive = contentAccess.subscriptionActive
 
   // Rank-based tier check: a higher-tier user is never blocked from lower-tier content.
   // e.g. annual ⊇ monthly ⊇ free
-  const userPlan: SubscriptionPlan = sub?.plan ?? 'free'
-  const bookTiers: SubscriptionPlan[] = (bookDoc.subscriptionTiers as SubscriptionPlan[]) ?? []
+  const userPlan = contentAccess.userPlan
+  const bookTiers = contentAccess.requiredTiers
 
-  const tierAccess = hasTierAccess(
-    userPlan,
-    bookTiers,
-    bookDoc.subscriptionRequired,
-    subscriptionActive,
-  )
+  const tierAccess = contentAccess.allowed
 
   // Use the extensionless secure proxy to fetch PDF bytes
-  const pdfMedia = bookDoc.pdf as any
-  const pdfMediaId = typeof pdfMedia === 'object' && pdfMedia !== null ? pdfMedia.id : null
-  const pdfUrl: string | null = pdfMediaId ? `/api/secure-pdf/${pdfMediaId}` : null
+  const pdfMedia = tierAccess
+    ? await resolveContentMedia({
+        content: bookDoc,
+        contentType: 'book',
+        field: 'pdf',
+        payload,
+      })
+    : null
+  const pdfUrl = pdfMedia
+    ? createSecurePDFURL(pdfMedia, {
+        contentId: bookDoc.id,
+        contentType: 'book',
+        field: 'pdf',
+        userId: user.id,
+      })
+    : null
 
   return (
     <DashboardLayout user={user} title="Read Book">
@@ -190,15 +188,17 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
                 </div>
               ) : null}
 
-              <BookProgressTracker
-                userId={user.id}
-                contentId={bookDoc.id}
-                subjectId={
-                  typeof bookDoc.subject === 'string'
-                    ? (bookDoc.subject as string)
-                    : ((bookDoc.subject as any)?.id as string)
-                }
-              />
+              {tierAccess && (
+                <BookProgressTracker
+                  userId={user.id}
+                  contentId={bookDoc.id}
+                  subjectId={
+                    typeof bookDoc.subject === 'string'
+                      ? (bookDoc.subject as string)
+                      : ((bookDoc.subject as any)?.id as string)
+                  }
+                />
+              )}
             </div>
           </MotionWrapper>
         </div>

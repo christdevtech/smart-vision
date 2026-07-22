@@ -1,78 +1,89 @@
-import { headers as getHeaders } from 'next/headers.js'
+import config from '@/payload.config'
+import { resolveContentAccess, resolveContentMedia } from '@/services/contentAuthorization'
+import { verifyMediaDeliveryToken } from '@/utilities/mediaDelivery'
 import { getPayload } from 'payload'
 import { NextResponse } from 'next/server'
-import config from '@/payload.config'
 
-/**
- * Secure, extensionless proxy that fetches a PDF from Payload's media API.
- * Because the URL does not end in .pdf, aggressive download managers like IDM
- * will not automatically intercept and hijack the request.
- *
- * Usage: GET /api/secure-pdf/[mediaId]
- */
+const getServerURL = (request: Request): string => {
+  const configuredURL = process.env.NEXT_PUBLIC_SERVER_URL?.trim()
+  return configuredURL ? configuredURL.replace(/\/$/, '') : new URL(request.url).origin
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ mediaId: string }> },
 ) {
-  const headers = await getHeaders()
-  const payloadConfig = await config
-  const payload = await getPayload({ config: payloadConfig })
+  const payload = await getPayload({ config })
+  const { user } = await payload.auth({ headers: request.headers })
 
-  // Auth check
-  const { user } = await payload.auth({ headers })
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { mediaId } = await params
+  const delivery = new URL(request.url).searchParams.get('delivery')
+  const claims = verifyMediaDeliveryToken(delivery, { mediaId, userId: user.id })
+
+  if (!claims) {
+    return NextResponse.json({ error: 'Invalid or expired media grant' }, { status: 403 })
+  }
+
+  if (!['pdf', 'answerKeyPdf'].includes(claims.field)) {
+    return NextResponse.json({ error: 'This grant is not for a PDF' }, { status: 403 })
+  }
+
+  const access = await resolveContentAccess({
+    contentId: claims.contentId,
+    contentType: claims.contentType,
+    payload,
+    user,
+  })
+
+  if (!access.allowed || !access.content) {
+    return NextResponse.json({ error: 'Content access denied' }, { status: 403 })
+  }
+
+  const media = await resolveContentMedia({
+    content: access.content,
+    contentType: claims.contentType,
+    field: claims.field,
+    payload,
+  })
+
+  if (
+    !media ||
+    media.id !== mediaId ||
+    media.filename !== claims.filename ||
+    media.mimeType !== 'application/pdf'
+  ) {
+    return NextResponse.json({ error: 'Media is not attached to this content' }, { status: 403 })
+  }
 
   try {
-    // Get the media document to find its URL and filename
-    const media = await payload.findByID({
-      collection: 'media',
-      id: mediaId,
-    })
-
-    if (!media || !media.url) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    }
-
-    // Build the absolute URL to Payload's media file endpoint
-    const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || `http://localhost:${process.env.PORT || 3000}`
-    const absoluteUrl = media.url.startsWith('http')
-      ? media.url
-      : `${serverUrl}${media.url}`
-
-    // Fetch the actual PDF bytes from Payload's media endpoint
-    const fileRes = await fetch(absoluteUrl, {
+    const upstreamURL = `${getServerURL(request)}/api/media/file/${encodeURIComponent(media.filename)}?delivery=${encodeURIComponent(delivery!)}`
+    const fileResponse = await fetch(upstreamURL, {
+      cache: 'no-store',
       headers: {
-        // Forward cookies so Payload's access control passes
-        cookie: headers.get('cookie') || '',
+        cookie: request.headers.get('cookie') ?? '',
       },
     })
 
-    if (!fileRes.ok) {
-      console.error('[secure-pdf] Upstream error:', fileRes.status, fileRes.statusText)
-      return NextResponse.json(
-        { error: `Upstream error: ${fileRes.status}` },
-        { status: fileRes.status },
-      )
+    if (!fileResponse.ok) {
+      return NextResponse.json({ error: 'Document is unavailable' }, { status: fileResponse.status })
     }
 
-    const buffer = await fileRes.arrayBuffer()
-    
-    // Convert to Base64 to send as JSON. This completely bypasses IDM and any 
-    // other download managers because the browser sees it as a standard JSON API call.
-    const base64 = Buffer.from(buffer).toString('base64')
-
-    return NextResponse.json({ data: base64 }, {
-      status: 200,
-      headers: {
-        'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+    const buffer = await fileResponse.arrayBuffer()
+    return NextResponse.json(
+      { data: Buffer.from(buffer).toString('base64') },
+      {
+        headers: {
+          'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+          'X-Content-Type-Options': 'nosniff',
+        },
       },
-    })
+    )
   } catch (error) {
-    console.error('[secure-pdf] Error:', error)
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    console.error('[secure-pdf] Failed to retrieve authorized media', error)
+    return NextResponse.json({ error: 'Document is unavailable' }, { status: 502 })
   }
 }

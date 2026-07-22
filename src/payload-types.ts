@@ -223,6 +223,11 @@ export interface Subject {
  */
 export interface Media {
   id: string;
+  /**
+   * Protected files require a lesson entitlement. Use Public only for covers, branding, and other intentionally public assets.
+   */
+  accessScope: 'protected' | 'public' | 'owner';
+  owner?: (string | null) | User;
   alt?: string | null;
   caption?: {
     root: {
@@ -1830,6 +1835,8 @@ export interface SubscriptionsSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  accessScope?: T;
+  owner?: T;
   alt?: T;
   caption?: T;
   prefix?: T;

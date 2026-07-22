@@ -2,6 +2,7 @@ import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
 import { authenticated } from '@/access/authenticated'
 import { slugField } from '@/fields/slug'
+import { adminFieldAccess } from '@/access/ownerAccess'
 
 export const Videos: CollectionConfig = {
   slug: 'videos',
@@ -26,6 +27,9 @@ export const Videos: CollectionConfig = {
       type: 'upload',
       relationTo: 'media',
       required: true,
+      access: {
+        read: adminFieldAccess,
+      },
     },
     {
       name: 'thumbnail',

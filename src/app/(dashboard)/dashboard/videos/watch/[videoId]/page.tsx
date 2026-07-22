@@ -9,9 +9,9 @@ import { Play } from 'lucide-react'
 import { Video } from '@/payload-types'
 import { Media } from '@/components/Media'
 import VideoProgressTracker from '@/components/Progress/VideoProgressTracker'
-import { Subscription } from '@/payload-types'
-import { isSubscriptionActive } from '@/utilities/subscription'
 import RichText from '@/components/RichText'
+import { resolveContentAccess, resolveContentMedia } from '@/services/contentAuthorization'
+import { createMediaFileURL } from '@/utilities/mediaDelivery'
 
 export default async function WatchVideoPage({ params }: { params: Promise<{ videoId: string }> }) {
   const headers = await getHeaders()
@@ -24,26 +24,33 @@ export default async function WatchVideoPage({ params }: { params: Promise<{ vid
     redirect('/auth/login')
   }
 
-  const res = await payload.find({
-    collection: 'videos',
-    where: { id: { equals: videoId } },
-    limit: 1,
-    depth: 1,
+  const contentAccess = await resolveContentAccess({
+    contentId: videoId,
+    contentType: 'video',
+    payload,
+    user,
   })
-  const videoDoc = (res.docs?.[0] as Video) || null
+  const videoDoc = contentAccess.content as Video | null
   if (!videoDoc) {
     redirect('/dashboard/videos')
   }
 
-  const subsRes = await payload.find({
-    collection: 'subscriptions',
-    where: { user: { equals: user.id } },
-    limit: 1,
-    user,
-    overrideAccess: false,
-  })
-  const sub = (subsRes.docs?.[0] as Subscription) || null
-  const subscriptionActive = isSubscriptionActive(sub)
+  const videoMedia = contentAccess.allowed
+    ? await resolveContentMedia({
+        content: videoDoc,
+        contentType: 'video',
+        field: 'video',
+        payload,
+      })
+    : null
+  const videoUrl = videoMedia
+    ? createMediaFileURL(videoMedia, {
+        contentId: videoDoc.id,
+        contentType: 'video',
+        field: 'video',
+        userId: user.id,
+      })
+    : null
 
   return (
     <DashboardLayout user={user} title="Watch Video">
@@ -78,7 +85,7 @@ export default async function WatchVideoPage({ params }: { params: Promise<{ vid
 
           <MotionWrapper animation="fadeIn" delay={0.2}>
             <div className="p-6 rounded-2xl border bg-card border-border/50">
-              {!subscriptionActive && (
+              {!contentAccess.allowed && (
                 <div className="flex justify-between items-center p-3 mb-3 rounded-xl border bg-input border-border">
                   <p className="text-sm text-muted-foreground">
                     You need an active subscription to watch videos.
@@ -91,23 +98,26 @@ export default async function WatchVideoPage({ params }: { params: Promise<{ vid
                   </a>
                 </div>
               )}
-              {subscriptionActive && (
+              {contentAccess.allowed && videoMedia && videoUrl && (
                 <div className="overflow-hidden w-full bg-black rounded-xl aspect-video">
                   <Media
-                    resource={videoDoc.video as any}
+                    resource={videoMedia}
+                    src={videoUrl}
                     videoClassName="w-full h-full object-cover"
                   />
                 </div>
               )}
-              <VideoProgressTracker
-                userId={user.id}
-                contentId={videoDoc.id}
-                subjectId={
-                  typeof videoDoc.subject === 'string'
-                    ? (videoDoc.subject as string)
-                    : ((videoDoc.subject as any)?.id as string)
-                }
-              />
+              {contentAccess.allowed && (
+                <VideoProgressTracker
+                  userId={user.id}
+                  contentId={videoDoc.id}
+                  subjectId={
+                    typeof videoDoc.subject === 'string'
+                      ? (videoDoc.subject as string)
+                      : ((videoDoc.subject as any)?.id as string)
+                  }
+                />
+              )}
             </div>
           </MotionWrapper>
         </div>

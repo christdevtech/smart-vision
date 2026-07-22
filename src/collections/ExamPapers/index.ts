@@ -2,6 +2,7 @@ import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
 import { authenticated } from '@/access/authenticated'
 import { slugField } from '@/fields/slug'
+import { adminFieldAccess } from '@/access/ownerAccess'
 
 export const ExamPapers: CollectionConfig = {
   slug: 'exam-papers',
@@ -54,6 +55,9 @@ export const ExamPapers: CollectionConfig = {
       type: 'upload',
       relationTo: 'media',
       required: true,
+      access: {
+        read: adminFieldAccess,
+      },
     },
     {
       name: 'thumbnail',
@@ -134,6 +138,9 @@ export const ExamPapers: CollectionConfig = {
     {
       name: 'encryptionKey',
       type: 'text',
+      access: {
+        read: adminFieldAccess,
+      },
       admin: {
         description: 'Encryption key for content protection',
         readOnly: true,
@@ -151,6 +158,9 @@ export const ExamPapers: CollectionConfig = {
       name: 'answerKeyPdf',
       type: 'upload',
       relationTo: 'media',
+      access: {
+        read: adminFieldAccess,
+      },
       admin: {
         condition: (data) => data.hasAnswerKey,
         description: 'Answer key PDF file',

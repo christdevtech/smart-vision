@@ -34,9 +34,17 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
   let height: number | undefined
   let alt = altFromProps
   let src: StaticImageData | string = srcFromProps || ''
+  let unoptimized = false
 
   if (!src && resource && typeof resource === 'object') {
-    const { alt: altFromResource, height: fullHeight, url, width: fullWidth } = resource
+    const {
+      accessScope,
+      alt: altFromResource,
+      filename,
+      height: fullHeight,
+      url,
+      width: fullWidth,
+    } = resource
 
     width = fullWidth!
     height = fullHeight!
@@ -44,7 +52,13 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
 
     const cacheTag = resource.updatedAt
 
-    src = getMediaUrl(url, cacheTag)
+    src = getMediaUrl(
+      filename ? `/api/media/file/${encodeURIComponent(filename)}` : url,
+      cacheTag,
+    )
+    // The Next image optimizer does not carry the viewer's session to an owner-only source.
+    // Let the browser request it directly so Payload can evaluate the owner policy.
+    unoptimized = accessScope === 'owner'
   }
 
   const loading = loadingFromProps || (!priority ? 'lazy' : undefined)
@@ -70,6 +84,7 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
         loading={loading}
         sizes={sizes}
         src={src}
+        unoptimized={unoptimized}
         width={!fill ? width : undefined}
       />
     </picture>

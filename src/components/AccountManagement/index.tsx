@@ -117,13 +117,6 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
     setProfilePicFile(file)
 
     if (changeFlow) {
-      const prevId =
-        currentProfileMedia && typeof currentProfileMedia === 'object'
-          ? (currentProfileMedia as any).id
-          : typeof user.profilePic === 'string'
-            ? (user.profilePic as string)
-            : null
-
       try {
         const newMediaId = await uploadProfilePic()
         if (!newMediaId) return
@@ -137,15 +130,6 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
         if (!res.ok) {
           toast.error(data.error || 'Failed to set new profile image')
           return
-        }
-
-        if (prevId) {
-          await fetch('/api/custom/account/remove-profile-pic', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-            body: JSON.stringify({ mediaId: prevId, force: true }),
-            credentials: 'include',
-          })
         }
 
         toast.success('Profile picture updated')

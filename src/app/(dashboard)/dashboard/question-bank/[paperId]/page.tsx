@@ -6,10 +6,11 @@ import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { FileText, ArrowLeft, Crown, Lock, Clock, Award } from 'lucide-react'
-import { ExamPaper, Subscription } from '@/payload-types'
-import { isSubscriptionActive, hasTierAccess, SubscriptionPlan } from '@/utilities/subscription'
+import { ExamPaper } from '@/payload-types'
 import Link from 'next/link'
 import ExamPaperViewerClient from '@/components/QuestionBank/ExamPaperViewerClient'
+import { resolveContentAccess, resolveContentMedia } from '@/services/contentAuthorization'
+import { createSecurePDFURL } from '@/utilities/mediaDelivery'
 
 export default async function ExamPaperViewerPage({
   params,
@@ -26,53 +27,53 @@ export default async function ExamPaperViewerPage({
     redirect('/auth/login')
   }
 
-  // Fetch the exam paper with depth:2 for populated relations
-  const res = await payload.find({
-    collection: 'exam-papers',
-    where: { id: { equals: paperId } },
-    limit: 1,
-    depth: 2,
+  const contentAccess = await resolveContentAccess({
+    contentId: paperId,
+    contentType: 'exam-paper',
+    payload,
+    user,
   })
-  const paper = (res.docs?.[0] as ExamPaper) || null
+  const paper = contentAccess.content as ExamPaper | null
 
   if (!paper || paper.isActive === false) {
     redirect('/dashboard/question-bank')
   }
 
-  // Subscription check
-  const subsRes = await payload.find({
-    collection: 'subscriptions',
-    where: { user: { equals: user.id } },
-    limit: 1,
-    sort: '-createdAt',
-    user,
-    overrideAccess: false,
-  })
-  const sub = (subsRes.docs?.[0] as Subscription) || null
-  const subscriptionActive = isSubscriptionActive(sub)
-  const userPlan: SubscriptionPlan = sub?.plan ?? 'free'
-  const paperTiers: SubscriptionPlan[] = (paper.subscriptionTiers as SubscriptionPlan[]) ?? []
-
-  const tierAccess = hasTierAccess(
-    userPlan,
-    paperTiers,
-    paper.subscriptionRequired,
-    subscriptionActive,
-  )
-
-  // Use the extensionless secure proxy to fetch PDF bytes without IDM intercepting
-  const pdfMedia = paper.pdf as any
-  const pdfMediaId = typeof pdfMedia === 'object' && pdfMedia !== null ? pdfMedia.id : null
-  const pdfUrl: string | null = pdfMediaId ? `/api/secure-pdf/${pdfMediaId}` : null
-
-  // Resolve answer key PDF URL
-  const answerKeyMedia = paper.answerKeyPdf as any
-  const answerKeyMediaId =
-    paper.hasAnswerKey && typeof answerKeyMedia === 'object' && answerKeyMedia !== null
-      ? answerKeyMedia.id
-      : null
-  const answerKeyUrl: string | null = answerKeyMediaId
-    ? `/api/secure-pdf/${answerKeyMediaId}`
+  const subscriptionActive = contentAccess.subscriptionActive
+  const userPlan = contentAccess.userPlan
+  const paperTiers = contentAccess.requiredTiers
+  const tierAccess = contentAccess.allowed
+  const pdfMedia = tierAccess
+    ? await resolveContentMedia({
+        content: paper,
+        contentType: 'exam-paper',
+        field: 'pdf',
+        payload,
+      })
+    : null
+  const pdfUrl = pdfMedia
+    ? createSecurePDFURL(pdfMedia, {
+        contentId: paper.id,
+        contentType: 'exam-paper',
+        field: 'pdf',
+        userId: user.id,
+      })
+    : null
+  const answerKeyMedia = tierAccess
+    ? await resolveContentMedia({
+        content: paper,
+        contentType: 'exam-paper',
+        field: 'answerKeyPdf',
+        payload,
+      })
+    : null
+  const answerKeyUrl = answerKeyMedia
+    ? createSecurePDFURL(answerKeyMedia, {
+        contentId: paper.id,
+        contentType: 'exam-paper',
+        field: 'answerKeyPdf',
+        userId: user.id,
+      })
     : null
 
   // Subject name

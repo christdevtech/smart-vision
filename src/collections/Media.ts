@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, FieldAccess } from 'payload'
 
 import {
   FixedToolbarFeature,
@@ -8,11 +8,14 @@ import {
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+import { adminFieldAccess, isAdminUser, ownerOrAdmin } from '@/access/ownerAccess'
+import { bindAuthenticatedOwner } from '@/hooks/bindAuthenticatedOwner'
+import { readMedia } from '@/access/mediaAccess'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const authenticatedFieldAccess: FieldAccess = ({ req }) => Boolean(req.user)
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -21,11 +24,45 @@ export const Media: CollectionConfig = {
   },
   access: {
     create: authenticated,
-    delete: authenticated,
-    read: anyone,
-    update: authenticated,
+    delete: ownerOrAdmin('owner'),
+    read: readMedia,
+    update: ownerOrAdmin('owner'),
   },
   fields: [
+    {
+      name: 'accessScope',
+      type: 'select',
+      defaultValue: 'protected',
+      options: [
+        { label: 'Protected course content', value: 'protected' },
+        { label: 'Public asset', value: 'public' },
+        { label: 'Owner only', value: 'owner' },
+      ],
+      required: true,
+      admin: {
+        description:
+          'Protected files require a lesson entitlement. Use Public only for covers, branding, and other intentionally public assets.',
+        position: 'sidebar',
+      },
+      access: {
+        create: authenticatedFieldAccess,
+        update: adminFieldAccess,
+      },
+    },
+    {
+      name: 'owner',
+      type: 'relationship',
+      relationTo: 'users',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: authenticatedFieldAccess,
+        update: adminFieldAccess,
+      },
+    },
     {
       name: 'alt',
       type: 'text',
@@ -41,6 +78,18 @@ export const Media: CollectionConfig = {
       }),
     },
   ],
+  hooks: {
+    beforeValidate: [
+      bindAuthenticatedOwner('owner'),
+      ({ data, operation, req }) => {
+        if (operation === 'create' && data && req.user && !isAdminUser(req.user)) {
+          return { ...data, accessScope: 'owner' }
+        }
+
+        return data
+      },
+    ],
+  },
   upload: {
     // Used only for local development. The R2 adapter disables local storage when configured.
     staticDir: path.resolve(dirname, '../../public/media'),

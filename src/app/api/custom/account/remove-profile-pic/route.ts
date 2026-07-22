@@ -13,7 +13,7 @@ async function validateCSRF(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!validateCSRF(request)) {
+    if (!(await validateCSRF(request))) {
       return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 })
     }
 
@@ -21,18 +21,18 @@ export async function POST(request: NextRequest) {
     const { user } = await payload.auth({ headers: request.headers })
     if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
 
-    const { mediaId, force } = await request.json()
+    const { mediaId } = await request.json()
     if (!mediaId) return NextResponse.json({ error: 'mediaId is required' }, { status: 400 })
 
     const currentPic = typeof user.profilePic === 'string' ? user.profilePic : user.profilePic?.id
-    if (!force) {
-      if (!currentPic || currentPic !== mediaId) {
-        return NextResponse.json({ error: 'Profile picture mismatch' }, { status: 400 })
-      }
+    if (!currentPic || currentPic !== mediaId) {
+      return NextResponse.json({ error: 'Profile picture mismatch' }, { status: 400 })
     }
 
     try {
-      await payload.delete({ collection: 'media', id: mediaId })
+      // Existing profile images predate Media.owner. The verified user relationship above is
+      // the authority for this narrow compatibility delete; new uploads use owner access.
+      await payload.delete({ collection: 'media', id: mediaId, overrideAccess: true })
     } catch (e) {
       return NextResponse.json({ error: 'Failed to delete media' }, { status: 500 })
     }

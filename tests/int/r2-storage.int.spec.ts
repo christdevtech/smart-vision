@@ -62,9 +62,14 @@ describe('Cloudflare R2 storage configuration', () => {
     expect(options).toMatchObject({
       alwaysInsertFields: true,
       bucket: 'lesson-media',
-      clientUploads: true,
+      clientUploads: {
+        access: expect.any(Function),
+      },
       collections: {
-        media: { prefix: 'smart-vision-media' },
+        media: {
+          prefix: 'smart-vision-media',
+          signedDownloads: { expiresIn: 300 },
+        },
       },
       config: {
         endpoint: 'https://account-id.r2.cloudflarestorage.com',
@@ -73,5 +78,9 @@ describe('Cloudflare R2 storage configuration', () => {
       },
       enabled: true,
     })
+
+    const access = (options.clientUploads as { access: (args: unknown) => boolean }).access
+    expect(access({ req: { user: { id: 'admin-1', role: 'admin' } } })).toBe(true)
+    expect(access({ req: { user: { id: 'user-1', role: 'user' } } })).toBe(false)
   })
 })

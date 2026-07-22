@@ -81,9 +81,17 @@ export const createR2StorageOptions = (
   return {
     alwaysInsertFields: true,
     bucket: settings.bucket || 'r2-build-placeholder',
-    clientUploads: settings.enabled,
+    clientUploads: settings.enabled
+      ? {
+          access: ({ req }) =>
+            Boolean(req.user && ['admin', 'super-admin'].includes(req.user.role ?? '')),
+        }
+      : false,
     collections: {
-      media: { prefix: 'smart-vision-media' },
+      media: {
+        prefix: 'smart-vision-media',
+        signedDownloads: { expiresIn: 5 * 60 },
+      },
     },
     config: {
       credentials: settings.configured
