@@ -41,6 +41,7 @@ Validation performed:
 - **G-01 — accepted scope:** `cloudbuild.yaml` is present only as an ignored local deployment file and is not tracked in the current repository. Per the repository owner's decision, no credential rotation or history rewrite is included.
 - **G-02 — implemented:** public registrations are forced to the `user` role with server-owned defaults; privileged user fields reject public create/update input; ordinary authenticated users cannot create additional accounts; and the profile endpoint accepts only validated profile fields rather than forwarding arbitrary objects to Payload.
 - **G-03 — implemented:** user-owned collections now enforce relationship-aware row policies; authenticated creates bind ownership server-side; owner fields are immutable to ordinary users; content-access session metadata is hidden; user-facing Local API calls enforce access control; and nested user-data hooks retain request transaction context.
+- **G-04 — implemented:** payment initiation now requires an authenticated session and accepts only a plan, phone number, and supported payment medium; user identity, contact identity, subscription ownership, messages, and prices are derived server-side. Transaction reads enforce Payload owner access, initiation and provider polling are rate-limited, provider responses are sanitized, and batch status/reconciliation routes require an administrator session or a fail-closed cron bearer secret.
 
 ## What is already implemented
 

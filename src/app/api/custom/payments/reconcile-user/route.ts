@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { createFapshiService } from '@/utilities/fapshi'
+import { authorizePaymentOperator } from '@/utilities/paymentSecurity'
+
+const operatorHeaders = (request: NextRequest): Headers => {
+  const headers = new Headers({ 'Content-Type': 'application/json' })
+  const authorization = request.headers.get('authorization')
+  const cookie = request.headers.get('cookie')
+
+  if (authorization) headers.set('authorization', authorization)
+  if (cookie) headers.set('cookie', cookie)
+
+  return headers
+}
 
 /**
  * API endpoint for reconciling transactions for a specific user
@@ -11,6 +22,11 @@ import { createFapshiService } from '@/utilities/fapshi'
 export async function POST(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
+    const operator = await authorizePaymentOperator(payload, request.headers)
+
+    if (!operator) {
+      return NextResponse.json({ error: 'Admin or cron authorization required' }, { status: 401 })
+    }
 
     // Parse request body
     const body = await request.json()
@@ -29,18 +45,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userIds must be an array' }, { status: 400 })
     }
 
-    // Check user permissions - only admins or the user themselves can reconcile
-    const { user } = request as any
-    const isAdmin = user?.role && ['admin', 'super-admin'].includes(user.role)
-
-    if (!isAdmin) {
-      // If not admin, can only reconcile own transactions
-      if (userIds || academicLevel || (userId && userId !== user.id)) {
-        return NextResponse.json(
-          { error: 'Unauthorized: Only admins can reconcile transactions for other users' },
-          { status: 403 },
-        )
-      }
+    if (Array.isArray(userIds) && userIds.length > 100) {
+      return NextResponse.json(
+        { error: 'A maximum of 100 users can be reconciled' },
+        { status: 400 },
+      )
     }
 
     // Build URL for the main reconciliation endpoint
@@ -54,9 +63,7 @@ export async function POST(request: NextRequest) {
     // Forward the request to the main reconciliation endpoint
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: operatorHeaders(request),
       body: JSON.stringify({
         userId,
         userIds,
@@ -79,6 +86,13 @@ export async function POST(request: NextRequest) {
 // Get reconciliation report for a specific user
 export async function GET(request: NextRequest) {
   try {
+    const payload = await getPayload({ config })
+    const operator = await authorizePaymentOperator(payload, request.headers)
+
+    if (!operator) {
+      return NextResponse.json({ error: 'Admin or cron authorization required' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     const academicLevel = searchParams.get('academicLevel')
@@ -89,17 +103,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing required parameter: userId or academicLevel' },
         { status: 400 },
-      )
-    }
-
-    // Check user permissions - only admins or the user themselves can view reports
-    const { user } = request as any
-    const isAdmin = user?.role && ['admin', 'super-admin'].includes(user.role)
-
-    if (!isAdmin && userId !== user.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized: Only admins can view reconciliation reports for other users' },
-        { status: 403 },
       )
     }
 
@@ -114,6 +117,7 @@ export async function GET(request: NextRequest) {
     // Forward the request to the main reconciliation endpoint
     const response = await fetch(url, {
       method: 'GET',
+      headers: operatorHeaders(request),
     })
 
     const result = await response.json()

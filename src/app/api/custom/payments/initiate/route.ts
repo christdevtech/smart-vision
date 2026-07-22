@@ -1,157 +1,102 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { createFapshiService, generateExternalId, validatePhoneNumber, formatPhoneNumber } from '@/utilities/fapshi'
-import { 
-  determineSubscriptionPlan, 
-  findOrCreateUserSubscription, 
-  getSubscriptionCosts,
-  createSubscription 
-} from '@/utilities/subscription'
+import {
+  createFapshiService,
+  formatPhoneNumber,
+  generateExternalId,
+  validatePhoneNumber,
+} from '@/utilities/fapshi'
+import { getSubscriptionCosts } from '@/utilities/subscription'
+import {
+  authenticatePaymentUser,
+  getServerPlanAmount,
+  isTrustedRequestOrigin,
+  PAYMENT_INITIATION_LIMIT,
+  PAYMENT_INITIATION_WINDOW_MS,
+  parsePaymentInitiationInput,
+} from '@/utilities/paymentSecurity'
 
-interface PaymentRequest {
-  userId: string
-  subscriptionId?: string
-  amount: number
-  phone: string
-  medium?: 'mobile money' | 'orange money'
-  name?: string
-  email?: string
-  message?: string
-}
+const unauthorized = () => NextResponse.json({ error: 'Authentication required' }, { status: 401 })
 
 export async function POST(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
-    const fapshiService = createFapshiService()
-    
-    // Parse request body
-    const {
-      userId,
-      subscriptionId,
-      amount,
-      phone,
-      medium,
-      name,
-      email,
-      message,
-    }: PaymentRequest = await request.json()
+    const user = await authenticatePaymentUser(payload, request.headers)
 
-    // Validate required fields
-    if (!userId || !amount || !phone) {
+    if (!user) return unauthorized()
+
+    if (!isTrustedRequestOrigin(request.url, request.headers)) {
+      return NextResponse.json({ error: 'Invalid request origin' }, { status: 403 })
+    }
+
+    let input
+    try {
+      input = parsePaymentInitiationInput(await request.json())
+    } catch (error) {
       return NextResponse.json(
-        { error: 'Missing required fields: userId, amount, phone' },
-        { status: 400 }
+        { error: error instanceof Error ? error.message : 'Invalid payment request' },
+        { status: 400 },
       )
     }
 
-    // Validate amount (minimum 100 XAF)
-    const numericAmount = Number(amount)
-    if (isNaN(numericAmount) || numericAmount < 100) {
-      return NextResponse.json(
-        { error: 'Invalid amount or minimum amount is 100 XAF' },
-        { status: 400 }
-      )
+    const formattedPhone = formatPhoneNumber(input.phone)
+    if (!validatePhoneNumber(formattedPhone)) {
+      return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 })
     }
 
-    // Validate and format phone number
-    if (!validatePhoneNumber(phone)) {
-      return NextResponse.json(
-        { error: 'Invalid phone number format' },
-        { status: 400 }
-      )
-    }
-
-    const formattedPhone = formatPhoneNumber(phone)
-
-    // Verify user exists
-    const user = await payload.findByID({
-      collection: 'users',
-      id: userId,
+    const rateLimitWindowStart = new Date(Date.now() - PAYMENT_INITIATION_WINDOW_MS).toISOString()
+    const recentTransactions = await payload.count({
+      collection: 'transactions',
+      where: {
+        and: [{ user: { equals: user.id } }, { createdAt: { greater_than: rateLimitWindowStart } }],
+      },
     })
 
-    if (!user) {
+    if (recentTransactions.totalDocs >= PAYMENT_INITIATION_LIMIT) {
       return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
+        { error: 'Too many payment attempts. Please wait before trying again.' },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(Math.ceil(PAYMENT_INITIATION_WINDOW_MS / 1000)) },
+        },
       )
     }
 
-    // Generate unique external ID
-    const externalId = generateExternalId('sv')
-
-    // Determine if this is a subscription payment and handle subscription logic
-    let finalSubscriptionId = subscriptionId
-    
-    // Get subscription costs to determine if this is a subscription payment
     const subscriptionCosts = await getSubscriptionCosts(payload)
-    const plan = determineSubscriptionPlan(numericAmount, subscriptionCosts)
-    
-    if (plan) {
-      // This is a subscription payment
-      if (!finalSubscriptionId) {
-        // No subscription ID provided, check if user has an existing subscription
-        const existingSubscriptions = await payload.find({
-          collection: 'subscriptions',
-          where: {
-            user: {
-              equals: userId,
-            },
-          },
-          limit: 1,
-          sort: '-createdAt', // Get the most recent subscription
-        })
-        
-        if (existingSubscriptions.docs.length > 0) {
-          // User has an existing subscription, use it for renewal/extension
-          finalSubscriptionId = existingSubscriptions.docs[0].id
-          console.log(`Found existing subscription ${finalSubscriptionId} for user ${userId}, will extend/renew`)
-        } else {
-          // No existing subscription, create a new one
-          const subscription = await createSubscription(payload, {
-            userId,
-            plan,
-            amount: numericAmount,
-          })
-          finalSubscriptionId = subscription.id
-          console.log(`Created new subscription ${finalSubscriptionId} for user ${userId}, plan: ${plan}`)
-        }
-      } else {
-        // Subscription ID was provided, verify it belongs to the user
-        try {
-          const providedSubscription = await payload.findByID({
-            collection: 'subscriptions',
-            id: finalSubscriptionId,
-          })
-          
-          if (providedSubscription.user !== userId) {
-            return NextResponse.json(
-              { error: 'Subscription does not belong to the specified user' },
-              { status: 403 }
-            )
-          }
-          
-          console.log(`Using provided subscription ${finalSubscriptionId} for user ${userId}`)
-        } catch (error) {
-          return NextResponse.json(
-            { error: 'Invalid subscription ID provided' },
-            { status: 400 }
-          )
-        }
-      }
+    let amount: number
+
+    try {
+      amount = getServerPlanAmount(input.plan, subscriptionCosts)
+    } catch (error) {
+      console.error('Payment price configuration error:', error)
+      return NextResponse.json({ error: 'Payment pricing is unavailable' }, { status: 503 })
     }
 
-    // Create transaction record first
+    const existingSubscriptions = await payload.find({
+      collection: 'subscriptions',
+      where: { user: { equals: user.id } },
+      limit: 1,
+      sort: '-createdAt',
+      depth: 0,
+      user,
+      overrideAccess: false,
+    })
+    const subscriptionId = existingSubscriptions.docs[0]?.id
+    const externalId = generateExternalId('sv')
+
+    // This is an intentional system write: the route has authenticated the owner and
+    // derives every privileged transaction field on the server.
     const transaction = await payload.create({
       collection: 'transactions',
       data: {
-        user: userId,
-        subscription: finalSubscriptionId,
+        user: user.id,
+        ...(subscriptionId ? { subscription: subscriptionId } : {}),
         transactionId: externalId,
-        amount: numericAmount,
+        amount,
         status: 'created',
         phone: formattedPhone,
-        paymentMedium: medium,
+        paymentMedium: input.medium,
         dateInitiated: new Date().toISOString(),
         externalId,
         webhookReceived: false,
@@ -160,23 +105,20 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Prepare Fapshi payment request
-    const paymentData = {
-      amount: numericAmount,
-      phone: formattedPhone,
-      medium,
-      name: name || `${user.firstName} ${user.lastName}`.trim(),
-      email: email || user.email,
-      userId: userId,
-      externalId,
-      message: message || 'SmartVision subscription payment',
-    }
+    const fapshiService = createFapshiService()
 
     try {
-      // Initiate payment with Fapshi
-      const fapshiResponse = await fapshiService.initiatePayment(paymentData)
+      const fapshiResponse = await fapshiService.initiatePayment({
+        amount,
+        phone: formattedPhone,
+        medium: input.medium,
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        email: user.email,
+        userId: user.id,
+        externalId,
+        message: `${input.plan === 'monthly' ? 'Monthly' : 'Annual'} subscription payment`,
+      })
 
-      // Update transaction with Fapshi transaction ID
       await payload.update({
         collection: 'transactions',
         id: transaction.id,
@@ -189,16 +131,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         transactionId: transaction.id,
-        fapshiTransId: fapshiResponse.transId,
-        externalId,
+        status: 'pending',
         message: 'Payment initiated successfully',
         dateInitiated: fapshiResponse.dateInitiated,
       })
-
     } catch (fapshiError) {
       console.error('Fapshi payment initiation failed:', fapshiError)
 
-      // Update transaction status to failed
       await payload.update({
         collection: 'transactions',
         id: transaction.id,
@@ -209,67 +148,51 @@ export async function POST(request: NextRequest) {
       })
 
       return NextResponse.json(
-        { 
-          error: 'Payment initiation failed',
-          details: (fapshiError as Error).message || String(fapshiError),
-          transactionId: transaction.id,
-        },
-        { status: 500 }
+        { error: 'Payment initiation failed', transactionId: transaction.id },
+        { status: 502 },
       )
     }
-
   } catch (error) {
     console.error('Payment initiation error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const transactionId = searchParams.get('transactionId')
+    const payload = await getPayload({ config })
+    const user = await authenticatePaymentUser(payload, request.headers)
 
+    if (!user) return unauthorized()
+
+    const transactionId = new URL(request.url).searchParams.get('transactionId')
     if (!transactionId) {
-      return NextResponse.json(
-        { error: 'Transaction ID required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Transaction ID required' }, { status: 400 })
     }
 
-    const payload = await getPayload({ config })
-
-    // Get transaction details
-    const transaction = await payload.findByID({
-      collection: 'transactions',
-      id: transactionId,
-    })
-
-    if (!transaction) {
-      return NextResponse.json(
-        { error: 'Transaction not found' },
-        { status: 404 }
-      )
+    let transaction
+    try {
+      transaction = await payload.findByID({
+        collection: 'transactions',
+        id: transactionId,
+        depth: 0,
+        user,
+        overrideAccess: false,
+      })
+    } catch {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
     }
 
     return NextResponse.json({
       transactionId: transaction.id,
-      fapshiTransId: transaction.fapshiTransId,
       status: transaction.status,
       amount: transaction.amount,
-      phone: transaction.phone,
       dateInitiated: transaction.dateInitiated,
       dateConfirmed: transaction.dateConfirmed,
       webhookReceived: transaction.webhookReceived,
     })
-
   } catch (error) {
     console.error('Get payment status error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

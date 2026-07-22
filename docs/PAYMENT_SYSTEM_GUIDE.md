@@ -102,21 +102,24 @@ const response = await fetch('/api/custom/payments/initiate', {
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    userId: 'user_id_here',
-    amount: 1000, // Amount in XAF
+    plan: 'monthly', // "monthly" or "annual"
     phone: '677123456', // Cameroon phone number
     medium: 'mobile money', // Payment method
-    message: 'Monthly subscription payment',
   }),
 })
 
 const result = await response.json()
-// Returns: { success: true, transaction: {...}, fapshiResponse: {...} }
+// Returns: { success: true, transactionId, status, message, dateInitiated }
 ```
+
+This route requires an authenticated Payload session. The server derives the user, account
+identity, subscription, message, and configured plan price; caller-supplied values for those
+fields are rejected. Initiation is limited to five attempts per user in ten minutes.
 
 **GET** `/api/custom/payments/initiate?transactionId=xxx`
 
-Check payment status by transaction ID.
+Read the authenticated user's transaction details by transaction ID. A transaction owned by a
+different user is returned as not found.
 
 ### Webhook Handler
 
@@ -133,35 +136,43 @@ Batch check all pending transactions:
 ```typescript
 const response = await fetch('/api/custom/payments/status-check', {
   method: 'POST',
+  headers: {
+    Authorization: `Bearer ${CRON_SECRET}`,
+  },
 })
 // Returns: { success: true, processed: 15, updated: 3 }
 ```
 
+Batch status processing is restricted to administrators or callers presenting `CRON_SECRET`.
+
 **GET** `/api/custom/payments/status-check?transactionId=xxx`
 
-Manual status check for specific transaction.
+Manual status check for a transaction owned by the authenticated user. Provider polling is
+rate-limited and provider-only transaction fields are not returned to the browser.
 
 ### Reconciliation
 
-**POST** `/api/custom/payments/reconcile`
+**POST** `/api/custom/payments/reconcile-user`
 
 Run reconciliation process:
 
 ```typescript
-const response = await fetch('/api/custom/payments/reconcile', {
+const response = await fetch('/api/custom/payments/reconcile-user', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
+    Authorization: `Bearer ${CRON_SECRET}`,
   },
   body: JSON.stringify({
-    days: 7, // Check last 7 days
+    userId: 'user_id_here',
   }),
 })
 ```
 
-**GET** `/api/custom/payments/reconcile?days=7`
+**GET** `/api/custom/payments/reconcile-user?userId=xxx&days=7`
 
-Get reconciliation report.
+Run or read user reconciliation through the administrative proxy. Both methods require an
+administrator session or `CRON_SECRET`; reconciliation is not a student self-service route.
 
 ### Automated Tasks
 

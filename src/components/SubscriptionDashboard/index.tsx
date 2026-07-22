@@ -13,7 +13,6 @@ export interface SubscriptionDashboardProps {
 }
 
 export default function SubscriptionDashboard({
-  user,
   transactions = [],
   subscription,
   subscriptionData,
@@ -71,22 +70,19 @@ export default function SubscriptionDashboard({
     setError(null)
 
     try {
-      const userId = user.id
       const response = await fetch('/api/custom/payments/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
-          amount: subscriptionAmount,
+          plan: selectedPlan === 'yearly' ? 'annual' : 'monthly',
           phone,
           medium: 'mobile money',
-          message: `${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} subscription payment`,
         }),
       })
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(`${errorData.error} - ${errorData.details}` || 'Failed to initiate payment')
+        throw new Error(errorData.error || 'Failed to initiate payment')
       }
 
       const data = await response.json()
