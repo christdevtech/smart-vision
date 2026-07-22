@@ -44,6 +44,17 @@ export function userHasAnyRole(
   return Boolean(user?.role && allowedRoles.includes(user.role))
 }
 
+export function canRunAdministrativeJob(
+  user: Pick<User, 'role'> | null | undefined,
+  authorization: string | null,
+  secret: string | undefined,
+): boolean {
+  return (
+    userHasAnyRole(user, ADMINISTRATIVE_ROLES) ||
+    hasValidBearerAuthorization(authorization, secret)
+  )
+}
+
 export async function authorizeAdministrativeRequest(
   payload: Payload,
   headers: Headers,

@@ -189,15 +189,7 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
               ) : null}
 
               {tierAccess && (
-                <BookProgressTracker
-                  userId={user.id}
-                  contentId={bookDoc.id}
-                  subjectId={
-                    typeof bookDoc.subject === 'string'
-                      ? (bookDoc.subject as string)
-                      : ((bookDoc.subject as any)?.id as string)
-                  }
-                />
+                <BookProgressTracker contentId={bookDoc.id} />
               )}
             </div>
           </MotionWrapper>

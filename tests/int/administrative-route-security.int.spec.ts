@@ -1,5 +1,6 @@
 import {
   authorizeAdministrativeRequest,
+  canRunAdministrativeJob,
   CONTENT_ADMINISTRATIVE_ROLES,
   hasValidBearerAuthorization,
   isSeedRouteEnabled,
@@ -49,5 +50,12 @@ describe('administrative request authorization', () => {
     expect(isSeedRouteEnabled('production')).toBe(false)
     expect(isSeedRouteEnabled('development')).toBe(true)
     expect(isSeedRouteEnabled('test')).toBe(true)
+  })
+
+  it('restricts background job execution to administrators or a configured secret', () => {
+    expect(canRunAdministrativeJob({ role: 'user' }, null, undefined)).toBe(false)
+    expect(canRunAdministrativeJob(null, 'Bearer undefined', undefined)).toBe(false)
+    expect(canRunAdministrativeJob({ role: 'admin' }, null, undefined)).toBe(true)
+    expect(canRunAdministrativeJob(null, 'Bearer expected', 'expected')).toBe(true)
   })
 })

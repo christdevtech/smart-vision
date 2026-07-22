@@ -108,15 +108,7 @@ export default async function WatchVideoPage({ params }: { params: Promise<{ vid
                 </div>
               )}
               {contentAccess.allowed && (
-                <VideoProgressTracker
-                  userId={user.id}
-                  contentId={videoDoc.id}
-                  subjectId={
-                    typeof videoDoc.subject === 'string'
-                      ? (videoDoc.subject as string)
-                      : ((videoDoc.subject as any)?.id as string)
-                  }
-                />
+                <VideoProgressTracker contentId={videoDoc.id} />
               )}
             </div>
           </MotionWrapper>

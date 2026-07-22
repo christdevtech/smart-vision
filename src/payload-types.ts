@@ -930,6 +930,14 @@ export interface UserProgress {
    */
   timeSpent?: number | null;
   lastAccessed?: string | null;
+  lastHeartbeatAt?: string | null;
+  recentHeartbeatIds?:
+    | {
+        heartbeatId: string;
+        receivedAt: string;
+        id?: string | null;
+      }[]
+    | null;
   completed?: boolean | null;
   completedAt?: string | null;
   /**
@@ -2148,6 +2156,14 @@ export interface UserProgressSelect<T extends boolean = true> {
   progressPercentage?: T;
   timeSpent?: T;
   lastAccessed?: T;
+  lastHeartbeatAt?: T;
+  recentHeartbeatIds?:
+    | T
+    | {
+        heartbeatId?: T;
+        receivedAt?: T;
+        id?: T;
+      };
   completed?: T;
   completedAt?: T;
   score?: T;

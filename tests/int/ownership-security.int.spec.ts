@@ -44,9 +44,10 @@ describe('relationship-aware owner access', () => {
     expect(await StudyPlans.access?.read?.(accessArgs(user))).toEqual({
       user: { equals: 'user-1' },
     })
-    expect(await UserProgress.access?.update?.(accessArgs(user))).toEqual({
+    expect(await UserProgress.access?.read?.(accessArgs(user))).toEqual({
       user: { equals: 'user-1' },
     })
+    expect(await UserProgress.access?.update?.(accessArgs(user))).toBe(false)
     expect(await TestResults.access?.read?.(accessArgs(user))).toEqual({
       user: { equals: 'user-1' },
     })

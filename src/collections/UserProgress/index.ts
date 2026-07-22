@@ -1,6 +1,5 @@
 import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
-import { authenticated } from '@/access/authenticated'
 import { adminFieldAccess, ownerOrAdmin } from '@/access/ownerAccess'
 import { bindAuthenticatedOwner } from '@/hooks/bindAuthenticatedOwner'
 import { autoTrackStudySession } from '@/utilities/autoTrackStudySession'
@@ -16,10 +15,10 @@ export const UserProgress: CollectionConfig = {
     group: 'User Content',
   },
   access: {
-    create: authenticated,
+    create: admin,
     delete: admin,
     read: ownerOrAdmin('user'),
-    update: ownerOrAdmin('user'),
+    update: admin,
   },
   fields: [
     {
@@ -90,6 +89,42 @@ export const UserProgress: CollectionConfig = {
       name: 'lastAccessed',
       type: 'date',
       defaultValue: () => new Date(),
+    },
+    {
+      name: 'lastHeartbeatAt',
+      type: 'date',
+      access: {
+        create: adminFieldAccess,
+        read: adminFieldAccess,
+        update: adminFieldAccess,
+      },
+      admin: {
+        hidden: true,
+      },
+    },
+    {
+      name: 'recentHeartbeatIds',
+      type: 'array',
+      access: {
+        create: adminFieldAccess,
+        read: adminFieldAccess,
+        update: adminFieldAccess,
+      },
+      admin: {
+        hidden: true,
+      },
+      fields: [
+        {
+          name: 'heartbeatId',
+          type: 'text',
+          required: true,
+        },
+        {
+          name: 'receivedAt',
+          type: 'date',
+          required: true,
+        },
+      ],
     },
     {
       name: 'completed',
@@ -214,6 +249,9 @@ export const UserProgress: CollectionConfig = {
     },
     {
       fields: ['user', 'lastAccessed'],
+    },
+    {
+      fields: ['user', 'lastHeartbeatAt'],
     },
   ],
   timestamps: true,
