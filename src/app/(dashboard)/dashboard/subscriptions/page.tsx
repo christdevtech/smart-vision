@@ -31,11 +31,15 @@ export default async function SubscriptionsPage() {
     where: { user: { equals: user.id } },
     limit: 1,
     sort: '-createdAt',
+    user,
+    overrideAccess: false,
   })
 
   const transactionDocs = await payload.find({
     collection: 'transactions',
     where: { user: { equals: user.id } },
+    user,
+    overrideAccess: false,
   })
 
   const transactions = transactionDocs.docs

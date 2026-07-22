@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const payloadConfig = await config
     const payload = await getPayload({ config: payloadConfig })
-    const { user } = request as any
+    const { user } = await payload.auth({ headers: request.headers })
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
       collection: 'study-plans',
       where: { user: { equals: user.id } },
       limit: 1,
+      user,
+      overrideAccess: false,
     })
 
     const plan = plans.docs[0] || null

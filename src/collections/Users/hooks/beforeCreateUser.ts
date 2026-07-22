@@ -1,8 +1,8 @@
-import { CollectionBeforeChangeHook } from 'payload'
+import type { CollectionBeforeChangeHook, PayloadRequest } from 'payload'
 import { extractReferralFromCookies } from '@/utilities/referral'
 
 // Function to generate a unique 7-digit code
-const generateUniqueCode = async (payload: any): Promise<string> => {
+const generateUniqueCode = async (req: PayloadRequest): Promise<string> => {
   let code: string
   let isUnique = false
 
@@ -11,13 +11,14 @@ const generateUniqueCode = async (payload: any): Promise<string> => {
     code = Math.floor(1000000 + Math.random() * 9000000).toString()
 
     // Check if this code already exists
-    const existing = await payload.find({
+    const existing = await req.payload.find({
       collection: 'users',
       where: {
         referralCode: {
           equals: code,
         },
       },
+      req,
     })
 
     if (existing.docs.length === 0) {
@@ -37,7 +38,7 @@ export const beforeChangeUser: CollectionBeforeChangeHook = async ({
   // Generate once for new users and backfill legacy users that do not have a code.
   // Update payloads are partial, so checking data.referralCode alone would regenerate the code.
   if (operation === 'create' || !originalDoc?.referralCode) {
-    data.referralCode = await generateUniqueCode(req.payload)
+    data.referralCode = await generateUniqueCode(req)
   }
 
   // Handle referral tracking for new users
@@ -55,6 +56,7 @@ export const beforeChangeUser: CollectionBeforeChangeHook = async ({
           const referrer = await req.payload.findByID({
             collection: 'users',
             id: referrerId,
+            req,
           })
 
           if (referrer) {
@@ -67,6 +69,7 @@ export const beforeChangeUser: CollectionBeforeChangeHook = async ({
               data: {
                 totalReferrals: (referrer.totalReferrals || 0) + 1,
               },
+              req,
             })
           }
         }

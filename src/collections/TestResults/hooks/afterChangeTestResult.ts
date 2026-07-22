@@ -51,6 +51,7 @@ export const afterChangeTestResult: CollectionAfterChangeHook = async ({ doc, op
           tags: [{ tag: 'test' }, { tag: 'result' }],
         },
       },
+      req,
     })
 
     // Achievement notification for high scores
@@ -73,6 +74,7 @@ export const afterChangeTestResult: CollectionAfterChangeHook = async ({ doc, op
             tags: [{ tag: 'achievement' }, { tag: 'high-score' }],
           },
         },
+        req,
       })
     }
   } catch (error) {

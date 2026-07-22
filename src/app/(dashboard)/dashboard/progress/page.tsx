@@ -21,8 +21,20 @@ export default async function ProgressTrackingPage() {
   }
 
   const [progressRes, resultsRes] = await Promise.all([
-    payload.find({ collection: 'user-progress', where: { user: { equals: user.id } }, limit: 500 }),
-    payload.find({ collection: 'test-results', where: { user: { equals: user.id } }, limit: 50 }),
+    payload.find({
+      collection: 'user-progress',
+      where: { user: { equals: user.id } },
+      limit: 500,
+      user,
+      overrideAccess: false,
+    }),
+    payload.find({
+      collection: 'test-results',
+      where: { user: { equals: user.id } },
+      limit: 50,
+      user,
+      overrideAccess: false,
+    }),
   ])
   const progresses = (progressRes.docs || []) as UserProgress[]
   const results = (resultsRes.docs || []) as TestResult[]
@@ -70,7 +82,9 @@ export default async function ProgressTrackingPage() {
                 </div>
                 <div className="p-3 rounded-lg border bg-input border-border">
                   <p className="text-sm text-muted-foreground">Average Test Score</p>
-                  <p className="text-2xl font-bold">{averageScore !== null ? `${averageScore}%` : '—'}</p>
+                  <p className="text-2xl font-bold">
+                    {averageScore !== null ? `${averageScore}%` : '—'}
+                  </p>
                 </div>
                 <div className="p-3 rounded-lg border bg-input border-border">
                   <p className="text-sm text-muted-foreground">Study Streak</p>
@@ -82,8 +96,11 @@ export default async function ProgressTrackingPage() {
                 {results.slice(0, 5).map((r) => (
                   <div key={r.id} className="p-3 rounded-lg border bg-input border-border">
                     <p className="text-sm">
-                      {typeof r.subject === 'string' ? r.subject : (r.subject as any)?.name || 'Subject'} •{' '}
-                      {r.testType} • {r.scorePercentage}% • {new Date(r.completedAt).toLocaleDateString()}
+                      {typeof r.subject === 'string'
+                        ? r.subject
+                        : (r.subject as any)?.name || 'Subject'}{' '}
+                      • {r.testType} • {r.scorePercentage}% •{' '}
+                      {new Date(r.completedAt).toLocaleDateString()}
                     </p>
                   </div>
                 ))}

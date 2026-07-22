@@ -48,6 +48,8 @@ export default async function DashboardPage() {
       where: { user: { equals: user.id } },
       limit: 1,
       sort: '-createdAt',
+      user,
+      overrideAccess: false,
     }),
 
     // Test results (with subject populated for PerformanceSnapshot)
@@ -59,6 +61,8 @@ export default async function DashboardPage() {
       },
       limit: 100,
       depth: 1,
+      user,
+      overrideAccess: false,
     }),
 
     // User progress (most recent first, with subject populated)
@@ -68,6 +72,8 @@ export default async function DashboardPage() {
       limit: 100,
       sort: '-lastAccessed',
       depth: 1,
+      user,
+      overrideAccess: false,
     }),
 
     // Active study plan
@@ -79,6 +85,8 @@ export default async function DashboardPage() {
       },
       limit: 1,
       depth: 2, // Populate timetable[].subject with slug for deep linking
+      user,
+      overrideAccess: false,
     }),
 
     // Unread notifications (last 3)
@@ -90,6 +98,8 @@ export default async function DashboardPage() {
       },
       sort: '-createdAt',
       limit: 3,
+      user,
+      overrideAccess: false,
     }),
   ])
 
@@ -165,10 +175,7 @@ export default async function DashboardPage() {
           {userProgress.totalDocs > 0 ? (
             <ContinueLearning recentProgress={userProgress.docs.slice(0, 3)} />
           ) : (
-            <DiscoverContent
-              latestVideos={latestVideos}
-              latestBooks={latestBooks}
-            />
+            <DiscoverContent latestVideos={latestVideos} latestBooks={latestBooks} />
           )}
 
           {/* 5. Subscription Card */}
@@ -179,9 +186,7 @@ export default async function DashboardPage() {
           />
 
           {/* 6. Performance Snapshot (only if has test results) */}
-          {testsCompleted > 0 && (
-            <PerformanceSnapshot testResults={testsResults.docs} />
-          )}
+          {testsCompleted > 0 && <PerformanceSnapshot testResults={testsResults.docs} />}
 
           {/* 7. Notifications Preview */}
           {unreadNotifications.totalDocs > 0 && (

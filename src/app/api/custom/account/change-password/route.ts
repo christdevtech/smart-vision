@@ -53,7 +53,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 })
     }
 
-    await payload.update({ collection: 'users', id: user.id, data: { password: newPassword } })
+    await payload.update({
+      collection: 'users',
+      id: user.id,
+      data: { password: newPassword },
+      user,
+      overrideAccess: false,
+    })
 
     await activityLogger.logSecurity('password_changed', user.id, { req: request as any })
     return NextResponse.json({ success: true })

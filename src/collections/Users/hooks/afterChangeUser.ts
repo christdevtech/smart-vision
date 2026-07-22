@@ -25,6 +25,7 @@ export const afterChangeUser: CollectionAfterChangeHook = async ({ doc, operatio
           tags: [{ tag: 'welcome' }],
         },
       },
+      req,
     })
   } catch (error) {
     // Don't block user creation if notification fails

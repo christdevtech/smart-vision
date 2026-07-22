@@ -23,7 +23,8 @@ export default async function VideoLibraryPage() {
   }
 
   // Global Context: Enforce Academic Level
-  const userLevelId = typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
+  const userLevelId =
+    typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
   if (!userLevelId) {
     redirect('/dashboard/account?setup=level')
   }
@@ -43,6 +44,8 @@ export default async function VideoLibraryPage() {
       collection: 'subscriptions',
       where: { user: { equals: user.id } },
       limit: 1,
+      user,
+      overrideAccess: false,
     }),
   ])
 

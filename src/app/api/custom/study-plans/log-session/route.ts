@@ -11,7 +11,6 @@ import {
 const VALID_STATUSES = ['completed', 'missed', 'rescheduled', 'pending'] as const
 type LogStatus = (typeof VALID_STATUSES)[number]
 
-
 export async function POST(request: NextRequest) {
   try {
     const payloadConfig = await config
@@ -39,6 +38,8 @@ export async function POST(request: NextRequest) {
       where: { user: { equals: user.id } },
       limit: 1,
       depth: 0,
+      user,
+      overrideAccess: false,
     })
 
     if (!existing.docs[0]) {
@@ -85,6 +86,8 @@ export async function POST(request: NextRequest) {
             lastCompleted?.date ?? (plan as any).analytics?.lastStudySession ?? null,
         },
       } as any,
+      user,
+      overrideAccess: false,
     })
 
     return NextResponse.json(

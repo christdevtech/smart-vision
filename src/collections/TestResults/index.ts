@@ -1,7 +1,8 @@
 import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
-import { selfOrAdmin } from '@/access/selfOrAdmin'
 import { authenticated } from '@/access/authenticated'
+import { adminFieldAccess, ownerOrAdmin } from '@/access/ownerAccess'
+import { bindAuthenticatedOwner } from '@/hooks/bindAuthenticatedOwner'
 import { afterChangeTestResult } from './hooks'
 
 export const TestResults: CollectionConfig = {
@@ -17,8 +18,8 @@ export const TestResults: CollectionConfig = {
   access: {
     create: authenticated,
     delete: admin,
-    read: selfOrAdmin,
-    update: authenticated,
+    read: ownerOrAdmin('user'),
+    update: ownerOrAdmin('user'),
   },
   fields: [
     {
@@ -26,6 +27,10 @@ export const TestResults: CollectionConfig = {
       type: 'relationship',
       relationTo: 'users',
       required: true,
+      access: {
+        create: adminFieldAccess,
+        update: adminFieldAccess,
+      },
     },
     {
       name: 'testType',
@@ -266,6 +271,7 @@ export const TestResults: CollectionConfig = {
   ],
   timestamps: true,
   hooks: {
+    beforeValidate: [bindAuthenticatedOwner('user')],
     afterChange: [afterChangeTestResult],
   },
 }

@@ -1,11 +1,3 @@
-import { Access } from 'payload'
+import { ownerOrAdmin } from './ownerAccess'
 
-export const selfOrAdmin: Access = ({ req: { user }, data }) => {
-  if (user && data && data.id === user.id) {
-    return true
-  }
-  if (user && ['admin', 'super-admin'].includes(user.role)) {
-    return true
-  }
-  return false
-}
+export const selfOrAdmin = ownerOrAdmin('user')

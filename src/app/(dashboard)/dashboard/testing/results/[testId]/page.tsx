@@ -23,6 +23,8 @@ export default async function TestResultPage({ params }: { params: Promise<{ tes
     collection: 'test-results',
     where: { id: { equals: testId } },
     limit: 1,
+    user,
+    overrideAccess: false,
   })
   const doc = (res.docs?.[0] as TestResult) || null
   if (!doc) {

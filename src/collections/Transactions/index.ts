@@ -1,6 +1,6 @@
 import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
-import { selfOrAdmin } from '@/access/selfOrAdmin'
+import { adminFieldAccess } from '@/access/ownerAccess'
 import { readTransactions } from '@/access/transactionAccess'
 import {
   determineSubscriptionPlan,
@@ -32,6 +32,10 @@ export const Transactions: CollectionConfig = {
       type: 'relationship',
       relationTo: 'users',
       required: true,
+      access: {
+        create: adminFieldAccess,
+        update: adminFieldAccess,
+      },
     },
     {
       name: 'subscription',

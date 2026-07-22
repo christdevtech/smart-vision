@@ -7,6 +7,8 @@ const adminFieldAccess: FieldAccess = ({ req: { user } }) =>
 
 const authenticatedFieldAccess: FieldAccess = ({ req: { user } }) => Boolean(user)
 const serverOnlyFieldAccess: FieldAccess = () => false
+const onboardingCompletionFieldAccess: FieldAccess = ({ req }) =>
+  req.context?.allowOnboardingCompletion === true
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -143,7 +145,7 @@ export const Users: CollectionConfig = {
       },
       access: {
         create: serverOnlyFieldAccess,
-        update: serverOnlyFieldAccess,
+        update: onboardingCompletionFieldAccess,
       },
     },
     {

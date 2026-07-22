@@ -22,6 +22,8 @@ export default async function PlannerSchedulePage() {
     collection: 'study-plans',
     where: { user: { equals: user.id } },
     limit: 5,
+    user,
+    overrideAccess: false,
   })
   const plans = res.docs as StudyPlan[]
   const plan = plans.find((p) => p.isActive) || plans[0] || null

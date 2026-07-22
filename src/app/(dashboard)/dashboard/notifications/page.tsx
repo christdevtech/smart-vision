@@ -27,6 +27,8 @@ export default async function NotificationsPage() {
     },
     sort: '-createdAt',
     limit: 100,
+    user,
+    overrideAccess: false,
   })
 
   const notifications = notificationsRes.docs as Notification[]

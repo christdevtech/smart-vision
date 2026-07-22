@@ -38,7 +38,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (currentPic === mediaId) {
-      await payload.update({ collection: 'users', id: user.id, data: { profilePic: null } })
+      await payload.update({
+        collection: 'users',
+        id: user.id,
+        data: { profilePic: null },
+        user,
+        overrideAccess: false,
+      })
     }
 
     await logContent('profile_image_removed', user.id, 'media', mediaId, { req: request as any })

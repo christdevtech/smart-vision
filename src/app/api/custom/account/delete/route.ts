@@ -33,7 +33,12 @@ export async function POST(request: NextRequest) {
     }
 
     await activityLogger.logSecurity('account_deletion_request', user.id, { req: request as any })
-    await payload.delete({ collection: 'users', id: user.id })
+    await payload.delete({
+      collection: 'users',
+      id: user.id,
+      user,
+      overrideAccess: false,
+    })
     await activityLogger.logSecurity('account_deleted', user.id, { req: request as any })
 
     return NextResponse.json({ success: true })

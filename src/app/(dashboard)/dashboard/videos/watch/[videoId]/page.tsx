@@ -39,6 +39,8 @@ export default async function WatchVideoPage({ params }: { params: Promise<{ vid
     collection: 'subscriptions',
     where: { user: { equals: user.id } },
     limit: 1,
+    user,
+    overrideAccess: false,
   })
   const sub = (subsRes.docs?.[0] as Subscription) || null
   const subscriptionActive = isSubscriptionActive(sub)

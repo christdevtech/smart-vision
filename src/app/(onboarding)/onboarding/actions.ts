@@ -36,6 +36,9 @@ export async function submitOnboarding(
         profilePic: data.profilePic ? (data.profilePic as any) : undefined,
         onboarded: true,
       },
+      user,
+      overrideAccess: false,
+      context: { allowOnboardingCompletion: true },
     })
 
     revalidatePath('/dashboard')

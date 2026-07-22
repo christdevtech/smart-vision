@@ -1,6 +1,7 @@
 import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
-import { selfOrAdmin } from '@/access/selfOrAdmin'
+import { adminFieldAccess, ownerOrAdmin } from '@/access/ownerAccess'
+import { bindAuthenticatedOwner } from '@/hooks/bindAuthenticatedOwner'
 
 export const Notifications: CollectionConfig<'notifications'> = {
   slug: 'notifications',
@@ -17,8 +18,8 @@ export const Notifications: CollectionConfig<'notifications'> = {
   access: {
     create: admin,
     delete: admin,
-    read: selfOrAdmin,
-    update: selfOrAdmin,
+    read: ownerOrAdmin('recipient'),
+    update: ownerOrAdmin('recipient'),
   },
   indexes: [
     {
@@ -60,6 +61,10 @@ export const Notifications: CollectionConfig<'notifications'> = {
       required: true,
       admin: {
         description: 'User who will receive this notification',
+      },
+      access: {
+        create: adminFieldAccess,
+        update: adminFieldAccess,
       },
     },
     {
@@ -296,6 +301,7 @@ export const Notifications: CollectionConfig<'notifications'> = {
     },
   ],
   hooks: {
+    beforeValidate: [bindAuthenticatedOwner('recipient')],
     beforeChange: [
       ({ data, operation }) => {
         // Set readAt timestamp when isRead is set to true

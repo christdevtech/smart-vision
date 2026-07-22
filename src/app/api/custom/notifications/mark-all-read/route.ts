@@ -25,15 +25,15 @@ export async function POST(request: NextRequest) {
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json(
         { error: 'Invalid request. ids array is required and must not be empty.' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     // Validate that all IDs are strings
-    if (!ids.every(id => typeof id === 'string')) {
+    if (!ids.every((id) => typeof id === 'string')) {
       return NextResponse.json(
         { error: 'Invalid request. All notification IDs must be strings.' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -48,23 +48,25 @@ export async function POST(request: NextRequest) {
             },
           },
           {
-            user: {
+            recipient: {
               equals: user.id,
             },
           },
         ],
       },
+      user,
+      overrideAccess: false,
     })
 
     if (notificationsResult.docs.length === 0) {
       return NextResponse.json(
         { error: 'No notifications found for the current user with the provided IDs.' },
-        { status: 404 }
+        { status: 404 },
       )
     }
 
     // Update notifications to mark them as read
-    const updatePromises = notificationsResult.docs.map(notification =>
+    const updatePromises = notificationsResult.docs.map((notification) =>
       payload.update({
         collection: 'notifications',
         id: notification.id,
@@ -72,7 +74,9 @@ export async function POST(request: NextRequest) {
           isRead: true,
           readAt: new Date().toISOString(),
         },
-      })
+        user,
+        overrideAccess: false,
+      }),
     )
 
     const updatedNotifications = await Promise.all(updatePromises)
@@ -81,7 +85,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Successfully marked ${updatedNotifications.length} notifications as read`,
       updatedCount: updatedNotifications.length,
-      updatedNotifications: updatedNotifications.map(n => ({
+      updatedNotifications: updatedNotifications.map((n) => ({
         id: n.id,
         isRead: n.isRead,
         readAt: n.readAt,
@@ -94,7 +98,7 @@ export async function POST(request: NextRequest) {
         error: 'Internal server error occurred while marking notifications as read',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

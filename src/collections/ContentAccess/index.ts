@@ -1,6 +1,6 @@
 import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
-import { authenticated } from '@/access/authenticated'
+import { adminFieldAccess, ownerOrAdmin } from '@/access/ownerAccess'
 
 export const ContentAccess: CollectionConfig = {
   slug: 'content-access',
@@ -12,7 +12,7 @@ export const ContentAccess: CollectionConfig = {
   access: {
     create: admin,
     delete: admin,
-    read: authenticated,
+    read: ownerOrAdmin('user'),
     update: admin,
   },
   indexes: [
@@ -38,6 +38,10 @@ export const ContentAccess: CollectionConfig = {
       required: true,
       admin: {
         description: 'User requesting access',
+      },
+      access: {
+        create: adminFieldAccess,
+        update: adminFieldAccess,
       },
     },
     {
@@ -181,6 +185,11 @@ export const ContentAccess: CollectionConfig = {
     {
       name: 'deviceInfo',
       type: 'group',
+      access: {
+        read: adminFieldAccess,
+        create: adminFieldAccess,
+        update: adminFieldAccess,
+      },
       fields: [
         {
           name: 'deviceId',
@@ -258,6 +267,11 @@ export const ContentAccess: CollectionConfig = {
     {
       name: 'sessionToken',
       type: 'text',
+      access: {
+        read: adminFieldAccess,
+        create: adminFieldAccess,
+        update: adminFieldAccess,
+      },
       admin: {
         description: 'Unique session token for access tracking',
       },
@@ -282,22 +296,22 @@ export const ContentAccess: CollectionConfig = {
     beforeChange: [
       ({ data, operation }) => {
         const now = new Date()
-        
+
         if (operation === 'create') {
           data.firstAccessAt = now
           data.lastAccessAt = now
-          
+
           // Generate session token
           data.sessionToken = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         } else {
           data.lastAccessAt = now
         }
-        
+
         // Set granted timestamp
         if (data.accessGranted && !data.grantedAt) {
           data.grantedAt = now
         }
-        
+
         return data
       },
     ],

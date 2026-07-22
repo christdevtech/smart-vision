@@ -1,37 +1,12 @@
 import { Access } from 'payload'
+import { isAdminUser, ownerOrAdmin } from './ownerAccess'
 
 export const userCreate: Access = ({ req: { user } }) => {
   if (!user) return true
 
-  return ['admin', 'super-admin'].includes(user.role)
+  return isAdminUser(user)
 }
 
-export const readUser: Access = ({ req: { user }, data }) => {
-  if (user && data && data.id === user.id) {
-    return true
-  }
-  if (user && ['admin', 'super-admin'].includes(user.role)) {
-    return true
-  }
-  return false
-}
-
-export const updateUser: Access = ({ req: { user }, data }) => {
-  if (user && data && data.id === user.id) {
-    return true
-  }
-  if (user && ['admin', 'super-admin'].includes(user.role)) {
-    return true
-  }
-  return false
-}
-
-export const deleteUser: Access = ({ req: { user }, data }) => {
-  if (user && data && data.id === user.id) {
-    return true
-  }
-  if (user && ['admin', 'super-admin'].includes(user.role)) {
-    return true
-  }
-  return false
-}
+export const readUser = ownerOrAdmin('id')
+export const updateUser = ownerOrAdmin('id')
+export const deleteUser = ownerOrAdmin('id')

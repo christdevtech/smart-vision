@@ -7,11 +7,7 @@ import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import MotionWrapper from '@/components/Dashboard/MotionWrapper'
 import { FileText, ArrowLeft, Crown, Lock, Clock, Award } from 'lucide-react'
 import { ExamPaper, Subscription } from '@/payload-types'
-import {
-  isSubscriptionActive,
-  hasTierAccess,
-  SubscriptionPlan,
-} from '@/utilities/subscription'
+import { isSubscriptionActive, hasTierAccess, SubscriptionPlan } from '@/utilities/subscription'
 import Link from 'next/link'
 import ExamPaperViewerClient from '@/components/QuestionBank/ExamPaperViewerClient'
 
@@ -49,12 +45,13 @@ export default async function ExamPaperViewerPage({
     where: { user: { equals: user.id } },
     limit: 1,
     sort: '-createdAt',
+    user,
+    overrideAccess: false,
   })
   const sub = (subsRes.docs?.[0] as Subscription) || null
   const subscriptionActive = isSubscriptionActive(sub)
   const userPlan: SubscriptionPlan = sub?.plan ?? 'free'
-  const paperTiers: SubscriptionPlan[] =
-    (paper.subscriptionTiers as SubscriptionPlan[]) ?? []
+  const paperTiers: SubscriptionPlan[] = (paper.subscriptionTiers as SubscriptionPlan[]) ?? []
 
   const tierAccess = hasTierAccess(
     userPlan,
@@ -80,9 +77,7 @@ export default async function ExamPaperViewerPage({
 
   // Subject name
   const subjectName =
-    typeof paper.subject === 'object' && paper.subject !== null
-      ? paper.subject.name
-      : '—'
+    typeof paper.subject === 'object' && paper.subject !== null ? paper.subject.name : '—'
 
   return (
     <DashboardLayout user={user} title={paper.title}>
@@ -157,9 +152,7 @@ export default async function ExamPaperViewerPage({
                 </div>
                 <div>
                   <p className="text-lg font-semibold text-foreground">
-                    {subscriptionActive
-                      ? 'Upgrade Required'
-                      : 'Subscription Required'}
+                    {subscriptionActive ? 'Upgrade Required' : 'Subscription Required'}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
                     {subscriptionActive

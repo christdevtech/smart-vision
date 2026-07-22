@@ -27,7 +27,13 @@ export async function POST(request: NextRequest) {
 
     // This trusted server endpoint intentionally uses the Local API after reducing input to the
     // explicit profile allowlist above. The authenticated user ID is never accepted from the client.
-    const updated = await payload.update({ collection: 'users', id: user.id, data })
+    const updated = await payload.update({
+      collection: 'users',
+      id: user.id,
+      data,
+      user,
+      overrideAccess: false,
+    })
     await logActivity(
       {
         action: 'profile.updated',

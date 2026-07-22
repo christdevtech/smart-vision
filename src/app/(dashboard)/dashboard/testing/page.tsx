@@ -22,7 +22,8 @@ export default async function TestingCenterPage() {
   }
 
   // Global Context: Enforce Academic Level
-  const userLevelId = typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
+  const userLevelId =
+    typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
   if (!userLevelId) {
     redirect('/dashboard/account?setup=level')
   }
@@ -50,12 +51,18 @@ export default async function TestingCenterPage() {
           <MotionWrapper animation="fadeIn" delay={0.2}>
             {await (async () => {
               const [subjectsRes, topicsRes, subsRes] = await Promise.all([
-                payload.find({ collection: 'subjects', where: { academicLevels: { in: [userLevelId] } }, limit: 200 }),
+                payload.find({
+                  collection: 'subjects',
+                  where: { academicLevels: { in: [userLevelId] } },
+                  limit: 200,
+                }),
                 payload.find({ collection: 'topics', limit: 500 }),
                 payload.find({
                   collection: 'subscriptions',
                   where: { user: { equals: user.id } },
                   limit: 1,
+                  user,
+                  overrideAccess: false,
                 }),
               ])
               const subs = subsRes.docs?.[0] as Subscription | undefined

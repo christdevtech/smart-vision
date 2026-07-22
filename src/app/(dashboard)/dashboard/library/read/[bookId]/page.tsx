@@ -67,6 +67,8 @@ export default async function ReadBookPage({ params }: { params: Promise<{ bookI
     where: { user: { equals: user.id } },
     limit: 1,
     sort: '-createdAt',
+    user,
+    overrideAccess: false,
   })
   const sub = (subsRes.docs?.[0] as Subscription) || null
   const subscriptionActive = isSubscriptionActive(sub)

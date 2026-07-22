@@ -1,7 +1,7 @@
 import { CollectionConfig } from 'payload'
-import { admin } from '@/access/admin'
-import { selfOrAdmin } from '@/access/selfOrAdmin'
 import { authenticated } from '@/access/authenticated'
+import { adminFieldAccess, ownerOrAdmin } from '@/access/ownerAccess'
+import { bindAuthenticatedOwner } from '@/hooks/bindAuthenticatedOwner'
 import { generateReminders } from './hooks/afterChangeStudyPlan'
 
 export const StudyPlans: CollectionConfig = {
@@ -12,9 +12,9 @@ export const StudyPlans: CollectionConfig = {
   },
   access: {
     create: authenticated,
-    delete: selfOrAdmin,
-    read: selfOrAdmin,
-    update: selfOrAdmin,
+    delete: ownerOrAdmin('user'),
+    read: ownerOrAdmin('user'),
+    update: ownerOrAdmin('user'),
   },
   fields: [
     {
@@ -23,6 +23,10 @@ export const StudyPlans: CollectionConfig = {
       relationTo: 'users',
       required: true,
       unique: true, // One plan per user
+      access: {
+        create: adminFieldAccess,
+        update: adminFieldAccess,
+      },
     },
     {
       name: 'goals',
@@ -531,6 +535,7 @@ export const StudyPlans: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeValidate: [bindAuthenticatedOwner('user')],
     beforeChange: [
       ({ data, operation }) => {
         const now = new Date()

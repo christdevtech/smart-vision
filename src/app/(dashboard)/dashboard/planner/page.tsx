@@ -20,19 +20,26 @@ export default async function StudyPlannerPage() {
   }
 
   // Global Context: Enforce Academic Level
-  const userLevelId = typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
+  const userLevelId =
+    typeof user.academicLevel === 'object' ? user.academicLevel?.id : user.academicLevel
   if (!userLevelId) {
     redirect('/dashboard/account?setup=level')
   }
 
   const [subjects, topics, existingPlan] = await Promise.all([
-    payload.find({ collection: 'subjects', where: { academicLevels: { in: [userLevelId] } }, limit: 100 }),
+    payload.find({
+      collection: 'subjects',
+      where: { academicLevels: { in: [userLevelId] } },
+      limit: 100,
+    }),
     payload.find({ collection: 'topics', limit: 100 }),
     payload.find({
       collection: 'study-plans',
       where: { user: { equals: user.id } },
       limit: 1,
       depth: 2,
+      user,
+      overrideAccess: false,
     }),
   ])
 
@@ -67,6 +74,8 @@ export default async function StudyPlannerPage() {
         data: { timetable: newTimetable as any },
         depth: 2,
         context: { skipReminderGeneration: true },
+        user,
+        overrideAccess: false,
       })
 
       initialPlan = updated

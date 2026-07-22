@@ -329,6 +329,8 @@ export async function POST(request: NextRequest) {
       collection: 'study-plans',
       where: { user: { equals: user.id } },
       limit: 1,
+      user,
+      overrideAccess: false,
     })
     const existingPlan = existing.docs[0]
 
@@ -345,11 +347,15 @@ export async function POST(request: NextRequest) {
         collection: 'study-plans',
         id: existingPlan.id,
         data: data as any,
+        user,
+        overrideAccess: false,
       })
     } else {
       plan = await payload.create({
         collection: 'study-plans',
         data: data as any,
+        user,
+        overrideAccess: false,
       })
     }
 

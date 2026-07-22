@@ -23,6 +23,8 @@ export default async function AccountSubscriptionPage() {
     collection: 'subscriptions',
     where: { user: { equals: user.id } },
     limit: 1,
+    user,
+    overrideAccess: false,
   })
   const sub = (subsRes.docs?.[0] as Subscription) || null
   const costs = await getSubscriptionCosts(payload)

@@ -1,7 +1,8 @@
 import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
-import { selfOrAdmin } from '@/access/selfOrAdmin'
 import { authenticated } from '@/access/authenticated'
+import { adminFieldAccess, ownerOrAdmin } from '@/access/ownerAccess'
+import { bindAuthenticatedOwner } from '@/hooks/bindAuthenticatedOwner'
 import { autoTrackStudySession } from '@/utilities/autoTrackStudySession'
 
 export const UserProgress: CollectionConfig = {
@@ -17,8 +18,8 @@ export const UserProgress: CollectionConfig = {
   access: {
     create: authenticated,
     delete: admin,
-    read: selfOrAdmin,
-    update: authenticated,
+    read: ownerOrAdmin('user'),
+    update: ownerOrAdmin('user'),
   },
   fields: [
     {
@@ -26,6 +27,10 @@ export const UserProgress: CollectionConfig = {
       type: 'relationship',
       relationTo: 'users',
       required: true,
+      access: {
+        create: adminFieldAccess,
+        update: adminFieldAccess,
+      },
     },
     {
       name: 'contentType',
@@ -171,6 +176,7 @@ export const UserProgress: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeValidate: [bindAuthenticatedOwner('user')],
     afterChange: [
       async ({ doc, req, context }) => {
         // Prevent recursive hooks (auto-tracking updates the study plan,
@@ -178,16 +184,10 @@ export const UserProgress: CollectionConfig = {
         if (context?.skipAutoTrack) return
 
         // Only auto-track if the progress entry has a subject
-        const subjectId =
-          typeof doc.subject === 'string'
-            ? doc.subject
-            : (doc.subject as any)?.id
+        const subjectId = typeof doc.subject === 'string' ? doc.subject : (doc.subject as any)?.id
         if (!subjectId) return
 
-        const userId =
-          typeof doc.user === 'string'
-            ? doc.user
-            : (doc.user as any)?.id
+        const userId = typeof doc.user === 'string' ? doc.user : (doc.user as any)?.id
         if (!userId) return
 
         try {
