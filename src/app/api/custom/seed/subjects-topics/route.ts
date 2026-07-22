@@ -1,25 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-
-const allowedRoles = ['admin', 'super-admin', 'content-manager']
-
-function isAuthorized(req: NextRequest, user: any): boolean {
-  const authHeader = req.headers.get('authorization')
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true
-  if (process.env.NODE_ENV !== 'production') return true
-  if (user?.role && allowedRoles.includes(user.role)) return true
-  return false
-}
+import {
+  authorizeAdministrativeRequest,
+  CONTENT_ADMINISTRATIVE_ROLES,
+  isSeedRouteEnabled,
+} from '@/utilities/requestAuthorization'
 
 export async function POST(request: NextRequest) {
+  if (!isSeedRouteEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   try {
     const payload = await getPayload({ config })
-    const { user } = (request as any)
+    const authorization = await authorizeAdministrativeRequest(payload, request.headers, {
+      allowedRoles: CONTENT_ADMINISTRATIVE_ROLES,
+    })
 
-    if (!isAuthorized(request, user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    if (!authorization) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const subjectsData = [

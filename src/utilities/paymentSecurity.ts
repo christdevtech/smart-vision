@@ -1,7 +1,10 @@
-import { timingSafeEqual } from 'node:crypto'
 import type { Setting, User } from '@/payload-types'
 import type { Payload } from 'payload'
-import { isAdminUser } from '@/access/ownerAccess'
+import {
+  authenticateRequestUser,
+  authorizeAdministrativeRequest,
+  hasValidBearerAuthorization,
+} from '@/utilities/requestAuthorization'
 
 export const PAYMENT_INITIATION_WINDOW_MS = 10 * 60 * 1000
 export const PAYMENT_INITIATION_LIMIT = 5
@@ -103,20 +106,14 @@ export function hasValidCronAuthorization(
   authorization: string | null,
   cronSecret: string | undefined,
 ): boolean {
-  if (!authorization || !cronSecret) return false
-
-  const actual = Buffer.from(authorization)
-  const expected = Buffer.from(`Bearer ${cronSecret}`)
-
-  return actual.length === expected.length && timingSafeEqual(actual, expected)
+  return hasValidBearerAuthorization(authorization, cronSecret)
 }
 
 export async function authenticatePaymentUser(
   payload: Payload,
   headers: Headers,
 ): Promise<User | null> {
-  const { user } = await payload.auth({ headers })
-  return (user as User | null) ?? null
+  return authenticateRequestUser(payload, headers)
 }
 
 export async function authorizePaymentOperator(
@@ -124,12 +121,11 @@ export async function authorizePaymentOperator(
   headers: Headers,
   cronSecret = process.env.CRON_SECRET,
 ): Promise<{ kind: 'admin'; user: User } | { kind: 'cron' } | null> {
-  if (hasValidCronAuthorization(headers.get('authorization'), cronSecret)) {
-    return { kind: 'cron' }
-  }
+  const authorization = await authorizeAdministrativeRequest(payload, headers, {
+    bearerSecret: cronSecret,
+  })
 
-  const user = await authenticatePaymentUser(payload, headers)
-  if (!user || !isAdminUser(user)) return null
-
-  return { kind: 'admin', user }
+  if (authorization?.kind === 'service') return { kind: 'cron' }
+  if (authorization?.kind === 'user') return { kind: 'admin', user: authorization.user }
+  return null
 }

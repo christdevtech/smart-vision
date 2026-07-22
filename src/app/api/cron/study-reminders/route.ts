@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { hasValidBearerAuthorization } from '@/utilities/requestAuthorization'
 
 // Cron endpoint — checks for study reminders due within the next 30 minutes
 // and sends an in-app notification.
@@ -17,13 +18,11 @@ import config from '@/payload.config'
 // Security: requires Authorization: Bearer <CRON_SECRET> header.
 
 export async function GET(request: NextRequest) {
-  // Verify cron secret
   const secret = process.env.CRON_SECRET
-  if (secret) {
-    const auth = request.headers.get('authorization')
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  const auth = request.headers.get('authorization')
+
+  if (!hasValidBearerAuthorization(auth, secret)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
