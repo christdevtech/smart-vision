@@ -24,6 +24,7 @@ import { PaymentSettlements } from './collections/PaymentSettlements'
 import { Topics } from './collections/Topics'
 import { UserProgress } from './collections/UserProgress'
 import { TestResults } from './collections/TestResults'
+import { TestSessions } from './collections/TestSessions'
 import { ContentAccess } from './collections/ContentAccess'
 import { Notifications } from './collections/Notifications'
 import { ActivityLogs } from './collections/ActivityLogs'
@@ -73,6 +74,7 @@ export default buildConfig({
     PaymentSettlements,
     Topics,
     UserProgress,
+    TestSessions,
     TestResults,
     ContentAccess,
     Notifications,

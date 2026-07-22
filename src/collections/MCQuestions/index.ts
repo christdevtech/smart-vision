@@ -1,6 +1,7 @@
 import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
 import { authenticated } from '@/access/authenticated'
+import { adminFieldAccess } from '@/access/ownerAccess'
 import {
   FixedToolbarFeature,
   InlineToolbarFeature,
@@ -48,6 +49,23 @@ export const MCQuestions: CollectionConfig = {
       required: true,
       minRows: 3,
       maxRows: 5,
+      validate: (value) => {
+        if (!Array.isArray(value)) return 'At least three options are required'
+        const options = value as Array<{ isCorrect?: boolean; text?: string }>
+        const correctOptions = options.filter((option) => option?.isCorrect === true)
+        if (correctOptions.length !== 1) return 'Exactly one option must be marked correct'
+
+        const normalizedTexts = options.map((option) =>
+          String(option?.text ?? '')
+            .trim()
+            .toLowerCase(),
+        )
+        if (new Set(normalizedTexts).size !== normalizedTexts.length) {
+          return 'Answer options must be unique'
+        }
+
+        return true
+      },
       fields: [
         {
           name: 'text',
@@ -58,12 +76,18 @@ export const MCQuestions: CollectionConfig = {
           name: 'isCorrect',
           type: 'checkbox',
           defaultValue: false,
+          access: {
+            read: adminFieldAccess,
+          },
         },
       ],
     },
     {
       name: 'explanation',
       type: 'richText',
+      access: {
+        read: adminFieldAccess,
+      },
       editor: lexicalEditor({
         features: ({ rootFeatures }) => {
           return [...rootFeatures, FixedToolbarFeature(), InlineToolbarFeature()]

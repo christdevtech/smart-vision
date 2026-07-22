@@ -1,8 +1,6 @@
 import { CollectionConfig } from 'payload'
 import { admin } from '@/access/admin'
-import { authenticated } from '@/access/authenticated'
 import { adminFieldAccess, ownerOrAdmin } from '@/access/ownerAccess'
-import { bindAuthenticatedOwner } from '@/hooks/bindAuthenticatedOwner'
 import { afterChangeTestResult } from './hooks'
 
 export const TestResults: CollectionConfig = {
@@ -16,10 +14,10 @@ export const TestResults: CollectionConfig = {
     group: 'User Content',
   },
   access: {
-    create: authenticated,
+    create: admin,
     delete: admin,
     read: ownerOrAdmin('user'),
-    update: ownerOrAdmin('user'),
+    update: () => false,
   },
   fields: [
     {
@@ -30,6 +28,17 @@ export const TestResults: CollectionConfig = {
       access: {
         create: adminFieldAccess,
         update: adminFieldAccess,
+      },
+    },
+    {
+      name: 'session',
+      type: 'relationship',
+      relationTo: 'test-sessions',
+      unique: true,
+      index: true,
+      admin: {
+        description: 'Server-created assessment session that produced this immutable result',
+        readOnly: true,
       },
     },
     {
@@ -271,7 +280,6 @@ export const TestResults: CollectionConfig = {
   ],
   timestamps: true,
   hooks: {
-    beforeValidate: [bindAuthenticatedOwner('user')],
     afterChange: [afterChangeTestResult],
   },
 }

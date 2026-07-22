@@ -82,6 +82,7 @@ export interface Config {
     'payment-settlements': PaymentSettlement;
     topics: Topic;
     'user-progress': UserProgress;
+    'test-sessions': TestSession;
     'test-results': TestResult;
     'content-access': ContentAccess;
     notifications: Notification;
@@ -108,6 +109,7 @@ export interface Config {
     'payment-settlements': PaymentSettlementsSelect<false> | PaymentSettlementsSelect<true>;
     topics: TopicsSelect<false> | TopicsSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
+    'test-sessions': TestSessionsSelect<false> | TestSessionsSelect<true>;
     'test-results': TestResultsSelect<false> | TestResultsSelect<true>;
     'content-access': ContentAccessSelect<false> | ContentAccessSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
@@ -968,11 +970,36 @@ export interface UserProgress {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-sessions".
+ */
+export interface TestSession {
+  id: string;
+  user: string | User;
+  testType: 'practice';
+  subject: string | Subject;
+  topics?: (string | Topic)[] | null;
+  academicLevel: string | AcademicLevel;
+  difficulty?: ('easy' | 'medium' | 'hard') | null;
+  questions: (string | Mcq)[];
+  status: 'active' | 'completed' | 'expired';
+  startedAt: string;
+  expiresAt: string;
+  completedAt?: string | null;
+  result?: (string | null) | TestResult;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "test-results".
  */
 export interface TestResult {
   id: string;
   user: string | User;
+  /**
+   * Server-created assessment session that produced this immutable result
+   */
+  session?: (string | null) | TestSession;
   testType: 'practice' | 'timed' | 'exam_paper' | 'topic' | 'subject';
   subject: string | Subject;
   topics?: (string | Topic)[] | null;
@@ -1600,6 +1627,10 @@ export interface PayloadLockedDocument {
         value: string | UserProgress;
       } | null)
     | ({
+        relationTo: 'test-sessions';
+        value: string | TestSession;
+      } | null)
+    | ({
         relationTo: 'test-results';
         value: string | TestResult;
       } | null)
@@ -2143,10 +2174,31 @@ export interface UserProgressSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "test-sessions_select".
+ */
+export interface TestSessionsSelect<T extends boolean = true> {
+  user?: T;
+  testType?: T;
+  subject?: T;
+  topics?: T;
+  academicLevel?: T;
+  difficulty?: T;
+  questions?: T;
+  status?: T;
+  startedAt?: T;
+  expiresAt?: T;
+  completedAt?: T;
+  result?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "test-results_select".
  */
 export interface TestResultsSelect<T extends boolean = true> {
   user?: T;
+  session?: T;
   testType?: T;
   subject?: T;
   topics?: T;

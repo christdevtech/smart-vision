@@ -46,6 +46,8 @@ Validation performed:
 
 - **G-06 — implemented:** media is classified as public, owner-only, or protected; ordinary users can mutate only owner-bound uploads; protected file relationships are hidden from user API responses; and lesson delivery uses one entitlement service for books, exam papers, and videos. Five-minute grants are bound to the user, content, field, media document, and filename, after which Payload redirects eligible video requests to a short-lived R2 `GetObject` URL. PDF requests re-check the current subscription and content relationship before retrieving bytes. Legacy unclassified images remain readable to avoid breaking existing covers and profile pictures, while unclassified PDFs and videos are private.
 
+- **G-07 — implemented:** practice tests now start through an authenticated, subscription-gated server endpoint that validates the student’s academic level, subject, topic, difficulty, and requested count before persisting an owner-bound two-hour session. Browser responses contain question and option IDs/text only; MCQ correctness and explanations are field-protected. Submissions contain only the session ID and selected option IDs, while the server derives correctness, totals, score, grade, elapsed time, attempt number, topic strengths/weaknesses, user, and content scope. Each immutable result is uniquely tied to one session, making retry and concurrent submission idempotent; ordinary users cannot create or update results directly.
+
 ## What is already implemented
 
 The following capabilities are useful foundations and should be retained while hardening them:

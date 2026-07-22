@@ -2,24 +2,15 @@
 
 import React from 'react'
 import { FileText, Minus, Plus } from 'lucide-react'
-import { AcademicLevel, Subject, Topic, TestResult, Mcq, User } from '@/payload-types'
+import type { Subject, TestResult, Topic, User } from '@/payload-types'
+import type { PublicTestQuestion } from '@/services/testScoring'
+import type { TestResultResponse } from '@/services/testSessionService'
 import RichText from '../RichText'
 
 function getId(val: string | { id: string } | undefined | null) {
   if (!val) return ''
   if (typeof val === 'string') return val
   return (val as any).id || ''
-}
-
-function computeGrade(score: number): TestResult['grade'] {
-  if (score >= 90) return 'A+'
-  if (score >= 80) return 'A'
-  if (score >= 70) return 'B+'
-  if (score >= 60) return 'B'
-  if (score >= 50) return 'C+'
-  if (score >= 40) return 'C'
-  if (score >= 30) return 'D'
-  return 'F'
 }
 
 const QUESTION_PRESETS = [5, 10, 20, 30, 50]
@@ -43,17 +34,17 @@ export default function TestingCenterClient({
   const [numQuestions, setNumQuestions] = React.useState<number>(20)
   const [showConfirm, setShowConfirm] = React.useState(false)
 
-  const [questions, setQuestions] = React.useState<Mcq[]>([])
+  const [questions, setQuestions] = React.useState<PublicTestQuestion[]>([])
+  const [sessionId, setSessionId] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState('')
 
   const [currentIndex, setCurrentIndex] = React.useState(0)
   const [selections, setSelections] = React.useState<Record<string, string>>({})
-  const [questionTimes, setQuestionTimes] = React.useState<Record<string, number>>({})
-  const [startedAt, setStartedAt] = React.useState<number | null>(null)
   const [submitted, setSubmitted] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [averageScore, setAverageScore] = React.useState<number | null>(null)
+  const [result, setResult] = React.useState<TestResultResponse | null>(null)
 
   React.useEffect(() => {
     const t = topics.filter((t) => (t.subjects || []).some((s) => getId(s) === subjectId))
@@ -94,23 +85,6 @@ export default function TestingCenterClient({
     } catch {}
   }, [user.id, academicLevelId, subjectId, topicId, difficulty, numQuestions])
 
-  // Timer for per-question time tracking
-  React.useEffect(() => {
-    let timer: any
-    if (startedAt !== null && questions[currentIndex]) {
-      timer = setInterval(() => {
-        setQuestionTimes((prev) => {
-          const qid = questions[currentIndex].id
-          const next = { ...prev, [qid]: (prev[qid] || 0) + 1 }
-          return next
-        })
-      }, 1000)
-    }
-    return () => {
-      if (timer) clearInterval(timer)
-    }
-  }, [startedAt, currentIndex, questions])
-
   async function fetchAverageScore(subjectIdArg: string, levelIdArg: string) {
     try {
       const res = await fetch(
@@ -129,8 +103,9 @@ export default function TestingCenterClient({
   async function startTest() {
     setError('')
     setSubmitted(false)
+    setResult(null)
+    setSessionId(null)
     setSelections({})
-    setQuestionTimes({})
     setQuestions([])
     setCurrentIndex(0)
 
@@ -145,23 +120,21 @@ export default function TestingCenterClient({
 
     setLoading(true)
     try {
-      const qs: string[] = []
-      qs.push(`where[and][0][subject][equals]=${encodeURIComponent(subjectId)}`)
-      qs.push(`where[and][1][academicLevel][equals]=${encodeURIComponent(academicLevelId)}`)
-      if (difficulty)
-        qs.push(`where[and][2][difficulty][equals]=${encodeURIComponent(difficulty)}`)
-      const url = `/api/mcq?limit=100&${qs.join('&')}`
-      const res = await fetch(url)
-      if (!res.ok) throw new Error('Failed to load questions')
+      const res = await fetch('/api/custom/tests/start', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subjectId,
+          ...(topicId ? { topicId } : {}),
+          ...(difficulty ? { difficulty } : {}),
+          numQuestions,
+        }),
+      })
       const data = await res.json()
-      let docs: Mcq[] = data?.docs || []
-      if (topicId) {
-        docs = docs.filter((q) => (q.topic || []).some((t) => getId(t) === topicId))
-      }
-      const wanted = Math.max(1, Math.min(numQuestions || 20, docs.length))
-      const shuffled = [...docs].sort(() => Math.random() - 0.5)
-      setQuestions(shuffled.slice(0, wanted))
-      setStartedAt(Date.now())
+      if (!res.ok) throw new Error(data?.error || 'Failed to start test')
+      setQuestions(data.questions || [])
+      setSessionId(data.sessionId)
       await fetchAverageScore(subjectId, academicLevelId)
     } catch (e: any) {
       setError(e?.message || 'Failed to start test')
@@ -170,8 +143,8 @@ export default function TestingCenterClient({
     }
   }
 
-  function selectAnswer(qid: string, text: string) {
-    setSelections((prev) => ({ ...prev, [qid]: text }))
+  function selectAnswer(qid: string, optionId: string) {
+    setSelections((prev) => ({ ...prev, [qid]: optionId }))
   }
 
   function nextQuestion() {
@@ -182,90 +155,28 @@ export default function TestingCenterClient({
   }
 
   async function finalizeSubmit() {
-    if (!questions.length) return
-    setSubmitted(true)
+    if (!questions.length || !sessionId) return
     setSaving(true)
+    setError('')
     try {
-      const totalQuestions = questions.length
-      let correctAnswers = 0
-      let incorrectAnswers = 0
-      let skipped = 0
-
-      const perTopic: Record<string, { correct: number; total: number }> = {}
-
-      const items = questions.map((q) => {
-        const correctOpt = q.options.find((o) => o.isCorrect)
-        const selectedText = selections[q.id]
-        const correctText = correctOpt?.text || ''
-        const isCorrect = !!selectedText && selectedText === correctText
-        if (!selectedText) skipped++
-        else if (isCorrect) correctAnswers++
-        else incorrectAnswers++
-        ;(q.topic || []).forEach((t) => {
-          const tid = getId(t)
-          if (!tid) return
-          if (!perTopic[tid]) perTopic[tid] = { correct: 0, total: 0 }
-          perTopic[tid].total += 1
-          if (isCorrect) perTopic[tid].correct += 1
-        })
-
-        return {
-          question: q.id,
-          selectedAnswer: selectedText || 'SKIPPED',
-          correctAnswer: correctText,
-          isCorrect,
-          timeSpent: questionTimes[q.id] || 0,
-          ...(q.difficulty ? { difficulty: q.difficulty } : {}),
-        }
-      })
-
-      const scorePercentage = Math.round((correctAnswers / totalQuestions) * 100)
-      const timeUsedMinutes = startedAt ? Math.round((Date.now() - startedAt) / 60000) : 0
-      const grade = computeGrade(scorePercentage)
-
-      const weakAreas = Object.entries(perTopic)
-        .map(([tid, v]) => ({ topic: tid, accuracy: Math.round((v.correct / v.total) * 100) }))
-        .filter((x) => (x.accuracy || 0) < 60)
-      const strongAreas = Object.entries(perTopic)
-        .map(([tid, v]) => ({ topic: tid, accuracy: Math.round((v.correct / v.total) * 100) }))
-        .filter((x) => (x.accuracy || 0) >= 80)
-
-      const body: Partial<TestResult> = {
-        user: user.id,
-        testType: 'practice',
-        subject: subjectId,
-        topics: topicId ? [topicId] : [],
-        academicLevel: academicLevelId,
-        questions: items as any,
-        totalQuestions,
-        correctAnswers,
-        incorrectAnswers,
-        skippedQuestions: skipped,
-        scorePercentage,
-        grade,
-        timeLimit: null,
-        timeUsed: timeUsedMinutes,
-        startedAt: new Date(startedAt || Date.now()).toISOString(),
-        completedAt: new Date().toISOString(),
-        isCompleted: true,
-        weakAreas: weakAreas as any,
-        strongAreas: strongAreas as any,
-        reviewMode: false,
-      }
-
-      const res = await fetch('/api/test-results', {
+      const res = await fetch('/api/custom/tests/submit', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          sessionId,
+          answers: questions.map((question) => ({
+            questionId: question.id,
+            selectedOptionId: selections[question.id] || null,
+          })),
+        }),
       })
+      const data = await res.json()
       if (!res.ok) {
-        let msg = 'Failed to save results'
-        try {
-          const err = await res.json()
-          msg = err?.message || err?.error || msg
-        } catch {}
-        throw new Error(msg)
+        throw new Error(data?.error || 'Failed to submit test')
       }
+      setResult(data)
+      setSubmitted(true)
     } catch (e: any) {
       setError(e?.message || 'Failed to submit test')
     } finally {
@@ -437,12 +348,13 @@ export default function TestingCenterClient({
             </div>
             <div className="space-y-2">
               {current.options.map((opt) => {
-                const selectedText = selections[current.id]
-                const isActive = selectedText === opt.text
+                const selectedOptionId = selections[current.id]
+                const isActive = selectedOptionId === opt.id
                 return (
                   <button
                     key={opt.id || opt.text}
-                    onClick={() => selectAnswer(current.id, opt.text)}
+                    onClick={() => selectAnswer(current.id, opt.id)}
+                    disabled={submitted}
                     className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-secondary text-foreground border-border'}`}
                   >
                     {opt.text}
@@ -483,7 +395,7 @@ export default function TestingCenterClient({
           <div className="relative p-4 m-0 w-full rounded-2xl border sm:max-w-md sm:m-4 bg-card border-border">
             <p className="mb-3 font-medium text-foreground">Submit answers?</p>
             <p className="mb-4 text-sm text-muted-foreground">
-              You will see explanations after submitting.
+              The server will grade this attempt and show the correct answers after submitting.
             </p>
             <div className="flex gap-2">
               <button
@@ -506,30 +418,18 @@ export default function TestingCenterClient({
         </div>
       )}
 
-      {submitted && (
+      {submitted && result && (
         <div className="p-4 space-y-3 rounded-2xl border bg-card border-border/50">
           <p className="font-medium text-foreground">Results</p>
           <div className="grid grid-cols-2 gap-2">
             <div className="p-3 rounded-lg border bg-input border-border">
               <p className="text-sm">Score</p>
-              <p className="text-2xl font-bold">
-                {Object.values(selections).filter(Boolean).length
-                  ? Math.round(
-                      (questions.filter(
-                        (q) =>
-                          selections[q.id] === (q.options.find((o) => o.isCorrect)?.text || ''),
-                      ).length /
-                        questions.length) *
-                        100,
-                    )
-                  : 0}
-                %
-              </p>
+              <p className="text-2xl font-bold">{result.scorePercentage}%</p>
             </div>
             <div className="p-3 rounded-lg border bg-input border-border">
               <p className="text-sm">Time</p>
               <p className="text-2xl font-bold">
-                {startedAt ? Math.round((Date.now() - startedAt) / 60000) : 0} min
+                {result.timeUsed} min
               </p>
             </div>
             {averageScore !== null && (
@@ -542,9 +442,8 @@ export default function TestingCenterClient({
 
           <div className="space-y-2">
             {questions.map((q) => {
-              const selectedText = selections[q.id]
-              const correctText = q.options.find((o) => o.isCorrect)?.text || ''
-              const correct = selectedText === correctText
+              const gradedQuestion = result.questions.find((item) => item.questionId === q.id)
+              if (!gradedQuestion) return null
               return (
                 <div key={q.id} className="p-3 rounded-lg border bg-input border-border">
                   <RichText
@@ -554,11 +453,11 @@ export default function TestingCenterClient({
                     enableGutter={false}
                   />
                   <p
-                    className={`text-sm ${correct ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}
+                    className={`text-sm ${gradedQuestion.isCorrect ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}
                   >
-                    Your answer: {selectedText || '—'}
+                    Your answer: {gradedQuestion.selectedAnswer}
                   </p>
-                  <p className="text-sm">Correct answer: {correctText}</p>
+                  <p className="text-sm">Correct answer: {gradedQuestion.correctAnswer}</p>
                 </div>
               )
             })}
