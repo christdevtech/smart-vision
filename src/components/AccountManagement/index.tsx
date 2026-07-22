@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AcademicLevel, Media as MediaType, User } from '@/payload-types'
+import { AcademicLevel, User } from '@/payload-types'
 import { toast } from 'sonner'
-import { Camera, CheckCircle, Shield, Trash2, Image as ImageIcon, X, Edit } from 'lucide-react'
+import { Camera, CheckCircle, Shield, Trash2, X, Edit, Laptop } from 'lucide-react'
 import { DatePicker } from '@/components/DatePicker'
 import { Media } from '@/components/Media'
+import { AccountSessionsPanel } from './AccountSessionsPanel'
+import { getPasswordPolicyError, PASSWORD_POLICY_MESSAGE } from '@/utilities/passwordPolicy'
 
 type Props = {
   user: User
@@ -48,7 +50,7 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
   const [deleteConfirmTwo, setDeleteConfirmTwo] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
-  const [securityTab, setSecurityTab] = useState<'password' | 'delete'>('password')
+  const [securityTab, setSecurityTab] = useState<'password' | 'sessions' | 'delete'>('password')
   const [changeFlow, setChangeFlow] = useState(false)
 
   useEffect(() => {
@@ -91,15 +93,10 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
     return phoneRegexE164.test(stripped) || /^6\d{8}$/.test(stripped)
   }, [phoneNumber])
 
-  const passwordComplexityOk = useMemo(() => {
-    return (
-      /[A-Z]/.test(newPassword) &&
-      /[a-z]/.test(newPassword) &&
-      /\d/.test(newPassword) &&
-      /[^A-Za-z0-9]/.test(newPassword) &&
-      newPassword.length >= 8
-    )
-  }, [newPassword])
+  const passwordError = useMemo(
+    () => (newPassword ? getPasswordPolicyError(newPassword, user.email) : null),
+    [newPassword, user.email],
+  )
 
   const handleProfilePicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -260,8 +257,8 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
       toast.error('Enter current password')
       return
     }
-    if (!passwordComplexityOk) {
-      toast.error('New password does not meet complexity requirements')
+    if (passwordError) {
+      toast.error(passwordError)
       return
     }
     if (newPassword !== confirmPassword) {
@@ -479,6 +476,15 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
         >
           <button
             role="tab"
+            aria-selected={securityTab === 'sessions'}
+            className={`flex-1 px-4 py-2 text-sm flex items-center justify-center gap-2 transition-all border-l border-border ${securityTab === 'sessions' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent text-foreground'}`}
+            onClick={() => setSecurityTab('sessions')}
+          >
+            <Laptop className="w-4 h-4" />
+            <span>Sessions</span>
+          </button>
+          <button
+            role="tab"
             aria-selected={securityTab === 'password'}
             className={`flex-1 px-4 py-2 text-sm flex items-center justify-center gap-2 transition-all ${securityTab === 'password' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent text-foreground'}`}
             onClick={() => setSecurityTab('password')}
@@ -526,10 +532,13 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
                   placeholder="Confirm new password"
                   className="px-4 py-3 w-full rounded-lg border bg-input border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
-                {!passwordComplexityOk && newPassword && (
-                  <p className="text-xs text-destructive">
-                    Use 8+ chars with upper, lower, number, special
+                {newPassword && (
+                  <p className={`text-xs ${passwordError ? 'text-destructive' : 'text-success'}`}>
+                    {passwordError || 'Password meets the security requirements.'}
                   </p>
+                )}
+                {!newPassword && (
+                  <p className="text-xs text-muted-foreground">{PASSWORD_POLICY_MESSAGE}</p>
                 )}
                 <button
                   onClick={changePassword}
@@ -540,6 +549,8 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
                 </button>
               </div>
             </div>
+          ) : securityTab === 'sessions' ? (
+            <AccountSessionsPanel csrfToken={csrfToken} />
           ) : (
             <div className="p-4">
               <div className="flex gap-2 items-center mb-3">

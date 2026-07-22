@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Logo } from '@/components/Graphics/Logo/Logo'
+import { getPasswordPolicyError, PASSWORD_POLICY_MESSAGE } from '@/utilities/passwordPolicy'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -36,9 +37,9 @@ export default function RegisterPage() {
       return
     }
 
-    // Validate password length
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long')
+    const passwordError = getPasswordPolicyError(formData.password, formData.email)
+    if (passwordError) {
+      setError(passwordError)
       setIsLoading(false)
       return
     }
@@ -60,8 +61,7 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (response.ok) {
-        // Registration successful, redirect to login
-        router.push('/auth/login?message=Registration successful! Please log in.')
+        router.push(`/auth/verify-email?email=${encodeURIComponent(formData.email)}`)
       } else {
         setError(data.message || 'Registration failed. Please try again.')
       }
@@ -162,6 +162,7 @@ export default function RegisterPage() {
                 className="px-3 py-2 w-full rounded-lg border bg-input border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Create a password"
               />
+              <p className="mt-2 text-xs text-muted-foreground">{PASSWORD_POLICY_MESSAGE}</p>
             </div>
 
             <div>

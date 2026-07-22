@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Logo } from '@/components/Graphics/Logo/Logo'
+import { getPasswordPolicyError, PASSWORD_POLICY_MESSAGE } from '@/utilities/passwordPolicy'
 
 function ResetPasswordContent() {
   const [password, setPassword] = useState('')
@@ -35,8 +36,9 @@ function ResetPasswordContent() {
       return
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long')
+    const passwordError = getPasswordPolicyError(password)
+    if (passwordError) {
+      setError(passwordError)
       setIsLoading(false)
       return
     }
@@ -77,11 +79,16 @@ function ResetPasswordContent() {
 
           <div className="p-6 rounded-xl border bg-card border-border">
             <div className="mb-4 text-4xl text-success">✓</div>
-            <h2 className="mb-3 text-xl font-semibold text-foreground">Password Reset Successful</h2>
+            <h2 className="mb-3 text-xl font-semibold text-foreground">
+              Password Reset Successful
+            </h2>
             <p className="mb-6 text-muted-foreground">
               Your password has been successfully reset. You can now sign in with your new password.
             </p>
-            <Link href="/auth/login" className="inline-block bg-gradient-to-br from-primary to-success text-primary-foreground py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)]">
+            <Link
+              href="/auth/login"
+              className="inline-block bg-gradient-to-br from-primary to-success text-primary-foreground py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(79,70,229,0.3)]"
+            >
               Sign In
             </Link>
           </div>
@@ -123,6 +130,7 @@ function ResetPasswordContent() {
                 className="px-4 py-3 w-full rounded-lg border transition-all bg-input border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter your new password"
               />
+              <p className="mt-2 text-xs text-muted-foreground">{PASSWORD_POLICY_MESSAGE}</p>
             </div>
 
             <div>
@@ -150,14 +158,20 @@ function ResetPasswordContent() {
           </form>
 
           <div className="mt-6 text-center">
-            <Link href="/auth/login" className="text-sm transition-colors text-primary hover:text-primary/80">
+            <Link
+              href="/auth/login"
+              className="text-sm transition-colors text-primary hover:text-primary/80"
+            >
               Back to sign in
             </Link>
           </div>
         </div>
 
         <div className="mt-6 text-center">
-          <Link href="/" className="text-sm transition-colors text-muted-foreground hover:text-foreground">
+          <Link
+            href="/"
+            className="text-sm transition-colors text-muted-foreground hover:text-foreground"
+          >
             ← Back to home
           </Link>
         </div>

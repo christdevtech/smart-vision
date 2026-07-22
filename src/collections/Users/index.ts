@@ -1,5 +1,12 @@
 import type { CollectionConfig, FieldAccess } from 'payload'
-import { afterChangeUser, beforeChangeUser, enforcePublicUserDefaults } from './hooks'
+import {
+  afterChangeUser,
+  beforeChangeUser,
+  enforceActiveUserBeforeLogin,
+  enforcePublicUserDefaults,
+  enforceUserAuthOperation,
+  recordSuccessfulLogin,
+} from './hooks'
 import { deleteUser, readUser, updateUser, userCreate } from '@/access/userAccess'
 
 const adminFieldAccess: FieldAccess = ({ req: { user } }) =>
@@ -22,7 +29,32 @@ export const Users: CollectionConfig = {
     update: updateUser,
     delete: deleteUser,
   },
-  auth: true,
+  auth: {
+    cookies: {
+      sameSite: 'Lax',
+      secure: process.env.NODE_ENV === 'production',
+    },
+    forgotPassword: {
+      expiration: 60 * 60 * 1000,
+    },
+    lockTime: 15 * 60 * 1000,
+    maxLoginAttempts: 5,
+    removeTokenFromResponses: true,
+    tokenExpiration: 30 * 24 * 60 * 60,
+    useSessions: true,
+    verify: {
+      generateEmailSubject: () => 'Verify your Smart Vision email',
+      generateEmailHTML: ({ token }) => {
+        const baseURL = (process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000').replace(
+          /\/$/,
+          '',
+        )
+        const verificationURL = `${baseURL}/auth/verify-email?token=${encodeURIComponent(token)}`
+
+        return `<p>Welcome to Smart Vision.</p><p><a href="${verificationURL}">Verify your email address</a> to activate your account.</p><p>This link is intended only for the account owner.</p>`
+      },
+    },
+  },
   fields: [
     {
       name: 'firstName',
@@ -172,6 +204,9 @@ export const Users: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeOperation: [enforceUserAuthOperation],
+    beforeLogin: [enforceActiveUserBeforeLogin],
+    afterLogin: [recordSuccessfulLogin],
     beforeChange: [enforcePublicUserDefaults, beforeChangeUser],
     afterChange: [afterChangeUser],
   },

@@ -1,7 +1,32 @@
 import { CollectionAfterChangeHook } from 'payload'
 
-export const afterChangeUser: CollectionAfterChangeHook = async ({ doc, operation, req }) => {
-  // Only act on create
+export const afterChangeUser: CollectionAfterChangeHook = async ({
+  doc,
+  operation,
+  previousDoc,
+  req,
+}) => {
+  if (operation === 'update' && previousDoc?.isActive !== false && doc.isActive === false) {
+    try {
+      await req.payload.db.updateOne({
+        collection: 'users',
+        id: doc.id,
+        data: { sessions: [] },
+        req,
+        returning: false,
+      })
+    } catch (error) {
+      req.payload.logger.error({
+        err: error,
+        msg: 'Could not revoke sessions for deactivated user',
+      })
+      throw error
+    }
+
+    return doc
+  }
+
+  // Only create the welcome notification for new accounts.
   if (operation !== 'create') return doc
 
   try {

@@ -52,6 +52,8 @@ Validation performed:
 
 - **G-09 — implemented:** video and book engagement now posts one server-validated heartbeat every 30 seconds while visible, with a guarded `sendBeacon` flush when a page is hidden or exited. The endpoint derives the user, subject, topic, academic level, access entitlement, timestamp, and fixed time delta server-side. Mongo applies the upsert, idempotency history, cooldown, and time increment atomically, so retries and concurrent tabs become no-ops; ordinary users can no longer create or alter progress through Payload's public API.
 
+- **G-10 — implemented:** all create, reset, and change-password paths now share one server-enforced 10-character complexity policy. Payload email verification is required for new accounts with a student-facing verification/resend flow, while an idempotent startup migration preserves access for legacy accounts. Authentication endpoints use IP-aware throttling plus five-attempt account lockout, inactive accounts cannot log in, production cookies are secure and same-site, and sessions have a 30-day ceiling. Students can inspect and revoke active sessions, password changes revoke other sessions, and account deactivation revokes every session. CAPTCHA remains an optional escalation if distributed abuse exceeds these controls.
+
 ## What is already implemented
 
 The following capabilities are useful foundations and should be retained while hardening them:

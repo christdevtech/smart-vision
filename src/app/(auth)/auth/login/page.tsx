@@ -36,7 +36,8 @@ function LoginContent() {
       if (response.ok) {
         window.location.href = '/dashboard'
       } else {
-        setError(data.message || 'Login failed. Please check your credentials.')
+        const responseMessage = data.message || 'Login failed. Please check your credentials.'
+        setError(responseMessage)
       }
     } catch (error) {
       console.error('Login error:', error)
@@ -70,6 +71,14 @@ function LoginContent() {
             {error && (
               <div className="p-3 text-sm text-red-400 rounded-lg border bg-red-500/10 border-red-500/20">
                 {error}
+                {error.toLowerCase().includes('verif') && (
+                  <Link
+                    href={`/auth/verify-email?email=${encodeURIComponent(email)}`}
+                    className="mt-2 block font-medium text-primary"
+                  >
+                    Resend verification email
+                  </Link>
+                )}
               </div>
             )}
 

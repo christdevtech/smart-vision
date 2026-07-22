@@ -31,11 +31,13 @@ import { ActivityLogs } from './collections/ActivityLogs'
 import { Settings } from './Settings/config'
 import { plugins } from './plugins'
 import { canRunAdministrativeJob } from './utilities/requestAuthorization'
+import { backfillLegacyEmailVerification } from './utilities/emailVerification'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  serverURL: process.env.NEXT_PUBLIC_SERVER_URL,
   admin: {
     user: 'users',
     importMap: {
@@ -102,6 +104,10 @@ export default buildConfig({
     // storage-adapter-placeholder
   ],
   onInit: async (payload) => {
+    const verifiedLegacyUsers = await backfillLegacyEmailVerification(payload)
+    if (verifiedLegacyUsers > 0) {
+      payload.logger.info(`Marked ${verifiedLegacyUsers} existing user accounts as email verified`)
+    }
     payload.logger.info('Payload initialized successfully')
   },
   jobs: {

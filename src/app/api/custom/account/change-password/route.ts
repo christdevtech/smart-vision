@@ -3,6 +3,8 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { activityLogger } from '@/utilities/activityLogger'
+import { getPasswordPolicyError } from '@/utilities/passwordPolicy'
+import { revokeOtherAccountSessions } from '@/services/accountSessions'
 
 async function validateCSRF(request: NextRequest) {
   const cookieStore = await cookies()
@@ -11,19 +13,9 @@ async function validateCSRF(request: NextRequest) {
   return cookieToken && headerToken && cookieToken === headerToken
 }
 
-function validatePasswordComplexity(pw: string) {
-  return (
-    /[A-Z]/.test(pw) &&
-    /[a-z]/.test(pw) &&
-    /\d/.test(pw) &&
-    /[^A-Za-z0-9]/.test(pw) &&
-    pw.length >= 8
-  )
-}
-
 export async function POST(request: NextRequest) {
   try {
-    if (!validateCSRF(request)) {
+    if (!(await validateCSRF(request))) {
       return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 })
     }
 
@@ -36,11 +28,9 @@ export async function POST(request: NextRequest) {
     if (!currentPassword || !newPassword) {
       return NextResponse.json({ error: 'Missing current or new password' }, { status: 400 })
     }
-    if (!validatePasswordComplexity(newPassword)) {
-      return NextResponse.json(
-        { error: 'Password does not meet complexity requirements' },
-        { status: 400 },
-      )
+    const passwordError = getPasswordPolicyError(newPassword, user.email)
+    if (passwordError) {
+      return NextResponse.json({ error: passwordError }, { status: 400 })
     }
 
     try {
@@ -60,6 +50,12 @@ export async function POST(request: NextRequest) {
       user,
       overrideAccess: false,
     })
+
+    await revokeOtherAccountSessions(
+      payload,
+      user.id,
+      (user as typeof user & { _sid?: string })._sid,
+    )
 
     await activityLogger.logSecurity('password_changed', user.id, { req: request as any })
     return NextResponse.json({ success: true })
