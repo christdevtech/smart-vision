@@ -86,6 +86,11 @@ export default function UserMenu({ user }: UserMenuProps) {
             alt={user.firstName || 'User'}
             imgClassName="w-full h-full rounded-full object-cover"
             fill
+            fallback={
+              <span className="text-sm font-semibold text-primary-foreground">
+                {(user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase()}
+              </span>
+            }
           />
         ) : (
           <span className="text-sm font-semibold text-primary-foreground">

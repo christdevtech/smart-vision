@@ -388,7 +388,16 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
                     className="object-cover w-full h-full"
                   />
                 ) : currentProfileMedia ? (
-                  <Media fill resource={currentProfileMedia as any} imgClassName="object-cover" />
+                  <Media
+                    fill
+                    resource={currentProfileMedia as any}
+                    imgClassName="object-cover"
+                    fallback={
+                      <div className="flex justify-center items-center w-full h-full text-muted-foreground">
+                        {`${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase() || 'U'}
+                      </div>
+                    }
+                  />
                 ) : (
                   <div className="flex justify-center items-center w-full h-full text-muted-foreground">
                     PN

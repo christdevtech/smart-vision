@@ -30,6 +30,7 @@ export const Users: CollectionConfig = {
     delete: deleteUser,
   },
   auth: {
+    depth: 1,
     cookies: {
       sameSite: 'Lax',
       secure: process.env.NODE_ENV === 'production',

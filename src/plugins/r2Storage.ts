@@ -9,6 +9,8 @@ const requiredR2EnvironmentVariables = [
   'R2_ENDPOINT',
 ] as const
 
+export const R2_MEDIA_PREFIX = 'smart-vision-media'
+
 export type R2StorageSettings = {
   accessKeyId: string
   bucket: string
@@ -89,7 +91,7 @@ export const createR2StorageOptions = (
       : false,
     collections: {
       media: {
-        prefix: 'smart-vision-media',
+        prefix: R2_MEDIA_PREFIX,
         signedDownloads: { expiresIn: 5 * 60 },
       },
     },

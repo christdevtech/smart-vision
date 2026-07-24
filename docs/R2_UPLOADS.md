@@ -41,7 +41,7 @@ Every Media document has an access scope:
 - `Public asset` is for covers, thumbnails, logos, and other intentionally public files.
 - `Owner only` is assigned automatically to uploads created by ordinary users, including profile pictures.
 
-Administrators must explicitly select `Public asset` for new covers and thumbnails. Existing Media records created before this field was introduced do not need an immediate migration: unclassified images remain public for compatibility, while unclassified video and PDF files are treated as protected.
+Administrators must explicitly select `Public asset` for new covers and thumbnails. Existing Media records created before this field was introduced remain readable for compatibility, while unclassified video and PDF files are treated as protected. Legacy images referenced as profile pictures should be reconciled and converted to owner-only metadata as described below.
 
 An entitled lesson request receives an application grant that expires after five minutes and is bound to the user, content record, content field, Media ID, and filename. Payload validates that grant and redirects video playback to a five-minute R2 `GetObject` presigned URL. The private R2 bucket remains the authority for the underlying object; do not enable public bucket access.
 
@@ -50,3 +50,23 @@ An entitled lesson request receives an application grant that expires after five
 - Treat presigned URLs as secrets while they are valid; do not log or persist them.
 - A presigned upload is a single request. For unreliable connections or files approaching the 2 GB application limit, multipart/resumable uploads are a separate enhancement.
 - Treat both application grants and R2 presigned URLs as bearer secrets: keep their lifetime short and never log or persist them.
+
+## Profile-image reconciliation
+
+Changing the storage adapter does not copy files that were previously stored on a Cloud Run instance or another filesystem. A Media database record can therefore remain valid while its `smart-vision-media/<filename>` object is absent from R2. Presigning such a path still produces a correctly signed URL, but R2 returns a missing-object response.
+
+Administrators can audit profile-image references through:
+
+```text
+POST /api/internal/media/reconcile-profile-images
+Authorization: Bearer <CRON_SECRET>
+Content-Type: application/json
+
+{"limit":100,"applyMetadata":false}
+```
+
+The dry run reports missing Media documents, missing R2 objects, shared references, explicit metadata conflicts, and legacy records eligible for a safe owner-only metadata backfill. It does not return filenames.
+
+After reviewing the result, run the same request with `"applyMetadata": true`. This only updates an unclassified, unowned, non-shared profile Media record when its R2 object exists. It does not delete broken references or overwrite explicit classifications.
+
+Missing R2 objects must be restored from a trusted backup under the exact configured key or replaced by the student through a new profile upload. Until then, the dashboard renders the student’s initials instead of a broken-image icon.

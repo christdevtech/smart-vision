@@ -4,7 +4,7 @@ import type { StaticImageData } from 'next/image'
 
 import { cn } from '@/utilities/ui'
 import NextImage from 'next/image'
-import React from 'react'
+import React, { useState } from 'react'
 
 import type { Props as MediaProps } from '../types'
 
@@ -21,6 +21,7 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
   const {
     alt: altFromProps,
     fill,
+    fallback = null,
     pictureClassName,
     imgClassName,
     priority,
@@ -28,7 +29,9 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
     size: sizeFromProps,
     src: srcFromProps,
     loading: loadingFromProps,
+    onError,
   } = props
+  const [failed, setFailed] = useState(false)
 
   let width: number | undefined
   let height: number | undefined
@@ -52,16 +55,15 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
 
     const cacheTag = resource.updatedAt
 
-    src = getMediaUrl(
-      filename ? `/api/media/file/${encodeURIComponent(filename)}` : url,
-      cacheTag,
-    )
+    src = getMediaUrl(filename ? `/api/media/file/${encodeURIComponent(filename)}` : url, cacheTag)
     // The Next image optimizer does not carry the viewer's session to an owner-only source.
     // Let the browser request it directly so Payload can evaluate the owner policy.
     unoptimized = accessScope === 'owner'
   }
 
   const loading = loadingFromProps || (!priority ? 'lazy' : undefined)
+
+  if (!src || failed) return <>{fallback}</>
 
   // NOTE: this is used by the browser to determine which image to download at different screen sizes
   const sizes = sizeFromProps
@@ -82,6 +84,10 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
         priority={priority}
         quality={100}
         loading={loading}
+        onError={() => {
+          setFailed(true)
+          onError?.()
+        }}
         sizes={sizes}
         src={src}
         unoptimized={unoptimized}

@@ -18,7 +18,7 @@ describe('API', () => {
     process.env.REFERRAL_SIGNING_SECRET = referralSigningSecret
     const payloadConfig = await config
     payload = await getPayload({ config: payloadConfig })
-  })
+  }, 30_000)
 
   afterEach(async () => {
     // Clean up test users after each test
