@@ -1,70 +1,658 @@
-.smartvision-admin-welcome {
-  align-items: center;
-  background: var(--theme-elevation-50);
-  border-radius: var(--style-radius-m);
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  justify-content: center;
-  margin-block-end: var(--base);
-  padding: 1.5rem;
-}
-
-.smartvision-admin-welcome__title {
+.smartvision-admin-dashboard {
+  --smartvision-accent: #059669;
+  --smartvision-accent-dark: #047857;
+  --smartvision-accent-soft: color-mix(in srgb, var(--smartvision-accent) 12%, transparent);
   color: var(--theme-text);
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.25;
-  margin: 0;
-  text-align: left;
+  display: grid;
+  gap: calc(var(--base) * 1.5);
+  margin-block-end: calc(var(--base) * 2);
 }
 
-.smartvision-admin-welcome__actions {
+.smartvision-admin-dashboard *,
+.smartvision-admin-dashboard *::before,
+.smartvision-admin-dashboard *::after {
+  box-sizing: border-box;
+}
+
+.smartvision-admin-dashboard h1,
+.smartvision-admin-dashboard h2,
+.smartvision-admin-dashboard p {
+  margin: 0;
+}
+
+.smartvision-admin-dashboard h2 {
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.smartvision-admin-dashboard a {
+  color: inherit;
+}
+
+.smartvision-admin-hero {
   align-items: center;
+  background:
+    radial-gradient(circle at 100% 0%, rgb(5 150 105 / 22%), transparent 42%),
+    var(--theme-elevation-50);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-l);
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+}
+
+.smartvision-admin-hero__title {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.1;
+  margin-block-start: 0.35rem !important;
+}
+
+.smartvision-admin-hero__description {
+  color: var(--theme-elevation-600);
+  line-height: 1.6;
+  margin-block-start: 0.75rem !important;
+  max-width: 42rem;
+}
+
+.smartvision-admin-hero__actions,
+.smartvision-admin-export-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
-.smartvision-admin-welcome__button {
-  border-radius: 0.75rem;
-  display: inline-block;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
+.smartvision-admin-hero__actions {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+
+.smartvision-admin-eyebrow {
+  color: var(--smartvision-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.smartvision-admin-button {
+  border: 1px solid transparent;
+  border-radius: var(--style-radius-m);
+  display: inline-flex;
+  font-weight: 600;
+  justify-content: center;
+  padding: 0.7rem 1rem;
   text-align: center;
   text-decoration: none;
   transition:
     background-color 150ms ease,
-    box-shadow 150ms ease;
+    border-color 150ms ease,
+    transform 150ms ease;
 }
 
-.smartvision-admin-welcome__button:focus-visible {
-  box-shadow: 0 0 0 2px var(--theme-elevation-0), 0 0 0 4px var(--theme-elevation-800);
-  outline: none;
+.smartvision-admin-button:hover {
+  transform: translateY(-1px);
 }
 
-.smartvision-admin-welcome__button--secondary {
-  background: var(--theme-elevation-150);
-  color: var(--theme-text);
+.smartvision-admin-button:focus-visible,
+.smartvision-admin-quick-links a:focus-visible,
+.smartvision-admin-attention-list a:focus-visible,
+.smartvision-admin-inventory a:focus-visible,
+.smartvision-admin-export-actions a:focus-visible {
+  outline: var(--accessibility-outline);
+  outline-offset: 2px;
 }
 
-.smartvision-admin-welcome__button--secondary:hover {
-  background: var(--theme-elevation-250);
+.smartvision-admin-button--primary {
+  background: var(--smartvision-accent);
+  color: #fff !important;
 }
 
-.smartvision-admin-welcome__button--primary {
-  background: #059669;
+.smartvision-admin-button--primary:hover {
+  background: var(--smartvision-accent-dark);
+}
+
+.smartvision-admin-button--secondary {
+  background: var(--theme-elevation-0);
+  border-color: var(--theme-elevation-250);
+}
+
+.smartvision-admin-button--secondary:hover {
+  background: var(--theme-elevation-100);
+}
+
+.smartvision-admin-section-heading {
+  align-items: flex-end;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-block-end: 1rem;
+}
+
+.smartvision-admin-section-heading h2 {
+  margin-block-start: 0.25rem;
+}
+
+.smartvision-admin-section-heading > p,
+.smartvision-admin-section-heading > strong,
+.smartvision-admin-section-heading > a {
+  color: var(--theme-elevation-600);
+  font-size: 0.85rem;
+}
+
+.smartvision-admin-section-heading > a {
+  font-weight: 600;
+}
+
+.smartvision-admin-metrics {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.smartvision-admin-metric {
+  background: var(--theme-elevation-0);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-m);
+  display: flex;
+  flex-direction: column;
+  min-height: 9.5rem;
+  padding: 1.1rem;
+}
+
+.smartvision-admin-metric > p {
+  color: var(--theme-elevation-600);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.smartvision-admin-metric > strong {
+  font-size: clamp(1.75rem, 3vw, 2.2rem);
+  line-height: 1.1;
+  margin-block: 0.7rem;
+}
+
+.smartvision-admin-metric > span {
+  color: var(--theme-elevation-600);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  margin-block-start: auto;
+}
+
+.smartvision-admin-metric--revenue {
+  background: var(--smartvision-accent);
+  border-color: var(--smartvision-accent);
   color: #fff;
 }
 
-.smartvision-admin-welcome__button--primary:hover {
-  background: #047857;
-  color: #fff;
+.smartvision-admin-metric--revenue > p,
+.smartvision-admin-metric--revenue > span {
+  color: rgb(255 255 255 / 82%);
 }
 
-@media (min-width: 768px) {
-  .smartvision-admin-welcome {
-    flex-direction: row;
-    justify-content: space-between;
+.smartvision-admin-metric--revenue > strong {
+  font-size: clamp(1.35rem, 2.25vw, 1.85rem);
+}
+
+.smartvision-admin-dashboard__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 1fr);
+}
+
+.smartvision-admin-panel {
+  background: var(--theme-elevation-0);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-m);
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.smartvision-admin-panel__description {
+  color: var(--theme-elevation-600);
+  line-height: 1.6;
+  margin-block-end: 1rem !important;
+}
+
+.smartvision-admin-chart-legend {
+  align-items: center;
+  color: var(--theme-elevation-600);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  gap: 0.75rem;
+}
+
+.smartvision-admin-chart-legend span {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.smartvision-admin-chart-legend i {
+  border-radius: 999px;
+  display: inline-block;
+  height: 0.55rem;
+  width: 0.55rem;
+}
+
+.smartvision-admin-chart-legend__assessments {
+  background: var(--smartvision-accent);
+}
+
+.smartvision-admin-chart-legend__students {
+  background: #2563eb;
+}
+
+.smartvision-admin-chart {
+  align-items: stretch;
+  border-block-end: 1px solid var(--theme-elevation-200);
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: repeat(14, minmax(1.25rem, 1fr));
+  height: 15rem;
+  padding-block-start: 1rem;
+}
+
+.smartvision-admin-chart__day {
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.smartvision-admin-chart__day > span {
+  color: var(--theme-elevation-600);
+  font-size: 0.62rem;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.smartvision-admin-chart__bars {
+  align-items: flex-end;
+  display: flex;
+  gap: 0.18rem;
+  height: calc(100% - 1.5rem);
+  justify-content: center;
+}
+
+.smartvision-admin-chart__bar {
+  border-radius: 0.2rem 0.2rem 0 0;
+  display: block;
+  height: var(--bar-height);
+  max-width: 0.75rem;
+  min-height: 2px;
+  transition: opacity 150ms ease;
+  width: 42%;
+}
+
+.smartvision-admin-chart__bar:hover {
+  opacity: 0.72;
+}
+
+.smartvision-admin-chart__bar--assessments {
+  background: var(--smartvision-accent);
+}
+
+.smartvision-admin-chart__bar--students {
+  background: #2563eb;
+}
+
+.smartvision-admin-attention-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.smartvision-admin-attention-list a {
+  align-items: center;
+  background: var(--theme-elevation-50);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-s);
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: 3rem 1fr;
+  padding: 0.8rem;
+  text-decoration: none;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.smartvision-admin-attention-list a:hover {
+  background: var(--theme-elevation-100);
+  border-color: var(--theme-elevation-300);
+}
+
+.smartvision-admin-attention-list strong {
+  color: var(--smartvision-accent);
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.smartvision-admin-attention-list span {
+  color: var(--theme-elevation-700);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.smartvision-admin-quick-links {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.smartvision-admin-quick-links a {
+  background: var(--theme-elevation-0);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-m);
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: 1fr auto;
+  min-height: 8rem;
+  padding: 1rem;
+  text-decoration: none;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.smartvision-admin-quick-links a:hover {
+  border-color: var(--smartvision-accent);
+  box-shadow: 0 0.5rem 1.25rem rgb(0 0 0 / 7%);
+  transform: translateY(-2px);
+}
+
+.smartvision-admin-quick-links strong {
+  font-size: 1rem;
+}
+
+.smartvision-admin-quick-links span {
+  color: var(--theme-elevation-600);
+  font-size: 0.75rem;
+  grid-column: 1 / -1;
+  line-height: 1.45;
+}
+
+.smartvision-admin-quick-links i {
+  color: var(--smartvision-accent);
+  font-size: 1.2rem;
+  font-style: normal;
+}
+
+.smartvision-admin-inventory {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.smartvision-admin-inventory a {
+  align-items: center;
+  background: var(--theme-elevation-50);
+  border-radius: var(--style-radius-s);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 0.5rem;
+  text-decoration: none;
+}
+
+.smartvision-admin-inventory a:hover {
+  background: var(--theme-elevation-100);
+}
+
+.smartvision-admin-inventory strong {
+  font-size: 1.4rem;
+}
+
+.smartvision-admin-inventory span {
+  color: var(--theme-elevation-600);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.smartvision-admin-export-actions a {
+  background: var(--smartvision-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--smartvision-accent) 35%, transparent);
+  border-radius: var(--style-radius-s);
+  color: var(--smartvision-accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.65rem 0.85rem;
+  text-decoration: none;
+}
+
+.smartvision-admin-export-actions a:hover {
+  background: color-mix(in srgb, var(--smartvision-accent) 18%, transparent);
+}
+
+.smartvision-admin-table-wrap {
+  overflow-x: auto;
+}
+
+.smartvision-admin-table {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  width: 100%;
+}
+
+.smartvision-admin-table th {
+  color: var(--theme-elevation-600);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.smartvision-admin-table th,
+.smartvision-admin-table td {
+  border-block-end: 1px solid var(--theme-elevation-150);
+  padding: 0.8rem 0.65rem;
+}
+
+.smartvision-admin-table tbody tr:last-child td {
+  border-block-end: 0;
+}
+
+.smartvision-admin-table td:first-child > a {
+  display: block;
+  font-weight: 600;
+}
+
+.smartvision-admin-table td:first-child > span {
+  color: var(--theme-elevation-600);
+  display: block;
+  font-size: 0.72rem;
+  margin-block-start: 0.18rem;
+}
+
+.smartvision-admin-status {
+  background: var(--theme-elevation-100);
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  text-transform: capitalize;
+}
+
+.smartvision-admin-status--success,
+.smartvision-admin-status--successful {
+  background: rgb(5 150 105 / 14%);
+  color: #047857;
+}
+
+.smartvision-admin-status--warning,
+.smartvision-admin-status--created,
+.smartvision-admin-status--pending {
+  background: rgb(217 119 6 / 14%);
+  color: #b45309;
+}
+
+.smartvision-admin-status--failed,
+.smartvision-admin-status--expired,
+.smartvision-admin-status--refunded {
+  background: rgb(220 38 38 / 14%);
+  color: #b91c1c;
+}
+
+.smartvision-admin-feed {
+  display: grid;
+}
+
+.smartvision-admin-feed > a {
+  align-items: flex-start;
+  border-block-end: 1px solid var(--theme-elevation-150);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-block: 0.8rem;
+  text-decoration: none;
+}
+
+.smartvision-admin-feed > a:first-child {
+  padding-block-start: 0;
+}
+
+.smartvision-admin-feed > a:last-child {
+  border-block-end: 0;
+  padding-block-end: 0;
+}
+
+.smartvision-admin-feed > a:hover strong {
+  color: var(--smartvision-accent);
+}
+
+.smartvision-admin-feed span {
+  min-width: 0;
+}
+
+.smartvision-admin-feed strong,
+.smartvision-admin-feed small {
+  display: block;
+}
+
+.smartvision-admin-feed strong {
+  font-size: 0.82rem;
+}
+
+.smartvision-admin-feed small {
+  color: var(--theme-elevation-600);
+  font-size: 0.7rem;
+  line-height: 1.45;
+  margin-block-start: 0.2rem;
+  max-width: 30rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.smartvision-admin-feed__value {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.smartvision-admin-feed__value .smartvision-admin-status {
+  display: inline-block;
+}
+
+.smartvision-admin-empty {
+  color: var(--theme-elevation-600);
+  font-size: 0.82rem;
+  padding-block: 1rem;
+}
+
+.smartvision-admin-state {
+  background: var(--theme-elevation-50);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-m);
+  margin-block-end: var(--base);
+  padding: 1.5rem;
+}
+
+.smartvision-admin-state h1 {
+  font-size: 1.4rem;
+  margin: 0 0 0.5rem;
+}
+
+.smartvision-admin-state p {
+  color: var(--theme-elevation-600);
+  margin: 0;
+}
+
+.smartvision-admin-state--error {
+  border-inline-start: 4px solid #dc2626;
+}
+
+@media (max-width: 1100px) {
+  .smartvision-admin-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .smartvision-admin-quick-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .smartvision-admin-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .smartvision-admin-hero__actions {
+    justify-content: flex-start;
+  }
+
+  .smartvision-admin-dashboard__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .smartvision-admin-chart {
+    gap: 0.2rem;
+  }
+
+  .smartvision-admin-chart__day > span {
+    writing-mode: vertical-rl;
+  }
+}
+
+@media (max-width: 600px) {
+  .smartvision-admin-metrics,
+  .smartvision-admin-quick-links {
+    grid-template-columns: 1fr;
+  }
+
+  .smartvision-admin-inventory {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .smartvision-admin-hero__actions,
+  .smartvision-admin-export-actions {
+    flex-direction: column;
+  }
+
+  .smartvision-admin-hero__actions > *,
+  .smartvision-admin-export-actions > * {
+    width: 100%;
+  }
+
+  .smartvision-admin-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smartvision-admin-dashboard *,
+  .smartvision-admin-dashboard *::before,
+  .smartvision-admin-dashboard *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
