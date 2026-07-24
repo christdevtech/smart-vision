@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AcademicLevel, User } from '@/payload-types'
 import { toast } from 'sonner'
-import { Camera, CheckCircle, Shield, Trash2, X, Edit, Laptop } from 'lucide-react'
+import { Camera, CheckCircle, Shield, Trash2, X, Edit, Laptop, Download } from 'lucide-react'
 import { DatePicker } from '@/components/DatePicker'
 import { Media } from '@/components/Media'
 import { AccountSessionsPanel } from './AccountSessionsPanel'
@@ -50,7 +50,11 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
   const [deleteConfirmTwo, setDeleteConfirmTwo] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
-  const [securityTab, setSecurityTab] = useState<'password' | 'sessions' | 'delete'>('password')
+  const [exportPassword, setExportPassword] = useState('')
+  const [isExporting, setIsExporting] = useState(false)
+  const [securityTab, setSecurityTab] = useState<'password' | 'sessions' | 'privacy' | 'delete'>(
+    'password',
+  )
   const [changeFlow, setChangeFlow] = useState(false)
 
   useEffect(() => {
@@ -308,15 +312,57 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
       })
       const data = await res.json()
       if (!res.ok) {
-        toast.error(data.error || 'Failed to delete account')
+        toast.error(data.error || 'Failed to schedule account deletion')
       } else {
-        toast.success('Account deleted')
+        toast.success('Account deletion scheduled. Contact support within 30 days to restore it.')
         window.location.href = '/'
       }
     } catch {
-      toast.error('An error occurred while deleting account')
+      toast.error('An error occurred while scheduling account deletion')
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const exportAccountData = async () => {
+    if (!exportPassword) {
+      toast.error('Enter your password to create the export')
+      return
+    }
+
+    setIsExporting(true)
+    try {
+      const res = await fetch('/api/custom/account/data-export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({ password: exportPassword }),
+        credentials: 'include',
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.error || 'Failed to create data export')
+        return
+      }
+
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      const disposition = res.headers.get('content-disposition') || ''
+      const filename =
+        disposition.match(/filename="([^"]+)"/)?.[1] || 'smartvision-personal-data.json'
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+      setExportPassword('')
+      toast.success('Your personal data export is ready')
+    } catch {
+      toast.error('An error occurred while creating the export')
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -472,7 +518,7 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
         <div
           role="tablist"
           aria-label="Security options"
-          className="inline-flex overflow-hidden w-full max-w-md rounded-xl border border-border bg-card"
+          className="grid overflow-hidden w-full max-w-2xl grid-cols-2 rounded-xl border border-border bg-card sm:grid-cols-4"
         >
           <button
             role="tab"
@@ -491,6 +537,15 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
           >
             <Shield className="w-4 h-4" />
             <span>Password</span>
+          </button>
+          <button
+            role="tab"
+            aria-selected={securityTab === 'privacy'}
+            className={`flex-1 px-4 py-2 text-sm flex items-center justify-center gap-2 transition-all border-l border-border ${securityTab === 'privacy' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent text-foreground'}`}
+            onClick={() => setSecurityTab('privacy')}
+          >
+            <Download className="w-4 h-4" />
+            <span>Privacy</span>
           </button>
           <button
             role="tab"
@@ -551,20 +606,57 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
             </div>
           ) : securityTab === 'sessions' ? (
             <AccountSessionsPanel csrfToken={csrfToken} />
+          ) : securityTab === 'privacy' ? (
+            <div className="p-4">
+              <div className="flex gap-2 items-center mb-3">
+                <Download className="w-4 h-4 text-primary" />
+                <p className="font-medium text-foreground">Download your personal data</p>
+              </div>
+              <div className="max-w-xl space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Create a JSON file containing your account, learning activity, subscriptions,
+                  payments, notifications, and referral records. Passwords, active session tokens,
+                  and protected content keys are never included.
+                </p>
+                <input
+                  type="password"
+                  value={exportPassword}
+                  onChange={(e) => setExportPassword(e.target.value)}
+                  placeholder="Enter password to confirm"
+                  autoComplete="current-password"
+                  className="px-4 py-3 w-full rounded-lg border bg-input border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+                <button
+                  onClick={exportAccountData}
+                  disabled={isExporting}
+                  className="flex gap-2 items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4" />
+                  {isExporting ? 'Preparing export...' : 'Download my data'}
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="p-4">
               <div className="flex gap-2 items-center mb-3">
                 <Trash2 className="w-4 h-4 text-destructive" />
-                <p className="font-medium text-foreground">Delete Account</p>
+                <p className="font-medium text-foreground">Schedule account deletion</p>
               </div>
-              <div className="space-y-3">
+              <div className="max-w-xl space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Your account will be deactivated immediately and anonymized after 30 days.
+                  Learning activity and profile data will then be removed. Financial, referral,
+                  security, and audit records are retained in anonymized form where required for
+                  reconciliation and platform integrity. Contact support before the scheduled date
+                  if you need to restore the account.
+                </p>
                 <label className="flex gap-2 items-center text-sm">
                   <input
                     type="checkbox"
                     checked={deleteConfirmOne}
                     onChange={(e) => setDeleteConfirmOne(e.target.checked)}
                   />{' '}
-                  I understand this action is irreversible.
+                  I understand I will be signed out and unable to use the account.
                 </label>
                 <label className="flex gap-2 items-center text-sm">
                   <input
@@ -572,7 +664,7 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
                     checked={deleteConfirmTwo}
                     onChange={(e) => setDeleteConfirmTwo(e.target.checked)}
                   />{' '}
-                  Remove all my data permanently.
+                  Schedule my profile and learning data for deletion after 30 days.
                 </label>
                 <input
                   type="password"
@@ -586,7 +678,8 @@ export default function AccountManagement({ user, academicLevels, profileMedia }
                   disabled={isDeleting}
                   className="flex gap-2 items-center px-4 py-2 rounded-lg bg-destructive text-destructive-foreground disabled:opacity-50"
                 >
-                  <Trash2 className="w-4 h-4" /> {isDeleting ? 'Deleting...' : 'Delete Account'}
+                  <Trash2 className="w-4 h-4" />{' '}
+                  {isDeleting ? 'Scheduling...' : 'Schedule deletion'}
                 </button>
               </div>
             </div>

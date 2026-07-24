@@ -1,6 +1,7 @@
 import { CollectionConfig } from 'payload'
 import { admin, superAdmin } from '@/access/admin'
-import { authenticated } from '@/access/authenticated'
+
+const denyExternalCreate = () => false
 
 export const ActivityLogs: CollectionConfig = {
   slug: 'activity-logs',
@@ -18,7 +19,7 @@ export const ActivityLogs: CollectionConfig = {
     },
   },
   access: {
-    create: authenticated, // Allow authenticated users to create logs
+    create: denyExternalCreate, // Trusted server code writes through the Local API.
     delete: superAdmin, // Only super admins can delete logs
     read: admin, // Only admins can read logs for privacy
     update: superAdmin, // Only super admins can update logs
@@ -56,7 +57,7 @@ export const ActivityLogs: CollectionConfig = {
         { label: 'Password Reset Complete', value: 'auth.password_reset_complete' },
         { label: 'Account Activation', value: 'auth.account_activation' },
         { label: 'Account Deactivation', value: 'auth.account_deactivation' },
-        
+
         // Content Actions
         { label: 'Video Viewed', value: 'content.video_viewed' },
         { label: 'Video Started', value: 'content.video_started' },
@@ -68,13 +69,13 @@ export const ActivityLogs: CollectionConfig = {
         { label: 'MCQ Test Completed', value: 'content.mcq_test_completed' },
         { label: 'Content Search', value: 'content.search' },
         { label: 'Content Access Denied', value: 'content.access_denied' },
-        
+
         // User Profile Actions
         { label: 'Profile Updated', value: 'profile.updated' },
         { label: 'Profile Picture Changed', value: 'profile.picture_changed' },
         { label: 'Academic Level Changed', value: 'profile.academic_level_changed' },
         { label: 'Phone Number Updated', value: 'profile.phone_updated' },
-        
+
         // Subscription Actions
         { label: 'Subscription Purchased', value: 'subscription.purchased' },
         { label: 'Subscription Renewed', value: 'subscription.renewed' },
@@ -83,19 +84,19 @@ export const ActivityLogs: CollectionConfig = {
         { label: 'Payment Initiated', value: 'payment.initiated' },
         { label: 'Payment Completed', value: 'payment.completed' },
         { label: 'Payment Failed', value: 'payment.failed' },
-        
+
         // Study Plan Actions
         { label: 'Study Plan Created', value: 'study_plan.created' },
         { label: 'Study Plan Updated', value: 'study_plan.updated' },
         { label: 'Study Plan Deleted', value: 'study_plan.deleted' },
         { label: 'Study Session Completed', value: 'study_plan.session_completed' },
-        
+
         // Referral Actions
         { label: 'Referral Code Generated', value: 'referral.code_generated' },
         { label: 'Referral Link Shared', value: 'referral.link_shared' },
         { label: 'Referral Successful', value: 'referral.successful' },
         { label: 'Referral Reward Earned', value: 'referral.reward_earned' },
-        
+
         // Admin Actions
         { label: 'User Created by Admin', value: 'admin.user_created' },
         { label: 'User Updated by Admin', value: 'admin.user_updated' },
@@ -106,19 +107,20 @@ export const ActivityLogs: CollectionConfig = {
         { label: 'Subscription Modified by Admin', value: 'admin.subscription_modified' },
         { label: 'System Settings Changed', value: 'admin.settings_changed' },
         { label: 'Bulk Operation Performed', value: 'admin.bulk_operation' },
-        
+
         // Notification Actions
         { label: 'Notification Sent', value: 'notification.sent' },
         { label: 'Notification Read', value: 'notification.read' },
         { label: 'Push Notification Sent', value: 'notification.push_sent' },
-        
+
         // Security Actions
         { label: 'Failed Login Attempt', value: 'security.failed_login' },
         { label: 'Account Locked', value: 'security.account_locked' },
         { label: 'Suspicious Activity Detected', value: 'security.suspicious_activity' },
         { label: 'Data Export Requested', value: 'security.data_export' },
         { label: 'Account Deletion Requested', value: 'security.account_deletion_request' },
-        
+        { label: 'Account Anonymized', value: 'security.account_anonymized' },
+
         // System Actions
         { label: 'System Error', value: 'system.error' },
         { label: 'API Rate Limit Exceeded', value: 'system.rate_limit_exceeded' },
@@ -334,13 +336,13 @@ export const ActivityLogs: CollectionConfig = {
         if (!data.timestamp) {
           data.timestamp = new Date()
         }
-        
+
         // Auto-set category based on action if not provided
         if (data.action && !data.category) {
           const actionPrefix = data.action.split('.')[0]
           data.category = actionPrefix
         }
-        
+
         return data
       },
     ],

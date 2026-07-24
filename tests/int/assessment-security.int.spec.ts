@@ -11,7 +11,9 @@ import { describe, expect, it, vi } from 'vitest'
 
 const question = {
   id: 'question-1',
-  question: { root: { children: [], direction: null, format: '', indent: 0, type: 'root', version: 1 } },
+  question: {
+    root: { children: [], direction: null, format: '', indent: 0, type: 'root', version: 1 },
+  },
   options: [
     { id: 'option-a', isCorrect: true, text: 'Correct' },
     { id: 'option-b', isCorrect: false, text: 'Incorrect' },
@@ -41,9 +43,10 @@ describe('assessment trust boundary', () => {
   })
 
   it('scores option IDs on the server and rejects answers outside the session', () => {
-    const score = scoreQuestions([question], [
-      { questionId: question.id, selectedOptionId: 'option-b' },
-    ])
+    const score = scoreQuestions(
+      [question],
+      [{ questionId: question.id, selectedOptionId: 'option-b' }],
+    )
 
     expect(score).toMatchObject({
       correctAnswers: 0,
@@ -59,9 +62,10 @@ describe('assessment trust boundary', () => {
       selectedAnswer: 'Incorrect',
     })
     expect(() =>
-      scoreQuestions([question], [
-        { questionId: 'question-outside-session', selectedOptionId: 'option-a' },
-      ]),
+      scoreQuestions(
+        [question],
+        [{ questionId: 'question-outside-session', selectedOptionId: 'option-a' }],
+      ),
     ).toThrow('outside this test session')
   })
 
@@ -74,9 +78,9 @@ describe('assessment trust boundary', () => {
         scorePercentage: 100,
       }),
     ).toEqual({ subjectId: 'subject-1', numQuestions: 20 })
-    expect(() =>
-      parseStartTestInput({ subjectId: 'subject-1', numQuestions: 51 }),
-    ).toThrow('between 1 and 50')
+    expect(() => parseStartTestInput({ subjectId: 'subject-1', numQuestions: 51 })).toThrow(
+      'between 1 and 50',
+    )
     expect(() =>
       parseSubmitTestInput({
         sessionId: 'session-1',
@@ -168,10 +172,13 @@ describe('assessment trust boundary', () => {
     const normalRequest = { req: { user } }
     const adminRequest = { req: { user: { id: 'admin-1', role: 'admin' } } }
 
-    expect((TestResults.access?.create as Function)(normalRequest)).toBe(false)
-    expect((TestResults.access?.create as Function)(adminRequest)).toBe(true)
-    expect((TestResults.access?.update as Function)(normalRequest)).toBe(false)
-    expect((TestResults.access?.update as Function)(adminRequest)).toBe(false)
+    const createAccess = TestResults.access?.create as (args: unknown) => unknown
+    const updateAccess = TestResults.access?.update as (args: unknown) => unknown
+
+    expect(createAccess(normalRequest)).toBe(false)
+    expect(createAccess(adminRequest)).toBe(true)
+    expect(updateAccess(normalRequest)).toBe(false)
+    expect(updateAccess(adminRequest)).toBe(false)
   })
 
   it('hides answer flags and explanations from ordinary MCQ reads', () => {

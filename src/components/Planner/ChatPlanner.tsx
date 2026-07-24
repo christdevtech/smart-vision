@@ -85,7 +85,7 @@ export default function ChatPlanner({
     if (initialMessage) {
       setTimeout(() => sendMessage(initialMessage), 300)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   // Auto-scroll
   useEffect(() => {

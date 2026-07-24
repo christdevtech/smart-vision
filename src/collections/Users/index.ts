@@ -150,6 +150,64 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      name: 'deletionStatus',
+      type: 'select',
+      defaultValue: 'none',
+      options: [
+        { label: 'No deletion request', value: 'none' },
+        { label: 'Deletion requested', value: 'requested' },
+        { label: 'Anonymized', value: 'anonymized' },
+      ],
+      admin: {
+        description:
+          'Account privacy lifecycle state. Administrators may restore a requested account before its scheduled date.',
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: serverOnlyFieldAccess,
+        update: serverOnlyFieldAccess,
+      },
+    },
+    {
+      name: 'deletionRequestedAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: serverOnlyFieldAccess,
+        update: serverOnlyFieldAccess,
+      },
+    },
+    {
+      name: 'deletionScheduledFor',
+      type: 'date',
+      admin: {
+        description:
+          'After this date the scheduled processor removes student activity data and anonymizes the account.',
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: serverOnlyFieldAccess,
+        update: serverOnlyFieldAccess,
+      },
+    },
+    {
+      name: 'anonymizedAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: serverOnlyFieldAccess,
+        update: serverOnlyFieldAccess,
+      },
+    },
+    {
       name: 'role',
       type: 'select',
       options: [

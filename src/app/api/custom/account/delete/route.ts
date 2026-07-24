@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { activityLogger } from '@/utilities/activityLogger'
+import { requestAccountDeletion } from '@/services/accountPrivacy'
 
 async function validateCSRF(request: NextRequest) {
   const cookieStore = await cookies()
@@ -13,7 +14,7 @@ async function validateCSRF(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!validateCSRF(request)) {
+    if (!(await validateCSRF(request))) {
       return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 })
     }
 
@@ -21,9 +22,21 @@ export async function POST(request: NextRequest) {
     const { user } = await payload.auth({ headers: request.headers })
     if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
 
-    const body = await request.json()
-    const { password } = body || {}
-    if (!password) return NextResponse.json({ error: 'Password is required' }, { status: 400 })
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
+    const password =
+      body &&
+      typeof body === 'object' &&
+      typeof (body as { password?: unknown }).password === 'string'
+        ? (body as { password: string }).password
+        : ''
+    if (!password || password.length > 200) {
+      return NextResponse.json({ error: 'Password is required' }, { status: 400 })
+    }
 
     try {
       await payload.login({ collection: 'users', data: { email: user.email, password } })
@@ -32,16 +45,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Password verification failed' }, { status: 400 })
     }
 
-    await activityLogger.logSecurity('account_deletion_request', user.id, { req: request as any })
-    await payload.delete({
-      collection: 'users',
-      id: user.id,
-      user,
-      overrideAccess: false,
-    })
-    await activityLogger.logSecurity('account_deleted', user.id, { req: request as any })
+    const deletion = await requestAccountDeletion(payload, user.id)
+    await activityLogger.logSecurity(
+      'account_deletion_request',
+      user.id,
+      { req: request as any },
+      { scheduledFor: deletion.scheduledFor },
+    )
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, ...deletion })
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

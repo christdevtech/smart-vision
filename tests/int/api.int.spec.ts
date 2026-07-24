@@ -114,7 +114,9 @@ describe('API', () => {
       })
 
       // Check that referral was tracked
-      expect(newUser.referredBy).toBe(referrer.id)
+      const referredById =
+        typeof newUser.referredBy === 'string' ? newUser.referredBy : newUser.referredBy?.id
+      expect(referredById).toBe(referrer.id)
 
       const attributions = await payload.count({
         collection: 'referral-attributions',

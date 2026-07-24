@@ -32,8 +32,8 @@ The audit covered:
 Validation performed:
 
 - `tsc --noEmit --incremental false`: **passes**.
-- Lint: **blocked** because the installed configuration cannot resolve `eslint-plugin-react-hooks`; the package script also relies on the legacy `next lint` workflow.
-- Integration/E2E tests were inspected but not executed against the ambient database because the integration suite creates and deletes users through the configured application database rather than an isolated test database.
+- Lint: **passes** through the supported ESLint CLI. The obsolete `next lint` script and existing blocking violations were repaired.
+- Integration tests: **111 pass across 17 files**. Test email delivery uses an in-memory adapter and cannot contact Resend. The database still comes from the configured environment, so per-run isolated database provisioning remains required before CI.
 - No CI workflow exists under `.github/workflows`.
 
 ## Remediation status
@@ -55,6 +55,10 @@ Validation performed:
 - **G-10 — implemented:** all create, reset, and change-password paths now share one server-enforced 10-character complexity policy. Payload email verification is required for new accounts with a student-facing verification/resend flow, while an idempotent startup migration preserves access for legacy accounts. Authentication endpoints use IP-aware throttling plus five-attempt account lockout, inactive accounts cannot log in, production cookies are secure and same-site, and sessions have a 30-day ceiling. Students can inspect and revoke active sessions, password changes revoke other sessions, and account deactivation revokes every session. CAPTCHA remains an optional escalation if distributed abuse exceeds these controls.
 
 - **G-11 — implemented:** referral links now use signed, expiring first-touch tokens; registration resolves the referrer server-side and records one immutable attribution. Successful referred-student subscription settlements create an idempotent reward ledger entry only when the referrer's own subscription is active, while refunds reverse rather than delete rewards. The default 30% gross-payment reward and 3% Fapshi fallback fee are administrator-editable in the global subscription settings. Transactions and settlements snapshot gross payment, provider fee, and post-fee revenue; student dashboards, admin analytics, and Excel exports report the resulting rewards and retained platform revenue. Automated cash payout remains a separately controlled phase requiring destination verification, approvals, and provider payout credentials.
+
+- **G-12 — implemented:** authenticated students can create a password-verified JSON export of their profile, learning, subscription, payment, notification, referral, and audit records without authentication/session/content-delivery secrets. Account deletion is now a 30-day staged request that immediately deactivates the account and revokes sessions, then removes volatile learning/profile data and anonymizes direct identifiers through a protected scheduled processor. Finance, referral, and audit records retain their relationships to the anonymized account for reconciliation and integrity. Public privacy/terms pages are published, deletion lifecycle fields are server-managed, and authenticated clients can no longer forge activity logs. Legal retention periods and the support restoration procedure still require owner approval before launch.
+
+- **G-15 — in progress:** the lint command now uses the supported ESLint CLI and passes, test email delivery is isolated from Resend, stale relationship assertions are depth-safe, and the current integration suite passes 111 tests across 17 files. A CI workflow, per-run isolated database, current end-to-end smoke tests, type-generation drift gate, and security/dependency/container scanning are still required before this gap can be closed.
 
 ## What is already implemented
 

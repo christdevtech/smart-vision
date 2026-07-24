@@ -179,6 +179,16 @@ export interface User {
    */
   totalReferrals?: number | null;
   lastActiveAt?: string | null;
+  /**
+   * Account privacy lifecycle state. Administrators may restore a requested account before its scheduled date.
+   */
+  deletionStatus?: ('none' | 'requested' | 'anonymized') | null;
+  deletionRequestedAt?: string | null;
+  /**
+   * After this date the scheduled processor removes student activity data and anonymizes the account.
+   */
+  deletionScheduledFor?: string | null;
+  anonymizedAt?: string | null;
   role: 'super-admin' | 'admin' | 'content-manager' | 'support' | 'user';
   onboarded?: boolean | null;
   subjects?: (string | Subject)[] | null;
@@ -1453,6 +1463,7 @@ export interface ActivityLog {
     | 'security.suspicious_activity'
     | 'security.data_export'
     | 'security.account_deletion_request'
+    | 'security.account_anonymized'
     | 'system.error'
     | 'system.rate_limit_exceeded'
     | 'system.backup'
@@ -1795,6 +1806,10 @@ export interface UsersSelect<T extends boolean = true> {
   referredBy?: T;
   totalReferrals?: T;
   lastActiveAt?: T;
+  deletionStatus?: T;
+  deletionRequestedAt?: T;
+  deletionScheduledFor?: T;
+  anonymizedAt?: T;
   role?: T;
   onboarded?: T;
   subjects?: T;

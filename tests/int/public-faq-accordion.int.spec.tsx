@@ -3,8 +3,8 @@ import React, { forwardRef } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('framer-motion', () => {
-  const motionComponent = (tag: 'article' | 'div') =>
-    forwardRef<
+  const motionComponent = (tag: 'article' | 'div') => {
+    const Component = forwardRef<
       HTMLElement,
       React.HTMLAttributes<HTMLElement> & {
         animate?: unknown
@@ -28,6 +28,9 @@ vi.mock('framer-motion', () => {
         ref,
       ) => React.createElement(tag, { ...props, ref }),
     )
+    Component.displayName = `MockMotion${tag[0].toUpperCase()}${tag.slice(1)}`
+    return Component
+  }
 
   return {
     AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
@@ -39,10 +42,7 @@ vi.mock('framer-motion', () => {
   }
 })
 
-import {
-  FAQAccordion,
-  FAQAccordionProvider,
-} from '@/components/PublicSite/FAQAccordion'
+import { FAQAccordion, FAQAccordionProvider } from '@/components/PublicSite/FAQAccordion'
 
 describe('public FAQ accordion', () => {
   it('keeps only one answer open across FAQ groups', () => {

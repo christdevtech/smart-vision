@@ -4,7 +4,7 @@ import { resendAdapter } from '@payloadcms/email-resend'
 import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
-import { buildConfig, PayloadRequest } from 'payload'
+import { buildConfig, PayloadRequest, type EmailAdapter } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
@@ -37,6 +37,12 @@ import { backfillLegacyEmailVerification } from './utilities/emailVerification'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const testEmailAdapter: EmailAdapter<{ id: string }> = () => ({
+  defaultFromAddress: 'test@smartvision.invalid',
+  defaultFromName: 'Smart Vision Test',
+  name: 'smartvision-test-email',
+  sendEmail: async () => ({ id: 'test-email-not-sent' }),
+})
 
 export default buildConfig({
   serverURL: process.env.NEXT_PUBLIC_SERVER_URL,
@@ -96,11 +102,14 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URI || '',
   }),
-  email: resendAdapter({
-    defaultFromAddress: 'admin@smartvisioncm.com',
-    defaultFromName: 'Smart Vision Cameroon',
-    apiKey: process.env.RESEND_API_KEY || '',
-  }),
+  email:
+    process.env.NODE_ENV === 'test'
+      ? testEmailAdapter
+      : resendAdapter({
+          defaultFromAddress: 'admin@smartvisioncm.com',
+          defaultFromName: 'Smart Vision Cameroon',
+          apiKey: process.env.RESEND_API_KEY || '',
+        }),
   sharp,
   plugins: [
     payloadCloudPlugin(),

@@ -181,7 +181,6 @@ export default function VideoClient({
                 {/* Thumbnail */}
                 <div className="relative w-full aspect-video bg-muted border-b border-border flex items-center justify-center overflow-hidden">
                   {thumbUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={thumbUrl}
                       alt={video.title}
