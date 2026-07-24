@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React from 'react'
+import '../styles.css'
 
 interface Props {
   className?: string
@@ -18,8 +19,7 @@ export const Logo = (props: Props) => {
   const priority = priorityFromProps || 'low'
 
   return (
-    /* eslint-disable @next/next/no-img-element */
-    <Link href={'/'} className="flex gap-2 justify-center items-center">
+    <Link href="/" className="smartvision-brand-logo">
       <img
         onClick={() => router.push('/')}
         alt="Smart Vision Logo"
@@ -28,12 +28,10 @@ export const Logo = (props: Props) => {
         loading={loading}
         fetchPriority={priority}
         decoding="async"
-        className={clsx('w-full max-w-[50px]', className)}
+        className={clsx('smartvision-brand-logo__image', className)}
         src="/favicon.png"
       />
-      <span className="hidden text-lg font-bold text-foreground md:block sm:text-xl text-decoration-none">
-        SmartVision
-      </span>
+      <span className="smartvision-brand-logo__name">SmartVision</span>
     </Link>
   )
 }

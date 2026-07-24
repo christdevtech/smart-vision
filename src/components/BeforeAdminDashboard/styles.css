@@ -1,3 +1,70 @@
-/* @tailwind base; */
-@tailwind components;
-@tailwind utilities;
+.smartvision-admin-welcome {
+  align-items: center;
+  background: var(--theme-elevation-50);
+  border-radius: var(--style-radius-m);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-block-end: var(--base);
+  padding: 1.5rem;
+}
+
+.smartvision-admin-welcome__title {
+  color: var(--theme-text);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0;
+  text-align: left;
+}
+
+.smartvision-admin-welcome__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.smartvision-admin-welcome__button {
+  border-radius: 0.75rem;
+  display: inline-block;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.smartvision-admin-welcome__button:focus-visible {
+  box-shadow: 0 0 0 2px var(--theme-elevation-0), 0 0 0 4px var(--theme-elevation-800);
+  outline: none;
+}
+
+.smartvision-admin-welcome__button--secondary {
+  background: var(--theme-elevation-150);
+  color: var(--theme-text);
+}
+
+.smartvision-admin-welcome__button--secondary:hover {
+  background: var(--theme-elevation-250);
+}
+
+.smartvision-admin-welcome__button--primary {
+  background: #059669;
+  color: #fff;
+}
+
+.smartvision-admin-welcome__button--primary:hover {
+  background: #047857;
+  color: #fff;
+}
+
+@media (min-width: 768px) {
+  .smartvision-admin-welcome {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}

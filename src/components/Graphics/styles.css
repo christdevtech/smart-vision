@@ -1,0 +1,41 @@
+.smartvision-brand-logo {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.smartvision-brand-logo__image {
+  display: block;
+  height: auto;
+  max-width: 50px;
+  width: 100%;
+}
+
+.smartvision-brand-logo__name {
+  color: currentColor;
+  display: none;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.smartvision-brand-icon {
+  display: block;
+  height: auto;
+  max-width: 150px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .smartvision-brand-logo__name {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .smartvision-brand-logo__name {
+    display: block;
+  }
+}

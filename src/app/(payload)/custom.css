@@ -1,0 +1,6 @@
+/*
+ * Payload admin styles must remain plain, narrowly scoped CSS.
+ *
+ * Do not import the application Tailwind stylesheet here. Tailwind's preflight
+ * resets leak into Payload's component tree and override the admin UI.
+ */

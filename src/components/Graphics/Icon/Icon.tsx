@@ -2,6 +2,7 @@
 import clsx from 'clsx'
 import { useRouter } from 'next/navigation'
 import React from 'react'
+import '../styles.css'
 
 interface Props {
   className?: string
@@ -17,7 +18,6 @@ export const Icon = (props: Props) => {
   const priority = priorityFromProps || 'low'
 
   return (
-    /* eslint-disable @next/next/no-img-element */
     <img
       onClick={() => router.push('/')}
       alt="Smart Vision Icon"
@@ -26,7 +26,7 @@ export const Icon = (props: Props) => {
       loading={loading}
       fetchPriority={priority}
       decoding="async"
-      className={clsx('w-full max-w-[150px]', className)}
+      className={clsx('smartvision-brand-icon', className)}
       src="/favicon.png"
     />
   )
