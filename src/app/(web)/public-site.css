@@ -106,6 +106,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
+  justify-self: start;
+  justify-content: flex-start;
   color: rgb(var(--foreground));
   font-weight: 850;
   text-decoration: none;
@@ -118,6 +120,7 @@
 }
 
 .public-header .smartvision-brand-logo__name {
+  display: block;
   font-size: 1.05rem;
   letter-spacing: -0.02em;
 }
@@ -161,52 +164,138 @@
 
 .public-mobile-nav {
   position: fixed;
-  z-index: 49;
-  inset: 4.6rem 0 0;
-  background: rgb(var(--background) / 0.98);
-  backdrop-filter: blur(20px);
+  z-index: 70;
+  display: flex;
+  justify-content: flex-end;
+  inset: 0;
+}
+
+.public-mobile-nav__backdrop {
+  position: absolute;
+  border: 0;
+  cursor: pointer;
+  inset: 0;
+  background: rgb(4 12 30 / 0.48);
+  backdrop-filter: blur(5px);
+}
+
+.public-mobile-nav__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(88vw, 23rem);
+  height: 100dvh;
+  flex-direction: column;
+  padding: 1rem;
+  color: rgb(var(--foreground));
+  background: rgb(var(--background));
+  box-shadow: -28px 0 80px rgb(4 12 30 / 0.26);
+  overflow-y: auto;
+}
+
+.public-mobile-nav__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0 1.15rem;
+  border-bottom: 1px solid rgb(var(--border));
+}
+
+.public-mobile-nav__header div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.public-mobile-nav__header span {
+  font-size: 1rem;
+  font-weight: 830;
+  letter-spacing: -0.02em;
+}
+
+.public-mobile-nav__header small {
+  color: rgb(var(--muted-foreground));
+  font-size: 0.75rem;
+}
+
+.public-mobile-nav__close {
+  display: inline-flex;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(var(--border));
+  border-radius: 0.8rem;
+  color: rgb(var(--foreground));
+  background: rgb(var(--muted));
 }
 
 .public-mobile-nav nav {
   display: flex;
   flex-direction: column;
-  padding-block: 1.25rem;
+  padding-block: 1rem;
 }
 
-.public-mobile-nav a {
-  padding: 1rem 0;
+.public-mobile-nav nav a {
+  display: flex;
+  min-height: 3.8rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0.25rem;
   border-bottom: 1px solid rgb(var(--border));
   color: rgb(var(--foreground));
-  font-size: 1.1rem;
+  font-size: 1.02rem;
   font-weight: 700;
   text-decoration: none;
+}
+
+.public-mobile-nav nav a svg {
+  color: rgb(var(--primary));
+}
+
+.public-mobile-nav__utility {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0.25rem;
+  color: rgb(var(--muted-foreground));
+  font-size: 0.82rem;
+  font-weight: 680;
 }
 
 .public-mobile-nav__actions {
   display: grid;
   gap: 0.8rem;
-  padding-top: 1rem;
+  margin-top: auto;
+  padding-top: 1.25rem;
+}
+
+.public-mobile-nav__actions .public-button {
+  width: 100%;
 }
 
 .public-home-hero {
-  padding: 5.4rem 0 4.5rem;
+  padding: 4.8rem 0 4.25rem;
 }
 
 .public-home-hero__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.03fr) minmax(25rem, 0.97fr);
+  grid-template-columns: minmax(0, 0.92fr) minmax(27rem, 1.08fr);
   align-items: center;
-  gap: clamp(2.5rem, 7vw, 6.5rem);
+  gap: clamp(2.5rem, 5vw, 4.75rem);
 }
 
 .public-home-hero__copy h1,
 .public-page-hero h1 {
-  max-width: 14ch;
+  max-width: 15ch;
   margin: 0;
-  font-size: clamp(3rem, 6.4vw, 5.8rem);
+  font-size: clamp(2.75rem, 5vw, 4.55rem);
   font-weight: 880;
-  letter-spacing: -0.065em;
-  line-height: 0.98;
+  letter-spacing: -0.055em;
+  line-height: 1;
 }
 
 .public-home-hero__copy h1 span {
@@ -216,12 +305,12 @@
 }
 
 .public-home-hero__lead,
-.public-page-hero__inner > p:not(.public-eyebrow) {
+.public-page-hero__copy > p:not(.public-eyebrow) {
   max-width: 62ch;
-  margin: 1.5rem 0 1.8rem;
+  margin: 1.35rem 0 1.7rem;
   color: rgb(var(--muted-foreground));
-  font-size: clamp(1rem, 1.5vw, 1.17rem);
-  line-height: 1.75;
+  font-size: clamp(1rem, 1.3vw, 1.12rem);
+  line-height: 1.68;
 }
 
 .public-home-hero__meta {
@@ -242,12 +331,41 @@
 
 .public-product-preview {
   position: relative;
+  min-height: clamp(26rem, 42vw, 34rem);
+  overflow: hidden;
   padding: 1.1rem;
   border: 1px solid rgb(var(--border));
   border-radius: 2rem;
   background: linear-gradient(150deg, rgb(var(--card)), rgb(var(--muted)));
   box-shadow: 0 32px 90px rgb(15 23 42 / 0.15);
   transform: rotate(1deg);
+}
+
+.public-product-preview--editorial {
+  background:
+    linear-gradient(180deg, transparent 58%, rgb(5 17 38 / 0.32)),
+    url('/images/smartvision-students-learning.webp') center / cover no-repeat;
+}
+
+.public-product-preview--editorial .public-preview-window {
+  display: none;
+}
+
+.public-product-preview--editorial::after {
+  position: absolute;
+  right: 1.4rem;
+  bottom: 1.4rem;
+  left: 1.4rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: 1rem;
+  color: white;
+  background: rgb(8 20 45 / 0.62);
+  backdrop-filter: blur(14px);
+  content: 'Real students. Focused study. Steady progress.';
+  font-size: 0.88rem;
+  font-weight: 720;
+  letter-spacing: -0.01em;
 }
 
 .public-product-preview::before {
@@ -420,7 +538,7 @@
 
 .public-section-heading {
   display: flex;
-  max-width: 48rem;
+  max-width: 51rem;
   flex-direction: column;
   margin-bottom: 2.4rem;
 }
@@ -428,10 +546,10 @@
 .public-section-heading h2,
 .public-cta h2 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-size: clamp(1.95rem, 3.4vw, 3rem);
   font-weight: 850;
-  letter-spacing: -0.045em;
-  line-height: 1.06;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
 }
 
 .public-section-heading > p:not(.public-eyebrow) {
@@ -446,8 +564,11 @@
   gap: 1rem;
 }
 
+/* Keep card actions and content aligned across variable copy lengths. */
 .public-feature-card {
+  display: flex;
   min-height: 15rem;
+  flex-direction: column;
   padding: 1.5rem;
   border: 1px solid rgb(var(--border));
   border-radius: 1.35rem;
@@ -470,9 +591,11 @@
 .public-feature-card h3 {
   margin: 0 0 0.65rem;
   font-size: 1.08rem;
+  font-weight: 820;
 }
 
 .public-feature-card p {
+  flex: 1;
   margin: 0;
   color: rgb(var(--muted-foreground));
   font-size: 0.91rem;
@@ -480,12 +603,28 @@
 }
 
 .public-feature-card a {
-  display: inline-block;
-  margin-top: 1rem;
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.7rem;
   color: rgb(var(--primary));
+  background: rgb(var(--primary) / 0.08);
   font-size: 0.85rem;
   font-weight: 750;
   text-decoration: none;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.public-feature-card a:hover {
+  color: white;
+  background: rgb(var(--primary));
+  transform: translateY(-1px);
 }
 
 .public-split {
@@ -497,9 +636,10 @@
 
 .public-split__content h2 {
   margin: 0;
-  font-size: clamp(2rem, 4.2vw, 3.6rem);
-  letter-spacing: -0.05em;
-  line-height: 1.06;
+  font-size: clamp(1.95rem, 3.5vw, 3.1rem);
+  font-weight: 850;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
 }
 
 .public-split__content > p:not(.public-eyebrow) {
@@ -610,6 +750,7 @@
 
 .public-process-grid h3 {
   margin: 1rem 0 0.5rem;
+  font-weight: 820;
 }
 
 .public-process-grid p {
@@ -660,22 +801,43 @@
 .public-price-card h3 {
   margin: 0;
   font-size: 1.15rem;
+  font-weight: 820;
 }
 
 .public-price-card__price {
-  margin: 1.3rem 0 0.25rem;
-  font-size: clamp(2rem, 4vw, 3rem);
+  display: grid;
+  justify-items: start;
+  gap: 0.2rem;
+  margin: 1.2rem 0 0.7rem;
+  font-size: clamp(2rem, 3.4vw, 2.7rem);
   font-weight: 850;
   letter-spacing: -0.05em;
+  line-height: 1;
 }
 
-.public-price-card > p {
+.public-price-card__price span {
+  color: rgb(var(--muted-foreground));
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+}
+
+.public-price-card__price strong {
+  font: inherit;
+}
+
+.public-price-card--featured .public-price-card__price span {
+  color: rgb(255 255 255 / 0.7);
+}
+
+.public-price-card > p:not(.public-price-card__price) {
   color: rgb(var(--muted-foreground));
   font-size: 0.86rem;
   line-height: 1.6;
 }
 
-.public-price-card--featured > p {
+.public-price-card--featured > p:not(.public-price-card__price) {
   color: rgb(255 255 255 / 0.72);
 }
 
@@ -689,20 +851,54 @@
 }
 
 .public-page-hero {
-  padding: 5.2rem 0 4.5rem;
+  padding: 4.6rem 0 4.2rem;
   border-bottom: 1px solid rgb(var(--border));
 }
 
 .public-page-hero__inner {
-  display: flex;
-  max-width: 61rem;
-  flex-direction: column;
-  align-items: flex-start;
+  display: block;
+}
+
+.public-page-hero__inner--visual {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(23rem, 0.78fr);
+  align-items: center;
+  gap: clamp(2.5rem, 6vw, 6rem);
+}
+
+.public-page-hero__copy {
+  max-width: 57rem;
 }
 
 .public-page-hero h1 {
-  max-width: 17ch;
-  font-size: clamp(2.8rem, 6vw, 5.2rem);
+  max-width: 20ch;
+  font-size: clamp(2.55rem, 4.6vw, 4.15rem);
+}
+
+.public-editorial-photo {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid rgb(var(--border));
+  border-radius: 1.7rem;
+  background: rgb(var(--muted));
+  box-shadow: 0 28px 70px rgb(15 23 42 / 0.13);
+}
+
+.public-editorial-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.public-page-hero__photo {
+  aspect-ratio: 4 / 3;
+  transform: rotate(0.75deg);
+}
+
+.public-page-hero__photo img {
+  height: 100%;
 }
 
 .public-content-grid {
@@ -720,55 +916,86 @@
 
 .public-content-card h2,
 .public-content-card h3 {
-  margin-top: 0;
+  margin: 0 0 0.55rem;
+  font-weight: 820;
+}
+
+.public-content-card > svg {
+  margin-bottom: 1rem;
 }
 
 .public-content-card p {
+  margin-top: 0;
   color: rgb(var(--muted-foreground));
   line-height: 1.7;
 }
 
+.public-content-card .public-price-card__price {
+  margin: 1rem 0 0.65rem;
+  font-size: clamp(1.9rem, 3vw, 2.35rem);
+}
+
 .public-faq-list {
   display: grid;
-  max-width: 55rem;
+  max-width: 61rem;
   gap: 0.75rem;
 }
 
-.public-faq-list details {
+.public-faq-item {
   overflow: hidden;
   border: 1px solid rgb(var(--border));
   border-radius: 1rem;
   background: rgb(var(--card));
+  box-shadow: 0 10px 28px rgb(15 23 42 / 0.035);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.public-faq-list summary {
-  position: relative;
-  padding: 1.2rem 3.5rem 1.2rem 1.25rem;
+.public-faq-item--open {
+  border-color: rgb(var(--primary) / 0.34);
+  box-shadow: 0 18px 42px rgb(var(--primary) / 0.08);
+}
+
+.public-faq-item h3 {
+  margin: 0;
+}
+
+.public-faq-item h3 button {
+  display: flex;
+  width: 100%;
+  min-height: 4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  border: 0;
   cursor: pointer;
+  color: rgb(var(--foreground));
+  background: transparent;
+  font: inherit;
   font-weight: 750;
-  list-style: none;
+  text-align: left;
 }
 
-.public-faq-list summary::-webkit-details-marker {
-  display: none;
-}
-
-.public-faq-list summary::after {
-  position: absolute;
-  top: 50%;
-  right: 1.25rem;
-  content: '+';
+.public-faq-item h3 button svg {
+  flex: 0 0 auto;
   color: rgb(var(--primary));
-  font-size: 1.35rem;
-  transform: translateY(-50%);
+  transition: transform 220ms ease;
 }
 
-.public-faq-list details[open] summary::after {
-  content: '−';
+.public-faq-item--open h3 button svg {
+  transform: rotate(180deg);
 }
 
-.public-faq-list details > div {
+.public-faq-item > div {
+  overflow: hidden;
+}
+
+.public-faq-item > div p {
+  width: 100%;
   padding: 0 1.25rem 1.25rem;
+  margin: 0;
   color: rgb(var(--muted-foreground));
   font-size: 0.92rem;
   line-height: 1.7;
@@ -788,9 +1015,31 @@
   background: rgb(var(--card));
 }
 
-.public-contact-card a {
+.public-contact-card h2,
+.public-legal h2 {
+  font-weight: 830;
+  letter-spacing: -0.025em;
+}
+
+.public-contact-card .public-check-list a {
   color: rgb(var(--primary));
   font-weight: 700;
+}
+
+.public-contact-actions {
+  margin-top: 1.5rem;
+}
+
+.public-contact-card .public-button--support {
+  color: white;
+  background: rgb(var(--primary));
+  box-shadow: 0 12px 28px rgb(var(--primary) / 0.18);
+}
+
+.public-contact-card .public-button--secondary {
+  color: rgb(var(--foreground));
+  background: rgb(var(--muted));
+  border-color: rgb(var(--border));
 }
 
 .public-contact-card .public-check-list p {
@@ -934,6 +1183,17 @@
   font-size: 0.76rem;
 }
 
+.public-footer__bottom p a {
+  margin-left: 0.8rem;
+  color: rgb(var(--foreground));
+  font-weight: 720;
+  text-decoration: none;
+}
+
+.public-footer__bottom p a:hover {
+  color: rgb(var(--primary));
+}
+
 .public-site a:focus-visible,
 .public-site button:focus-visible,
 .public-site summary:focus-visible {
@@ -956,6 +1216,7 @@
   }
 
   .public-home-hero__grid,
+  .public-page-hero__inner--visual,
   .public-split,
   .public-contact-grid {
     grid-template-columns: 1fr;
@@ -968,6 +1229,10 @@
   .public-product-preview {
     width: min(100%, 38rem);
     margin-inline: auto;
+  }
+
+  .public-page-hero__photo {
+    width: min(100%, 42rem);
   }
 
   .public-feature-grid,
@@ -995,7 +1260,11 @@
 
   .public-home-hero__copy h1,
   .public-page-hero h1 {
-    font-size: clamp(2.6rem, 14vw, 4rem);
+    font-size: clamp(2.25rem, 11vw, 3.2rem);
+  }
+
+  .public-product-preview {
+    min-height: 22rem;
   }
 
   .public-preview-window__body {
@@ -1039,7 +1308,20 @@
   }
 
   .public-page-hero {
-    padding: 3.8rem 0 3.2rem;
+    padding: 3.4rem 0 3rem;
+  }
+
+  .public-page-hero__inner--visual {
+    gap: 2.5rem;
+  }
+
+  .public-contact-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .public-contact-actions .public-button {
+    width: 100%;
   }
 
   .public-cta {
@@ -1063,6 +1345,11 @@
     flex-direction: column;
     gap: 0.5rem;
     padding-block: 1rem;
+  }
+
+  .public-footer__bottom p a {
+    display: block;
+    margin: 0.4rem 0 0;
   }
 }
 

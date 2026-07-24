@@ -2,6 +2,7 @@ import React from 'react'
 import '../styles.css'
 import { HeaderServerWrapper } from '@/Header/ServerWrapper'
 import Footer from '@/Footer/Component'
+import { PublicMotionObserver } from '@/components/PublicSite/PublicMotionObserver'
 import './public-site.css'
 
 const publicSiteURL = new URL(process.env.NEXT_PUBLIC_SERVER_URL || 'https://smartvisioncm.com')
@@ -37,6 +38,7 @@ export default function WebLayout({ children }: { children: React.ReactNode }) {
       <HeaderServerWrapper />
       <main>{children}</main>
       <Footer />
+      <PublicMotionObserver />
     </div>
   )
 }

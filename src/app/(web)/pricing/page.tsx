@@ -2,7 +2,12 @@ import { CheckCircle2, ShieldCheck } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-import { FAQList, PublicCTA, PublicPageHero } from '@/components/PublicSite/PageElements'
+import {
+  FAQList,
+  PublicCTA,
+  PublicPageHero,
+  PublicPrice,
+} from '@/components/PublicSite/PageElements'
 import { formatPublicCurrency, getPublicSiteData } from '@/services/publicSite'
 
 export const metadata: Metadata = {
@@ -82,7 +87,7 @@ export default async function PricingPage() {
 
           <article className="public-price-card">
             <h3>Monthly</h3>
-            <p className="public-price-card__price">{formatPublicCurrency(site.monthlyPrice)}</p>
+            <PublicPrice value={site.monthlyPrice} />
             <p>Full subscribed access for one month from activation.</p>
             <ul className="public-check-list">
               {paidFeatures.map((feature) => (
@@ -100,7 +105,7 @@ export default async function PricingPage() {
           <article className="public-price-card public-price-card--featured">
             <span className="public-price-card__badge">Best continuity</span>
             <h3>Annual</h3>
-            <p className="public-price-card__price">{formatPublicCurrency(site.annualPrice)}</p>
+            <PublicPrice value={site.annualPrice} />
             <p>
               Full subscribed access for one year.
               {annualSaving > 0

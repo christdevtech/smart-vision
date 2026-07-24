@@ -16,7 +16,7 @@ import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import { getPayload } from 'payload'
 
-import { FAQList, PublicCTA } from '@/components/PublicSite/PageElements'
+import { FAQList, PublicCTA, PublicPrice } from '@/components/PublicSite/PageElements'
 import config from '@/payload.config'
 import { formatPublicCurrency, getPublicSiteData } from '@/services/publicSite'
 
@@ -107,11 +107,11 @@ export default async function HomePage() {
           <div className="public-home-hero__copy">
             <p className="public-eyebrow">Built for focused secondary learning</p>
             <h1>
-              Learn with direction. <span>Practise with confidence.</span>
+              Learn. Practise. <span>Progress.</span>
             </h1>
             <p className="public-home-hero__lead">
-              SmartVision brings lessons, books, exam practice, study planning, and progress
-              feedback into one calm workspace for ambitious students.
+              Bring lessons, books, exam practice, study planning, and useful progress feedback into
+              one focused student workspace.
             </p>
             <div className="public-actions">
               <Link className="public-button" href={primaryHref}>
@@ -135,8 +135,8 @@ export default async function HomePage() {
           </div>
 
           <div
-            aria-label="Preview of the SmartVision student dashboard"
-            className="public-product-preview"
+            aria-label="Secondary students studying together with books and a laptop"
+            className="public-product-preview public-product-preview--editorial"
           >
             <div className="public-preview-window">
               <div className="public-preview-window__top">
@@ -344,13 +344,13 @@ export default async function HomePage() {
             <article className="public-content-card">
               <BookOpen aria-hidden="true" color="rgb(var(--primary))" />
               <h3>Monthly</h3>
-              <p className="public-price-card__price">{formatPublicCurrency(site.monthlyPrice)}</p>
+              <PublicPrice value={site.monthlyPrice} />
               <p>Full subscribed access for one month.</p>
             </article>
             <article className="public-content-card">
               <Sparkles aria-hidden="true" color="rgb(var(--success))" />
               <h3>Annual</h3>
-              <p className="public-price-card__price">{formatPublicCurrency(site.annualPrice)}</p>
+              <PublicPrice value={site.annualPrice} />
               <p>Full subscribed access for one year.</p>
             </article>
           </div>

@@ -89,6 +89,10 @@ export default async function FeaturesPage() {
         }
         description="From first lesson to final review, SmartVision connects the resources and feedback students need to keep moving."
         eyebrow="Platform features"
+        image={{
+          alt: 'A secondary student studying with a laptop, notebook, and textbook',
+          src: '/images/smartvision-focused-study.webp',
+        }}
         title="One connected workspace for serious study."
       />
 

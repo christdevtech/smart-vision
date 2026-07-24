@@ -72,8 +72,8 @@ export default async function ContactPage() {
                 For referrals, include the reward or transaction reference shown in your dashboard.
               </li>
             </ul>
-            <div className="public-actions" style={{ marginTop: '1.5rem' }}>
-              <a className="public-button" href={`mailto:${site.email}`}>
+            <div className="public-actions public-contact-actions">
+              <a className="public-button public-button--support" href={`mailto:${site.email}`}>
                 Email support
               </a>
               <Link className="public-button public-button--secondary" href="/faq">

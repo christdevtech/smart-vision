@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { FAQAccordionProvider } from '@/components/PublicSite/FAQAccordion'
 import { FAQList, PublicCTA, PublicPageHero } from '@/components/PublicSite/PageElements'
 import { formatPublicCurrency, getPublicSiteData } from '@/services/publicSite'
 
@@ -130,23 +131,25 @@ export default async function FAQPage() {
         }
         description="Clear answers about accounts, content, subscriptions, payments, referrals, progress, and privacy."
         eyebrow="Frequently asked questions"
-        title="Find the answer without searching the whole platform."
+        title="Answers, without the searching."
       />
 
-      {groups.map((group, index) => (
-        <section
-          className={`public-section ${index % 2 === 1 ? 'public-section--muted' : ''}`}
-          key={group.title}
-        >
-          <div className="public-shell">
-            <div className="public-section-heading">
-              <p className="public-eyebrow">Help centre</p>
-              <h2>{group.title}</h2>
+      <FAQAccordionProvider>
+        {groups.map((group, index) => (
+          <section
+            className={`public-section ${index % 2 === 1 ? 'public-section--muted' : ''}`}
+            key={group.title}
+          >
+            <div className="public-shell">
+              <div className="public-section-heading">
+                <p className="public-eyebrow">Help centre</p>
+                <h2>{group.title}</h2>
+              </div>
+              <FAQList groupId={`faq-group-${index}`} items={group.items} />
             </div>
-            <FAQList items={group.items} />
-          </div>
-        </section>
-      ))}
+          </section>
+        ))}
+      </FAQAccordionProvider>
 
       <PublicCTA description="If your question is specific to an account or transaction, sign in first so you can provide the relevant reference safely." />
     </>

@@ -57,8 +57,13 @@ export default async function Footer() {
         </div>
       </div>
       <div className="public-shell public-footer__bottom">
-        <p>© {new Date().getFullYear()} SmartVision Cameroon. All rights reserved.</p>
-        <ThemeSwitcher />
+        <p>
+          © {new Date().getFullYear()} SmartVision Cameroon. All rights reserved.
+          <a href="https://christdev.com" rel="noreferrer" target="_blank">
+            Powered by ChristDev
+          </a>
+        </p>
+        <ThemeSwitcher variant="icon-only" />
       </div>
     </footer>
   )

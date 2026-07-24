@@ -18,7 +18,7 @@ export default async function PrivacyPage() {
       <PublicPageHero
         description="This page explains the main information SmartVision uses to provide accounts, learning, subscriptions, referrals, and platform security."
         eyebrow="Privacy"
-        title="Your information should support your learning—not become a mystery."
+        title="Your learning data, explained clearly."
       />
 
       <section className="public-section">
