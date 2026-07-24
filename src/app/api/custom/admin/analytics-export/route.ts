@@ -1,7 +1,7 @@
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { TestResult, Transaction, User } from '@/payload-types'
+import type { ReferralReward, TestResult, Transaction, User } from '@/payload-types'
 import { getAdminAnalytics } from '@/services/adminAnalytics'
 import { createAdminAnalyticsWorkbook } from '@/services/adminAnalyticsWorkbook'
 import {
@@ -42,76 +42,99 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [analytics, studentResult, assessmentResult, transactionResult] = await Promise.all([
-      getAdminAnalytics(payload, authorization.user, { days, now }),
-      payload.find({
-        ...access,
-        collection: 'users',
-        depth: 1,
-        limit: EXPORT_ROW_LIMIT,
-        sort: '-createdAt',
-        select: {
-          academicLevel: true,
-          createdAt: true,
-          email: true,
-          firstName: true,
-          isActive: true,
-          lastActiveAt: true,
-          lastName: true,
-          onboarded: true,
-        },
-        where: {
-          and: [
-            { role: { equals: 'user' } },
-            { createdAt: { greater_than_equal: periodStart } },
-          ],
-        },
-      }),
-      payload.find({
-        ...access,
-        collection: 'test-results',
-        depth: 1,
-        limit: EXPORT_ROW_LIMIT,
-        sort: '-completedAt',
-        select: {
-          academicLevel: true,
-          completedAt: true,
-          correctAnswers: true,
-          grade: true,
-          scorePercentage: true,
-          subject: true,
-          testType: true,
-          timeUsed: true,
-          totalQuestions: true,
-          user: true,
-        },
-        where: { completedAt: { greater_than_equal: periodStart } },
-      }),
-      payload.find({
-        ...access,
-        collection: 'transactions',
-        depth: 1,
-        limit: EXPORT_ROW_LIMIT,
-        sort: '-dateInitiated',
-        select: {
-          amount: true,
-          dateConfirmed: true,
-          dateInitiated: true,
-          paymentMedium: true,
-          plan: true,
-          reconciled: true,
-          revenue: true,
-          status: true,
-          transactionId: true,
-          user: true,
-        },
-        where: { dateInitiated: { greater_than_equal: periodStart } },
-      }),
-    ])
+    const [analytics, studentResult, assessmentResult, transactionResult, referralRewardResult] =
+      await Promise.all([
+        getAdminAnalytics(payload, authorization.user, { days, now }),
+        payload.find({
+          ...access,
+          collection: 'users',
+          depth: 1,
+          limit: EXPORT_ROW_LIMIT,
+          sort: '-createdAt',
+          select: {
+            academicLevel: true,
+            createdAt: true,
+            email: true,
+            firstName: true,
+            isActive: true,
+            lastActiveAt: true,
+            lastName: true,
+            onboarded: true,
+          },
+          where: {
+            and: [{ role: { equals: 'user' } }, { createdAt: { greater_than_equal: periodStart } }],
+          },
+        }),
+        payload.find({
+          ...access,
+          collection: 'test-results',
+          depth: 1,
+          limit: EXPORT_ROW_LIMIT,
+          sort: '-completedAt',
+          select: {
+            academicLevel: true,
+            completedAt: true,
+            correctAnswers: true,
+            grade: true,
+            scorePercentage: true,
+            subject: true,
+            testType: true,
+            timeUsed: true,
+            totalQuestions: true,
+            user: true,
+          },
+          where: { completedAt: { greater_than_equal: periodStart } },
+        }),
+        payload.find({
+          ...access,
+          collection: 'transactions',
+          depth: 1,
+          limit: EXPORT_ROW_LIMIT,
+          sort: '-dateInitiated',
+          select: {
+            amount: true,
+            dateConfirmed: true,
+            dateInitiated: true,
+            paymentMedium: true,
+            plan: true,
+            providerFeeAmount: true,
+            reconciled: true,
+            revenue: true,
+            status: true,
+            transactionId: true,
+            user: true,
+          },
+          where: { dateInitiated: { greater_than_equal: periodStart } },
+        }),
+        payload.find({
+          ...access,
+          collection: 'referral-rewards',
+          depth: 1,
+          limit: EXPORT_ROW_LIMIT,
+          sort: '-settledAt',
+          select: {
+            grossPaymentAmount: true,
+            ineligibilityReason: true,
+            plan: true,
+            platformRevenueAfterReward: true,
+            providerFeeAmount: true,
+            referredUser: true,
+            referrer: true,
+            revenue: true,
+            rewardAmount: true,
+            rewardRateBasisPoints: true,
+            settledAt: true,
+            status: true,
+          },
+          where: { settledAt: { greater_than_equal: periodStart } },
+        }),
+      ])
 
     const workbook = await createAdminAnalyticsWorkbook(analytics, {
       assessments: assessmentResult.docs as TestResult[],
       assessmentsTruncated: assessmentResult.hasNextPage,
+      referralRewards: referralRewardResult.docs as ReferralReward[],
+      referralRewardsTruncated: referralRewardResult.hasNextPage,
       students: studentResult.docs as User[],
       studentsTruncated: studentResult.hasNextPage,
       transactions: transactionResult.docs as Transaction[],

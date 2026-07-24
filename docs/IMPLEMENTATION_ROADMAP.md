@@ -54,6 +54,8 @@ Validation performed:
 
 - **G-10 — implemented:** all create, reset, and change-password paths now share one server-enforced 10-character complexity policy. Payload email verification is required for new accounts with a student-facing verification/resend flow, while an idempotent startup migration preserves access for legacy accounts. Authentication endpoints use IP-aware throttling plus five-attempt account lockout, inactive accounts cannot log in, production cookies are secure and same-site, and sessions have a 30-day ceiling. Students can inspect and revoke active sessions, password changes revoke other sessions, and account deactivation revokes every session. CAPTCHA remains an optional escalation if distributed abuse exceeds these controls.
 
+- **G-11 — implemented:** referral links now use signed, expiring first-touch tokens; registration resolves the referrer server-side and records one immutable attribution. Successful referred-student subscription settlements create an idempotent reward ledger entry only when the referrer's own subscription is active, while refunds reverse rather than delete rewards. The default 30% gross-payment reward and 3% Fapshi fallback fee are administrator-editable in the global subscription settings. Transactions and settlements snapshot gross payment, provider fee, and post-fee revenue; student dashboards, admin analytics, and Excel exports report the resulting rewards and retained platform revenue. Automated cash payout remains a separately controlled phase requiring destination verification, approvals, and provider payout credentials.
+
 ## What is already implemented
 
 The following capabilities are useful foundations and should be retained while hardening them:

@@ -1,13 +1,21 @@
 import { getPayload, Payload } from 'payload'
 import config from '@/payload.config'
-import { extractReferralFromCookies, generateReferralLink, isReferralValid } from '@/utilities/referral'
+import {
+  createReferralToken,
+  extractReferralFromCookies,
+  generateReferralLink,
+  isReferralValid,
+} from '@/utilities/referral'
 
 import { describe, it, beforeAll, expect, afterEach } from 'vitest'
 
 let payload: Payload
+const referralSigningSecret =
+  process.env.REFERRAL_SIGNING_SECRET || process.env.PAYLOAD_SECRET || 'test-referral-secret'
 
 describe('API', () => {
   beforeAll(async () => {
+    process.env.REFERRAL_SIGNING_SECRET = referralSigningSecret
     const payloadConfig = await config
     payload = await getPayload({ config: payloadConfig })
   })
@@ -22,7 +30,7 @@ describe('API', () => {
         },
       },
     })
-    
+
     for (const user of testUsers.docs) {
       await payload.delete({
         collection: 'users',
@@ -44,7 +52,7 @@ describe('API', () => {
         collection: 'users',
         data: {
           email: 'test-referral-1@example.com',
-          password: 'password123',
+          password: 'StrongPass1!',
           firstName: 'Test',
           lastName: 'User1',
           role: 'user',
@@ -55,7 +63,7 @@ describe('API', () => {
         collection: 'users',
         data: {
           email: 'test-referral-2@example.com',
-          password: 'password123',
+          password: 'StrongPass1!',
           firstName: 'Test',
           lastName: 'User2',
           role: 'user',
@@ -75,7 +83,7 @@ describe('API', () => {
         collection: 'users',
         data: {
           email: 'test-referral-referrer@example.com',
-          password: 'password123',
+          password: 'StrongPass1!',
           firstName: 'Referrer',
           lastName: 'User',
           role: 'user',
@@ -83,25 +91,21 @@ describe('API', () => {
       })
 
       // Simulate cookie with referral data
-      const cookieValue = `smartvision_referral=${encodeURIComponent(JSON.stringify({
-        referrerId: referrer.id,
-        referralCode: referrer.referralCode,
-        timestamp: Date.now()
-      }))}`
+      const cookieValue = `smartvision_referral=${encodeURIComponent(
+        createReferralToken(referrer.referralCode!, referralSigningSecret),
+      )}`
 
       // Create new user with referral cookie in request
       const mockReq = {
         payload,
-        headers: {
-          cookie: cookieValue,
-        },
+        headers: new Headers({ cookie: cookieValue }),
       }
 
       const newUser = await payload.create({
         collection: 'users',
         data: {
           email: 'test-referral-referred@example.com',
-          password: 'password123',
+          password: 'StrongPass1!',
           firstName: 'Referred',
           lastName: 'User',
           role: 'user',
@@ -112,12 +116,13 @@ describe('API', () => {
       // Check that referral was tracked
       expect(newUser.referredBy).toBe(referrer.id)
 
-      // Check that referrer's count was incremented
-      const updatedReferrer = await payload.findByID({
-        collection: 'users',
-        id: referrer.id,
+      const attributions = await payload.count({
+        collection: 'referral-attributions',
+        where: {
+          and: [{ referrer: { equals: referrer.id } }, { referredUser: { equals: newUser.id } }],
+        },
       })
-      expect(updatedReferrer.totalReferrals).toBe(1)
+      expect(attributions.totalDocs).toBe(1)
     })
 
     it('does not track referrals with expired cookies', async () => {
@@ -126,7 +131,7 @@ describe('API', () => {
         collection: 'users',
         data: {
           email: 'test-referral-referrer-expired@example.com',
-          password: 'password123',
+          password: 'StrongPass1!',
           firstName: 'Referrer',
           lastName: 'Expired',
           role: 'user',
@@ -134,26 +139,27 @@ describe('API', () => {
       })
 
       // Simulate expired cookie (31 days ago)
-      const expiredTimestamp = Date.now() - (31 * 24 * 60 * 60 * 1000)
-      const cookieValue = `smartvision_referral=${encodeURIComponent(JSON.stringify({
-        referrerId: referrer.id,
-        referralCode: referrer.referralCode,
-        timestamp: expiredTimestamp
-      }))}`
+      const expiredTimestamp = Date.now() - 31 * 24 * 60 * 60 * 1000
+      const cookieValue = `smartvision_referral=${encodeURIComponent(
+        createReferralToken(
+          referrer.referralCode!,
+          referralSigningSecret,
+          expiredTimestamp,
+          'expired-referral-token',
+        ),
+      )}`
 
       // Create new user with expired referral cookie
       const mockReq = {
         payload,
-        headers: {
-          cookie: cookieValue,
-        },
+        headers: new Headers({ cookie: cookieValue }),
       }
 
       const newUser = await payload.create({
         collection: 'users',
         data: {
           email: 'test-referral-not-referred@example.com',
-          password: 'password123',
+          password: 'StrongPass1!',
           firstName: 'Not',
           lastName: 'Referred',
           role: 'user',
@@ -164,12 +170,13 @@ describe('API', () => {
       // Check that referral was NOT tracked
       expect(newUser.referredBy).toBeUndefined()
 
-      // Check that referrer's count was NOT incremented
-      const updatedReferrer = await payload.findByID({
-        collection: 'users',
-        id: referrer.id,
+      const attributions = await payload.count({
+        collection: 'referral-attributions',
+        where: {
+          referrer: { equals: referrer.id },
+        },
       })
-      expect(updatedReferrer.totalReferrals).toBe(0)
+      expect(attributions.totalDocs).toBe(0)
     })
   })
 
@@ -182,36 +189,41 @@ describe('API', () => {
 
     it('validates referral timestamps correctly', () => {
       const now = Date.now()
-      const validTimestamp = now - (10 * 24 * 60 * 60 * 1000) // 10 days ago
-      const expiredTimestamp = now - (31 * 24 * 60 * 60 * 1000) // 31 days ago
+      const validTimestamp = now - 10 * 24 * 60 * 60 * 1000 // 10 days ago
+      const expiredTimestamp = now - 31 * 24 * 60 * 60 * 1000 // 31 days ago
 
       expect(isReferralValid(validTimestamp)).toBe(true)
       expect(isReferralValid(expiredTimestamp)).toBe(false)
     })
 
     it('extracts referral data from cookies correctly', () => {
-      const referralData = {
-        referrerId: 'user123',
+      const timestamp = Date.now()
+      const token = createReferralToken(
+        '1234567',
+        referralSigningSecret,
+        timestamp,
+        'valid-referral-token',
+      )
+      const cookieValue = `other=value; smartvision_referral=${encodeURIComponent(token)}; another=value`
+      const extracted = extractReferralFromCookies(cookieValue, referralSigningSecret)
+
+      expect(extracted).toEqual({
         referralCode: '1234567',
-        timestamp: Date.now()
-      }
-      
-      const cookieValue = `other=value; smartvision_referral=${encodeURIComponent(JSON.stringify(referralData))}; another=value`
-      const extracted = extractReferralFromCookies(cookieValue)
-      
-      expect(extracted).toEqual(referralData)
+        timestamp,
+        tokenId: 'valid-referral-token',
+      })
     })
 
     it('returns null for invalid or expired cookies', () => {
-      const expiredData = {
-        referrerId: 'user123',
-        referralCode: '1234567',
-        timestamp: Date.now() - (31 * 24 * 60 * 60 * 1000) // 31 days ago
-      }
-      
-      const cookieValue = `smartvision_referral=${encodeURIComponent(JSON.stringify(expiredData))}`
-      const extracted = extractReferralFromCookies(cookieValue)
-      
+      const token = createReferralToken(
+        '1234567',
+        referralSigningSecret,
+        Date.now() - 31 * 24 * 60 * 60 * 1000,
+        'expired-referral-token',
+      )
+      const cookieValue = `smartvision_referral=${encodeURIComponent(token)}`
+      const extracted = extractReferralFromCookies(cookieValue, referralSigningSecret)
+
       expect(extracted).toBeNull()
     })
   })

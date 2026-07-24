@@ -3,9 +3,8 @@ import '../styles.css'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 
 export const metadata = {
-  description:
-    'SmartVision - A comprehensive mobile learning platform for secondary education students with personalized study programs, interactive testing, and offline content access.',
-  title: 'SmartVision - Authentication',
+  description: 'Sign in or create your SmartVision student account.',
+  title: 'Account | SmartVision',
 }
 
 export default function WebLayout({ children }: { children: React.ReactNode }) {

@@ -28,6 +28,8 @@ import { TestSessions } from './collections/TestSessions'
 import { ContentAccess } from './collections/ContentAccess'
 import { Notifications } from './collections/Notifications'
 import { ActivityLogs } from './collections/ActivityLogs'
+import { ReferralAttributions } from './collections/ReferralAttributions'
+import { ReferralRewards } from './collections/ReferralRewards'
 import { Settings } from './Settings/config'
 import { plugins } from './plugins'
 import { canRunAdministrativeJob } from './utilities/requestAuthorization'
@@ -82,6 +84,8 @@ export default buildConfig({
     ContentAccess,
     Notifications,
     ActivityLogs,
+    ReferralAttributions,
+    ReferralRewards,
   ],
   globals: [Settings],
   editor: lexicalEditor(),

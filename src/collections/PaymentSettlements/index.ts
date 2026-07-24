@@ -67,6 +67,22 @@ export const PaymentSettlements: CollectionConfig = {
       type: 'number',
     },
     {
+      name: 'providerFeeAmount',
+      type: 'number',
+      admin: {
+        readOnly: true,
+        description: 'Gross settled amount minus revenue after Fapshi fees.',
+      },
+    },
+    {
+      name: 'providerFeeRateBasisPoints',
+      type: 'number',
+      admin: {
+        readOnly: true,
+        description: 'Actual fee rate derived from the provider revenue response.',
+      },
+    },
+    {
       name: 'paymentMedium',
       type: 'select',
       options: ['mobile money', 'orange money'],

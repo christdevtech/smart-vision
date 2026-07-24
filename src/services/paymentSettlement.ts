@@ -2,6 +2,10 @@ import type { Transaction } from '@/payload-types'
 import type { FapshiTransaction, InternalPaymentStatus } from '@/utilities/fapshi'
 import { mapFapshiStatus } from '@/utilities/fapshi'
 import { determineSubscriptionPlan, getSubscriptionCosts } from '@/utilities/subscription'
+import {
+  calculatePaymentAccounting,
+  getPaymentAccountingSettings,
+} from '@/utilities/paymentAccounting'
 import type { Payload } from 'payload'
 
 export type PaymentSettlementSource = 'webhook' | 'manual' | 'batch' | 'reconciliation'
@@ -114,6 +118,14 @@ export async function processVerifiedPaymentStatus(
       throw new Error('Cannot determine the paid subscription plan')
     }
 
+    const accountingSettings = await getPaymentAccountingSettings(payload)
+    const accounting = calculatePaymentAccounting({
+      amount: providerTransaction.amount,
+      providerFeePercentage: accountingSettings.providerFeePercentage,
+      providerRevenue: providerTransaction.revenue,
+      referralRewardPercentage: accountingSettings.referralRewardPercentage,
+    })
+
     try {
       await payload.create({
         collection: 'payment-settlements',
@@ -124,7 +136,9 @@ export async function processVerifiedPaymentStatus(
           user: relationshipId(transaction.user),
           amount: providerTransaction.amount,
           plan,
-          revenue: providerTransaction.revenue,
+          revenue: accounting.revenue,
+          providerFeeAmount: accounting.providerFeeAmount,
+          providerFeeRateBasisPoints: accounting.providerFeeRateBasisPoints,
           ...(providerTransaction.medium === 'mobile money' ||
           providerTransaction.medium === 'orange money'
             ? { paymentMedium: providerTransaction.medium }

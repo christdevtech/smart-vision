@@ -4,9 +4,9 @@ import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/components/ThemeProvider'
 
 export const metadata = {
-  title: 'SmartVision - Mobile Learning Platform',
+  title: 'SmartVision | Learn, practise, and progress',
   description:
-    'A comprehensive mobile learning platform for secondary education students with personalized study programs, interactive testing, and offline content access.',
+    'Learning resources, exam practice, study planning, and progress insights for secondary students.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,4 +1,5 @@
 import { CollectionAfterChangeHook } from 'payload'
+import { reverseReferralRewardForTransaction } from '@/services/referralRewards'
 
 export const afterChangeTransaction: CollectionAfterChangeHook = async ({
   doc,
@@ -9,6 +10,10 @@ export const afterChangeTransaction: CollectionAfterChangeHook = async ({
   // Only trigger on status changes during updates
   if (operation !== 'update') return doc
   if (doc.status === previousDoc?.status) return doc
+
+  if (doc.status === 'refunded') {
+    await reverseReferralRewardForTransaction(req, doc.id, 'Subscription payment refunded')
+  }
 
   const userId = typeof doc.user === 'string' ? doc.user : doc.user?.id
   if (!userId) return doc

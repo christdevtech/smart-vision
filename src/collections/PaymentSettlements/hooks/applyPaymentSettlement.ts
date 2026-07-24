@@ -4,6 +4,7 @@ import {
   findOrCreateUserSubscription,
   getSubscriptionCosts,
 } from '@/utilities/subscription'
+import { createReferralRewardForSettlement } from '@/services/referralRewards'
 
 const relationshipId = (value: unknown): string | null => {
   if (typeof value === 'string') return value
@@ -67,6 +68,13 @@ export const applyPaymentSettlement: CollectionAfterChangeHook = async ({
     req,
   )
 
+  await createReferralRewardForSettlement({
+    paymentSettlement: doc,
+    referredSubscription: subscription,
+    req,
+    transaction,
+  })
+
   const checkedByStatusRoute = doc.source === 'manual' || doc.source === 'batch'
 
   await req.payload.update({
@@ -81,6 +89,8 @@ export const applyPaymentSettlement: CollectionAfterChangeHook = async ({
       providerVerifiedAt: doc.verifiedAt,
       dateConfirmed: doc.providerConfirmedAt,
       revenue: doc.revenue,
+      providerFeeAmount: doc.providerFeeAmount,
+      providerFeeRateBasisPoints: doc.providerFeeRateBasisPoints,
       ...(doc.paymentMedium ? { paymentMedium: doc.paymentMedium } : {}),
       ...(doc.financialTransId ? { financialTransId: doc.financialTransId } : {}),
       ...(doc.source === 'webhook'

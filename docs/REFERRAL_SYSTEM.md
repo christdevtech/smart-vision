@@ -1,272 +1,123 @@
-# SmartVision Referral System
+# SmartVision Referral and Reward System
 
-The SmartVision referral system allows users to refer new users to the platform using unique referral codes and HTTP-only cookies for secure tracking.
+## Business rules
 
-## Overview
+- Every student receives a unique referral code.
+- A referral link creates a signed, HTTP-only, 30-day first-touch attribution cookie.
+- Registration resolves the referrer from the signed code and writes one immutable attribution.
+- A reward is evaluated whenever a referred student's subscription payment settles.
+- The referrer earns the configured percentage of the gross subscription payment only while the
+  referrer's own paid monthly or annual subscription is active.
+- The default reward rate is 30%. Administrators can change it in
+  **Settings → Subscriptions → Payment accounting and referrals**.
+- The default Fapshi fee is 3%. Provider-reported revenue is authoritative when present; otherwise
+  the configured fee is used to derive revenue.
+- Self-referrals, inactive referrers, duplicate settlement attempts, and disabled-program
+  settlements do not create an available reward.
+- When a referred payment would have earned a reward but the referrer's subscription is inactive,
+  SmartVision records the ineligible reward and sends a high-priority notification showing the
+  missed amount, configured percentage, and renewal link.
+- Refunds reverse the corresponding reward rather than deleting its financial history.
 
-The referral system consists of:
-- **Unique referral codes** automatically generated for each user
-- **HTTP-only cookies** for secure referral tracking
-- **Automatic referral attribution** during user registration
-- **Referral statistics** and dashboard for users
-- **API endpoints** for referral management
+## Accounting model
 
-## How It Works
+All monetary values are integer XAF amounts.
 
-### 1. Referral Code Generation
-- Every new user automatically gets a unique 7-digit referral code
-- Codes are generated using `generateUniqueCode()` function
-- Codes are stored in the `referralCode` field of the user document
-
-### 2. Referral Link Sharing
-- Users can share their referral link: `https://yoursite.com/api/custom/referral/redirect/{referralCode}`
-- When someone clicks the link, they're redirected to the homepage
-- An HTTP-only cookie is set with referral information
-
-### 3. Referral Tracking
-- When a new user registers, the system checks for the referral cookie
-- If a valid cookie exists, the new user is linked to the referrer
-- The referrer's `totalReferrals` count is automatically incremented
-
-### 4. Cookie Security
-- Cookies are HTTP-only (not accessible via JavaScript)
-- Secure flag enabled in production
-- 30-day expiration period
-- SameSite=lax for CSRF protection
-
-## API Endpoints
-
-### GET `/api/custom/referral/redirect/[code]`
-Handles incoming referral links and sets tracking cookies.
-
-**Parameters:**
-- `code` (path parameter): The referral code
-
-**Response:**
-- Redirects to homepage with referral cookie set
-- Returns 404 if referral code is invalid
-
-### GET `/api/custom/referral/generate`
-Generates a referral link for the authenticated user.
-
-**Authentication:** Required
-
-**Response:**
-```json
-{
-  "referralCode": "1234567",
-  "referralLink": "https://yoursite.com/api/custom/referral/redirect/1234567",
-  "totalReferrals": 5
-}
+```text
+gross payment       = amount paid by the referred student
+Fapshi fee          = gross payment - provider revenue
+revenue             = gross payment - Fapshi fee
+referral reward     = gross payment × configured referral percentage
+platform revenue    = revenue - referral reward
 ```
 
-### POST `/api/custom/referral/generate`
-Generates a referral link for a user by email (admin use).
+For the default settings, a 10,000 XAF payment records:
 
-**Body:**
-```json
-{
-  "email": "user@example.com"
-}
+```text
+gross payment       10,000 XAF
+Fapshi fee             300 XAF
+revenue              9,700 XAF
+referral reward      3,000 XAF
+platform revenue     6,700 XAF
 ```
 
-**Response:**
-```json
-{
-  "referralCode": "1234567",
-  "referralLink": "https://yoursite.com/api/custom/referral/redirect/1234567",
-  "totalReferrals": 5
-}
-```
+The applicable percentages and calculated amounts are snapshotted on each settlement and reward.
+Changing global settings affects future settlements only.
 
-### GET `/api/custom/referral/stats`
-Retrieve referral statistics for the authenticated user.
+## Data model
 
-**Authentication:** Required
+### Users
 
-**Response:**
-```json
-{
-  "referralCode": "1234567",
-  "referralLink": "https://yoursite.com/api/custom/referral/redirect/1234567",
-  "totalReferrals": 5,
-  "referredUsers": [
-    {
-      "id": "user_id",
-      "email": "referred@example.com",
-      "firstName": "John",
-      "lastName": "Doe",
-      "createdAt": "2024-01-01T00:00:00.000Z"
-    }
-  ],
-  "referredBy": "referrer_user_id"
-}
-```
+- `referralCode`: unique, server-generated code.
+- `referredBy`: legacy convenience relationship to the referrer.
+- `totalReferrals`: legacy cached field; new reporting uses immutable attributions.
 
-## Database Schema
+### Referral attributions
 
-The referral system adds the following fields to the Users collection:
+`referral-attributions` stores one immutable record per referred student. It contains the
+referrer, referred user, code, signed token identifier, attribution source, status, and timestamp.
+Only administrators and the owning referrer may read these records. Application code creates
+them inside the registration request transaction.
 
-```typescript
-{
-  referralCode: {
-    type: 'text',
-    unique: true,
-    admin: {
-      readOnly: true,
-      position: 'sidebar',
-    },
-  },
-  referredBy: {
-    type: 'relationship',
-    relationTo: 'users',
-  },
-  totalReferrals: {
-    type: 'number',
-    defaultValue: 0,
-    admin: {
-      readOnly: true,
-    },
-  },
-}
-```
+### Referral rewards
 
-## Frontend Components
+`referral-rewards` is the financial reward ledger. Each payment settlement and transaction may
+appear only once. A record snapshots:
 
-### ReferralDashboard Component
-A React component that displays referral statistics and allows users to copy their referral link.
+- referrer and referred student;
+- payment settlement, transaction, attribution, and referrer subscription;
+- gross amount, provider fee, provider revenue, and fee basis points;
+- reward rate, reward amount, and retained platform revenue;
+- `available`, `ineligible`, `paid`, or `reversed` status;
+- ineligibility or reversal reason and timestamps.
 
-**Usage:**
-```tsx
-import ReferralDashboard from '@/components/ReferralDashboard'
+Collection API mutations are denied. Settlement and refund services write the ledger through
+Payload's trusted Local API.
 
-function UserProfile() {
-  return (
-    <div>
-      <h1>User Profile</h1>
-      <ReferralDashboard className="mt-6" />
-    </div>
-  )
-}
-```
+## Payment records
 
-**Features:**
-- Displays total referrals, referral code, and rewards
-- Copy-to-clipboard functionality for referral links
-- List of recent referrals
-- Loading and error states
-- Responsive design with Tailwind CSS
+Successful `transactions` and immutable `payment-settlements` record:
 
-## Utility Functions
+- gross `amount`;
+- `providerFeeAmount`;
+- `providerFeeRateBasisPoints`;
+- post-provider-fee `revenue`.
 
-The referral system includes utility functions in `@/utilities/referral`:
+The admin dashboard and Excel export report gross payments, Fapshi fees, revenue after fees,
+referral rewards, and platform revenue after rewards. The workbook includes transaction and
+referral reward detail sheets.
 
-### `generateReferralLink(referralCode, baseUrl?)`
-Generates a complete referral link.
+## API and user experience
 
-### `parseReferralCookie(cookieValue)`
-Parses referral data from a cookie value.
+- `GET /api/custom/referral/redirect/[code]` validates the code and sets a signed first-touch
+  cookie.
+- `GET /api/custom/referral/generate` returns the authenticated student's referral link.
+- `POST /api/custom/referral/generate` is restricted to administrators.
+- `GET /api/custom/referral/stats` returns the authenticated student's eligibility, current
+  program rates, privacy-limited referral list, reward history, and aggregate earnings.
 
-### `isReferralValid(timestamp)`
-Checks if a referral timestamp is still valid (within 30 days).
-
-### `extractReferralFromCookies(cookieHeader)`
-Extracts and validates referral data from request cookies.
-
-### `getReferralCookieOptions(isProduction?)`
-Returns secure cookie options for setting referral cookies.
-
-## Testing
-
-The referral system includes comprehensive tests in `tests/int/api.int.spec.ts`:
-
-- Unique referral code generation
-- Referral tracking with valid cookies
-- Expired cookie handling
-- Utility function validation
-- Cookie parsing and extraction
-
-**Run tests:**
-```bash
-pnpm test:int
-```
-
-## Security Considerations
-
-1. **HTTP-Only Cookies**: Referral cookies are not accessible via JavaScript, preventing XSS attacks
-2. **Secure Flag**: Cookies are marked secure in production environments
-3. **SameSite Protection**: Cookies use SameSite=lax to prevent CSRF attacks
-4. **Expiration**: Cookies automatically expire after 30 days
-5. **Validation**: All referral data is validated before processing
-6. **Error Handling**: Referral errors don't prevent user registration
+The student dashboard shows available and lifetime earnings, total and qualified referrals,
+subscription eligibility, the shareable link, and recent rewards. It never returns a referred
+student's email address.
 
 ## Configuration
 
-Environment variables:
-- `NEXT_PUBLIC_SERVER_URL`: Base URL for generating referral links
-- `NODE_ENV`: Determines cookie security settings
+- `PAYLOAD_SECRET` signs referral cookies by default.
+- `REFERRAL_SIGNING_SECRET` may be provided as a dedicated signing key.
+- `NEXT_PUBLIC_SERVER_URL` is used to generate canonical referral links.
+- The global Settings subscription tab controls program enablement, the fallback provider fee,
+  and the referral reward percentage.
 
-Constants (in `@/utilities/referral`):
-- `COOKIE_NAME`: 'smartvision_referral'
-- `COOKIE_MAX_AGE`: 30 days
-- `REFERRAL_VALIDITY_DAYS`: 30 days
+## Operational notes
 
-## Usage Examples
+- Reward creation is idempotent at the database and service layers.
+- Historical users with `referredBy` continue to qualify for future rewards even if an attribution
+  record has not yet been backfilled.
+- Reward balances are accounting records, not cash disbursements. A reviewed payout workflow is a
+  separate phase because it requires a verified destination, payout approvals, and provider payout
+  credentials.
+- Administrators should reconcile gross amount and provider revenue against the Fapshi settlement
+  report before marking reward records paid.
 
-### Getting a User's Referral Link
-```typescript
-// Client-side
-const response = await fetch('/api/custom/referral/generate')
-const data = await response.json()
-console.log(data.referralLink) // https://yoursite.com/api/custom/referral/redirect/1234567
-```
-
-### Checking Referral Statistics
-```typescript
-// Client-side
-const response = await fetch('/api/custom/referral/stats')
-const stats = await response.json()
-console.log(`Total referrals: ${stats.totalReferrals}`)
-```
-
-### Manual Referral Link Generation
-```typescript
-// Server-side
-import { generateReferralLink } from '@/utilities/referral'
-
-const link = generateReferralLink('1234567')
-console.log(link) // https://yoursite.com/api/custom/referral/redirect/1234567
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Referral not tracked**: Check if cookies are enabled and not blocked
-2. **Invalid referral code**: Ensure the referral code exists in the database
-3. **Expired referral**: Referral cookies expire after 30 days
-4. **Duplicate referral codes**: The system prevents duplicates, but check for race conditions
-
-### Debug Information
-
-The system logs errors to the console:
-- Referral processing errors during user creation
-- Invalid referral code attempts
-- Cookie parsing failures
-
-### Testing Referrals Locally
-
-1. Create a user account
-2. Get the user's referral code from the admin panel
-3. Visit `/api/custom/referral/redirect/{code}` in an incognito window
-4. Register a new account
-5. Check that the referral was tracked in the admin panel
-
-## Future Enhancements
-
-- Referral rewards system
-- Multi-level referrals
-- Referral analytics dashboard
-- Email notifications for successful referrals
-- Referral campaign management
-- Social media sharing integration
+See [REFERRAL_REWARDS_IMPLEMENTATION_PLAN.md](./REFERRAL_REWARDS_IMPLEMENTATION_PLAN.md) for the
+implementation phases and remaining payout work.

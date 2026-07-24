@@ -87,6 +87,8 @@ export interface Config {
     'content-access': ContentAccess;
     notifications: Notification;
     'activity-logs': ActivityLog;
+    'referral-attributions': ReferralAttribution;
+    'referral-rewards': ReferralReward;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -114,6 +116,8 @@ export interface Config {
     'content-access': ContentAccessSelect<false> | ContentAccessSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     'activity-logs': ActivityLogsSelect<false> | ActivityLogsSelect<true>;
+    'referral-attributions': ReferralAttributionsSelect<false> | ReferralAttributionsSelect<true>;
+    'referral-rewards': ReferralRewardsSelect<false> | ReferralRewardsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -170,6 +174,9 @@ export interface User {
   isActive?: boolean | null;
   referralCode?: string | null;
   referredBy?: (string | null) | User;
+  /**
+   * Legacy cached count. Authoritative referral totals are derived from referral attributions.
+   */
   totalReferrals?: number | null;
   lastActiveAt?: string | null;
   role: 'super-admin' | 'admin' | 'content-manager' | 'support' | 'user';
@@ -644,6 +651,14 @@ export interface Transaction {
    * Amount received after Fapshi fees deduction
    */
   revenue?: number | null;
+  /**
+   * Gross payment minus the provider-reported revenue.
+   */
+  providerFeeAmount?: number | null;
+  /**
+   * 300 basis points equals 3%.
+   */
+  providerFeeRateBasisPoints?: number | null;
   status?: ('created' | 'pending' | 'successful' | 'failed' | 'expired' | 'refunded') | null;
   /**
    * Payment method used
@@ -718,6 +733,14 @@ export interface PaymentSettlement {
   amount: number;
   plan: 'monthly' | 'annual';
   revenue?: number | null;
+  /**
+   * Gross settled amount minus revenue after Fapshi fees.
+   */
+  providerFeeAmount?: number | null;
+  /**
+   * Actual fee rate derived from the provider revenue response.
+   */
+  providerFeeRateBasisPoints?: number | null;
   paymentMedium?: ('mobile money' | 'orange money') | null;
   financialTransId?: string | null;
   providerConfirmedAt: string;
@@ -1554,6 +1577,57 @@ export interface ActivityLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "referral-attributions".
+ */
+export interface ReferralAttribution {
+  id: string;
+  referrer: string | User;
+  referredUser: string | User;
+  referralCode: string;
+  attributedAt: string;
+  source: 'signed-cookie' | 'legacy' | 'admin';
+  status: 'valid' | 'legacy-unverified' | 'invalidated';
+  /**
+   * Non-secret token nonce used for attribution auditing.
+   */
+  tokenId?: string | null;
+  invalidReason?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "referral-rewards".
+ */
+export interface ReferralReward {
+  id: string;
+  idempotencyKey: string;
+  referrer: string | User;
+  referredUser: string | User;
+  attribution?: (string | null) | ReferralAttribution;
+  paymentSettlement: string | PaymentSettlement;
+  transaction: string | Transaction;
+  referrerSubscription?: (string | null) | Subscription;
+  plan: 'monthly' | 'annual';
+  grossPaymentAmount: number;
+  providerFeeAmount: number;
+  providerFeeRateBasisPoints: number;
+  revenue: number;
+  rewardRateBasisPoints: number;
+  rewardAmount: number;
+  platformRevenueAfterReward: number;
+  status: 'available' | 'ineligible' | 'paid' | 'reversed';
+  ineligibilityReason?:
+    | ('program-disabled' | 'self-referral' | 'referrer-inactive' | 'referrer-subscription-inactive')
+    | null;
+  settledAt: string;
+  reversedAt?: string | null;
+  reversalReason?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1655,6 +1729,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'activity-logs';
         value: string | ActivityLog;
+      } | null)
+    | ({
+        relationTo: 'referral-attributions';
+        value: string | ReferralAttribution;
+      } | null)
+    | ({
+        relationTo: 'referral-rewards';
+        value: string | ReferralReward;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -2095,6 +2177,8 @@ export interface TransactionsSelect<T extends boolean = true> {
   amount?: T;
   plan?: T;
   revenue?: T;
+  providerFeeAmount?: T;
+  providerFeeRateBasisPoints?: T;
   status?: T;
   paymentMedium?: T;
   phone?: T;
@@ -2126,6 +2210,8 @@ export interface PaymentSettlementsSelect<T extends boolean = true> {
   amount?: T;
   plan?: T;
   revenue?: T;
+  providerFeeAmount?: T;
+  providerFeeRateBasisPoints?: T;
   paymentMedium?: T;
   financialTransId?: T;
   providerConfirmedAt?: T;
@@ -2384,6 +2470,50 @@ export interface ActivityLogsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "referral-attributions_select".
+ */
+export interface ReferralAttributionsSelect<T extends boolean = true> {
+  referrer?: T;
+  referredUser?: T;
+  referralCode?: T;
+  attributedAt?: T;
+  source?: T;
+  status?: T;
+  tokenId?: T;
+  invalidReason?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "referral-rewards_select".
+ */
+export interface ReferralRewardsSelect<T extends boolean = true> {
+  idempotencyKey?: T;
+  referrer?: T;
+  referredUser?: T;
+  attribution?: T;
+  paymentSettlement?: T;
+  transaction?: T;
+  referrerSubscription?: T;
+  plan?: T;
+  grossPaymentAmount?: T;
+  providerFeeAmount?: T;
+  providerFeeRateBasisPoints?: T;
+  revenue?: T;
+  rewardRateBasisPoints?: T;
+  rewardAmount?: T;
+  platformRevenueAfterReward?: T;
+  status?: T;
+  ineligibilityReason?: T;
+  settledAt?: T;
+  reversedAt?: T;
+  reversalReason?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -2461,6 +2591,20 @@ export interface Setting {
     monthly: number;
     yearly: number;
   };
+  /**
+   * Percentages used to record provider fees, revenue, and referral rewards for future settled payments.
+   */
+  paymentAccounting: {
+    /**
+     * Fallback fee used when Fapshi does not return an explicit revenue amount.
+     */
+    providerFeePercentage: number;
+    referralProgramEnabled?: boolean | null;
+    /**
+     * Percentage of the referred student’s gross settled subscription payment awarded to an eligible referrer.
+     */
+    referralRewardPercentage: number;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2489,6 +2633,13 @@ export interface SettingsSelect<T extends boolean = true> {
     | {
         monthly?: T;
         yearly?: T;
+      };
+  paymentAccounting?:
+    | T
+    | {
+        providerFeePercentage?: T;
+        referralProgramEnabled?: T;
+        referralRewardPercentage?: T;
       };
   updatedAt?: T;
   createdAt?: T;

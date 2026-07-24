@@ -42,6 +42,16 @@ const quickLinks = [
     label: 'Transactions',
   },
   {
+    description: 'Review earned, ineligible, paid, and reversed rewards',
+    href: '/admin/collections/referral-rewards',
+    label: 'Referral rewards',
+  },
+  {
+    description: 'Audit signed referral attribution records',
+    href: '/admin/collections/referral-attributions',
+    label: 'Referral attributions',
+  },
+  {
     description: 'Inspect scores and assessment attempts',
     href: '/admin/collections/test-results',
     label: 'Test results',
@@ -171,9 +181,31 @@ const BeforeAdminDashboard: React.FC = async () => {
               <span>{formatCount(analytics.metrics.assessmentAttempts)} attempts this period</span>
             </article>
             <article className="smartvision-admin-metric smartvision-admin-metric--revenue">
-              <p>Confirmed revenue</p>
+              <p>Gross payments</p>
+              <strong>{formatCurrency(analytics.metrics.grossPayments)}</strong>
+              <span>Successful subscription payments received</span>
+            </article>
+            <article className="smartvision-admin-metric">
+              <p>Fapshi fees</p>
+              <strong>{formatCurrency(analytics.metrics.providerFees)}</strong>
+              <span>Payment-provider fees recorded this period</span>
+            </article>
+            <article className="smartvision-admin-metric smartvision-admin-metric--revenue">
+              <p>Revenue after fees</p>
               <strong>{formatCurrency(analytics.metrics.revenue)}</strong>
-              <span>Successful payments in the last {analytics.periodDays} days</span>
+              <span>Gross payments less Fapshi fees</span>
+            </article>
+            <article className="smartvision-admin-metric">
+              <p>Referral rewards</p>
+              <strong>{formatCurrency(analytics.metrics.referralRewardExpense)}</strong>
+              <span>Available and paid rewards earned this period</span>
+            </article>
+            <article className="smartvision-admin-metric smartvision-admin-metric--revenue">
+              <p>Platform revenue</p>
+              <strong>
+                {formatCurrency(analytics.metrics.platformRevenueAfterReferralRewards)}
+              </strong>
+              <span>Revenue after Fapshi fees and referral rewards</span>
             </article>
           </div>
         </section>
@@ -314,9 +346,9 @@ const BeforeAdminDashboard: React.FC = async () => {
               </div>
             </div>
             <p className="smartvision-admin-panel__description">
-              Download a multi-sheet workbook containing the platform summary, student
-              onboarding, assessment results, and payment performance. Sensitive authentication,
-              birth-date, and payment-phone fields are excluded.
+              Download a multi-sheet workbook containing the platform summary, student onboarding,
+              assessment results, payment accounting, and referral rewards. Sensitive
+              authentication, birth-date, and payment-phone fields are excluded.
             </p>
             <div className="smartvision-admin-export-actions">
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
@@ -400,6 +432,10 @@ const BeforeAdminDashboard: React.FC = async () => {
                     </span>
                     <span className="smartvision-admin-feed__value">
                       <strong>{formatCurrency(transaction.amount)}</strong>
+                      <small>
+                        {formatCurrency(transaction.revenue)} revenue ·{' '}
+                        {formatCurrency(transaction.providerFeeAmount)} fee
+                      </small>
                       <small
                         className={`smartvision-admin-status smartvision-admin-status--${transaction.status}`}
                       >
@@ -425,10 +461,7 @@ const BeforeAdminDashboard: React.FC = async () => {
                 <p className="smartvision-admin-empty">No platform activity has been recorded.</p>
               ) : (
                 analytics.recentActivity.map((activity) => (
-                  <Link
-                    href={`/admin/collections/activity-logs/${activity.id}`}
-                    key={activity.id}
-                  >
+                  <Link href={`/admin/collections/activity-logs/${activity.id}`} key={activity.id}>
                     <span>
                       <strong>{formatAction(activity.action)}</strong>
                       <small>{activity.description}</small>
@@ -452,7 +485,10 @@ const BeforeAdminDashboard: React.FC = async () => {
     })
 
     return (
-      <section className="smartvision-admin-state smartvision-admin-state--error" aria-live="polite">
+      <section
+        className="smartvision-admin-state smartvision-admin-state--error"
+        aria-live="polite"
+      >
         <h1>Dashboard analytics are temporarily unavailable</h1>
         <p>You can continue managing content and users from the collection navigation.</p>
       </section>

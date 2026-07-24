@@ -1,55 +1,93 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Users, Copy, Check } from 'lucide-react'
-import { User } from '@/payload-types'
+import { BadgeCheck, Check, Copy, Gift, Users, Wallet } from 'lucide-react'
+import React, { useCallback, useEffect, useState } from 'react'
+
+import type { User } from '@/payload-types'
 
 interface ReferralStats {
+  eligibility: {
+    active: boolean
+    subscriptionEndDate: string | null
+  }
+  program: {
+    enabled: boolean
+    providerFeePercentage: number
+    rewardPercentage: number
+  }
   referralCode: string
   referralLink: string
-  totalReferrals: number
   referredUsers: Array<{
+    firstName: string
     id: string
-    email: string
-    firstName?: string
-    lastName?: string
-    createdAt: string
+    joinedAt: string
+    status: string
   }>
-  referredBy: string | null
+  rewards: Array<{
+    amount: number
+    grossPaymentAmount: number
+    id: string
+    plan: string
+    ratePercentage: number
+    settledAt: string
+    status: string
+  }>
+  summary: {
+    availableEarnings: number
+    paidEarnings: number
+    qualifiedReferrals: number
+    reversedEarnings: number
+    totalEarnings: number
+    totalReferrals: number
+  }
 }
 
 interface ReferralDashboardProps {
-  user?: User
   className?: string
+  user?: User
 }
 
-export default function ReferralDashboard({ user, className = '' }: ReferralDashboardProps) {
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en', {
+    currency: 'XAF',
+    maximumFractionDigits: 0,
+    style: 'currency',
+  }).format(value)
+
+const formatDate = (value: string) =>
+  new Intl.DateTimeFormat('en', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(value))
+
+export default function ReferralDashboard({ className = '', user }: ReferralDashboardProps) {
   const [stats, setStats] = useState<ReferralStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
-  useEffect(() => {
-    fetchReferralStats()
-  }, [])
-
-  const fetchReferralStats = async () => {
+  const fetchReferralStats = useCallback(async () => {
     try {
       setLoading(true)
+      setError(null)
       const response = await fetch('/api/custom/referral/stats')
 
       if (!response.ok) {
         throw new Error('Failed to fetch referral stats')
       }
 
-      const data = await response.json()
-      setStats(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setStats((await response.json()) as ReferralStats)
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    void fetchReferralStats()
+  }, [fetchReferralStats])
 
   const copyToClipboard = async () => {
     if (!stats?.referralLink) return
@@ -58,43 +96,39 @@ export default function ReferralDashboard({ user, className = '' }: ReferralDash
       await navigator.clipboard.writeText(stats.referralLink)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy to clipboard:', err)
+    } catch (caughtError) {
+      console.error('Failed to copy referral link:', caughtError)
     }
   }
 
-  // Use stats if available, fallback to user prop for basic display if needed
-  const displayCode = stats?.referralCode || user?.referralCode || '—'
-  const displayCount = stats?.totalReferrals ?? user?.totalReferrals ?? 0
-  const displayLink = stats?.referralLink || ''
-
   if (loading) {
     return (
-      <div className={`p-6 rounded-2xl border bg-card border-border/50 ${className}`}>
-        <div className="flex gap-3 items-center mb-6">
-          <Users className="w-5 h-5 text-primary" />
-          <p className="font-medium text-foreground">Your Referral Details</p>
+      <div className={`rounded-2xl border border-border/50 bg-card p-6 ${className}`}>
+        <div className="mb-6 flex items-center gap-3">
+          <Gift className="h-5 w-5 text-primary" />
+          <p className="font-medium text-foreground">Referral rewards</p>
         </div>
-        <div className="space-y-4 animate-pulse">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="h-20 rounded-lg bg-muted/20"></div>
-            <div className="h-20 rounded-lg bg-muted/20"></div>
-          </div>
-          <div className="h-10 rounded-lg bg-muted/20"></div>
+        <div className="grid animate-pulse gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((item) => (
+            <div className="h-24 rounded-lg bg-muted/20" key={item} />
+          ))}
         </div>
       </div>
     )
   }
 
-  if (error) {
+  if (error || !stats) {
     return (
       <div
-        className={`p-6 rounded-2xl border bg-destructive/10 border-destructive/20 ${className}`}
+        className={`rounded-2xl border border-destructive/20 bg-destructive/10 p-6 ${className}`}
       >
-        <p className="mb-2 text-destructive">Error loading referral data: {error}</p>
+        <p className="mb-2 text-destructive">
+          Error loading referral data: {error || 'No data was returned'}
+        </p>
         <button
-          onClick={fetchReferralStats}
-          className="px-4 py-2 rounded transition-colors bg-destructive/20 text-destructive hover:bg-destructive/30"
+          className="rounded bg-destructive/20 px-4 py-2 text-destructive transition-colors hover:bg-destructive/30"
+          onClick={() => void fetchReferralStats()}
+          type="button"
         >
           Retry
         </button>
@@ -102,67 +136,158 @@ export default function ReferralDashboard({ user, className = '' }: ReferralDash
     )
   }
 
+  const displayCode = stats.referralCode || user?.referralCode || '—'
+  const eligibilityLabel = !stats.program.enabled
+    ? 'Program paused'
+    : stats.eligibility.active
+      ? 'Eligible to earn'
+      : 'Active subscription required'
+
   return (
-    <div className={`p-6 rounded-2xl border bg-card border-border/50 ${className}`}>
-      <div className="flex gap-3 items-center mb-6">
-        <Users className="w-5 h-5 text-primary" />
-        <p className="font-medium text-foreground">Your Referral Details</p>
+    <div className={`rounded-2xl border border-border/50 bg-card p-6 ${className}`}>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Gift className="h-5 w-5 text-primary" />
+          <p className="font-medium text-foreground">Referral rewards</p>
+        </div>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-medium ${
+            stats.program.enabled && stats.eligibility.active
+              ? 'bg-emerald-500/10 text-emerald-600'
+              : 'bg-amber-500/10 text-amber-600'
+          }`}
+        >
+          {eligibilityLabel}
+        </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="p-3 rounded-lg border bg-input border-border">
-          <p className="mb-1 text-sm text-muted-foreground">Referral Code</p>
+      <p className="mb-6 text-sm text-muted-foreground">
+        Earn {stats.program.rewardPercentage}% of each referred student&apos;s successful
+        subscription payment while your own subscription is active.
+      </p>
+
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-border bg-input p-4">
+          <Wallet className="mb-3 h-5 w-5 text-primary" />
+          <p className="mb-1 text-sm text-muted-foreground">Available earnings</p>
+          <p className="text-lg font-semibold text-foreground">
+            {formatCurrency(stats.summary.availableEarnings)}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-input p-4">
+          <Gift className="mb-3 h-5 w-5 text-primary" />
+          <p className="mb-1 text-sm text-muted-foreground">Lifetime earned</p>
+          <p className="text-lg font-semibold text-foreground">
+            {formatCurrency(stats.summary.totalEarnings)}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-input p-4">
+          <Users className="mb-3 h-5 w-5 text-primary" />
+          <p className="mb-1 text-sm text-muted-foreground">Total referrals</p>
+          <p className="text-lg font-semibold text-foreground">{stats.summary.totalReferrals}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-input p-4">
+          <BadgeCheck className="mb-3 h-5 w-5 text-primary" />
+          <p className="mb-1 text-sm text-muted-foreground">Qualified referrals</p>
+          <p className="text-lg font-semibold text-foreground">
+            {stats.summary.qualifiedReferrals}
+          </p>
+        </div>
+      </div>
+
+      <div className="mb-6 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border border-border bg-input p-3">
+          <p className="mb-1 text-sm text-muted-foreground">Referral code</p>
           <p className="text-lg font-medium text-foreground">{displayCode}</p>
         </div>
-        <div className="p-3 rounded-lg border bg-input border-border">
-          <p className="mb-1 text-sm text-muted-foreground">Total Referrals</p>
-          <p className="text-lg font-medium text-foreground">{displayCount}</p>
+        <div className="rounded-lg border border-border bg-input p-3">
+          <p className="mb-1 text-sm text-muted-foreground">Eligibility period</p>
+          <p className="text-sm font-medium text-foreground">
+            {stats.eligibility.subscriptionEndDate
+              ? `Active until ${formatDate(stats.eligibility.subscriptionEndDate)}`
+              : 'No active paid subscription'}
+          </p>
         </div>
       </div>
 
       <div className="mb-6">
-        <label className="block mb-2 text-sm text-muted-foreground">Share your link</label>
+        <label className="mb-2 block text-sm text-muted-foreground">Share your link</label>
         <div className="flex gap-2">
-          <div className="overflow-hidden flex-1 p-3 text-sm whitespace-nowrap rounded-lg border bg-input border-border text-foreground text-ellipsis">
-            {displayLink || 'Link unavailable'}
+          <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap rounded-lg border border-border bg-input p-3 text-sm text-foreground">
+            {stats.referralLink || 'Link unavailable'}
           </div>
           <button
-            onClick={copyToClipboard}
-            disabled={!displayLink}
-            className="flex gap-2 items-center px-4 py-2 font-medium rounded-lg transition-colors bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            disabled={!stats.referralLink}
+            onClick={() => void copyToClipboard()}
+            type="button"
           >
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             {copied ? 'Copied' : 'Copy'}
           </button>
         </div>
       </div>
 
-      {/* Recent Referrals */}
-      {stats?.referredUsers && stats.referredUsers.length > 0 && (
-        <div className="pt-6 mt-6 border-t border-border">
-          <h4 className="mb-3 text-sm font-medium text-foreground">Recent Referrals</h4>
-          <div className="overflow-y-auto space-y-2 max-h-40">
-            {stats.referredUsers.slice(0, 5).map((u) => (
-              <div
-                key={u.id}
-                className="flex justify-between items-center p-3 rounded-lg border bg-input border-border"
-              >
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.email}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(u.createdAt).toLocaleDateString()}
-                  </p>
+      <div className="grid gap-6 border-t border-border pt-6 lg:grid-cols-2">
+        <section>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Recent referrals</h4>
+          {stats.referredUsers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No referrals yet.</p>
+          ) : (
+            <div className="max-h-56 space-y-2 overflow-y-auto">
+              {stats.referredUsers.slice(0, 6).map((referredUser) => (
+                <div
+                  className="flex items-center justify-between rounded-lg border border-border bg-input p-3"
+                  key={referredUser.id}
+                >
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {referredUser.firstName || 'Student'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Joined {formatDate(referredUser.joinedAt)}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+                    {referredUser.status.replaceAll('-', ' ')}
+                  </span>
                 </div>
-                <div className="px-2 py-1 text-xs font-medium text-emerald-500 rounded-full bg-emerald-500/10">
-                  +1
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Recent rewards</h4>
+          {stats.rewards.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Rewards appear here after a referred student completes a subscription payment.
+            </p>
+          ) : (
+            <div className="max-h-56 space-y-2 overflow-y-auto">
+              {stats.rewards.slice(0, 6).map((reward) => (
+                <div
+                  className="flex items-center justify-between rounded-lg border border-border bg-input p-3"
+                  key={reward.id}
+                >
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {formatCurrency(reward.amount)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {reward.ratePercentage}% of {formatCurrency(reward.grossPaymentAmount)} ·{' '}
+                      {reward.plan} · {formatDate(reward.settledAt)}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600">
+                    {reward.status}
+                  </span>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   )
 }

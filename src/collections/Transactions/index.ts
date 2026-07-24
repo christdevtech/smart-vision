@@ -85,6 +85,24 @@ export const Transactions: CollectionConfig = {
       },
     },
     {
+      name: 'providerFeeAmount',
+      type: 'number',
+      label: 'Fapshi Fee Amount',
+      admin: {
+        readOnly: true,
+        description: 'Gross payment minus the provider-reported revenue.',
+      },
+    },
+    {
+      name: 'providerFeeRateBasisPoints',
+      type: 'number',
+      label: 'Fapshi Fee Rate (Basis Points)',
+      admin: {
+        readOnly: true,
+        description: '300 basis points equals 3%.',
+      },
+    },
+    {
       name: 'status',
       type: 'select',
       options: [

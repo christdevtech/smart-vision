@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { REFERRAL_CONSTANTS, getReferralCookieOptions } from '@/utilities/referral'
+import {
+  createReferralToken,
+  getReferralCookieOptions,
+  isReferralValid,
+  parseReferralToken,
+  REFERRAL_CONSTANTS,
+} from '@/utilities/referral'
 import { cookies } from 'next/headers'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
@@ -31,40 +37,43 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const referrer = result.docs[0]
+    if (referrer.isActive === false) {
+      return NextResponse.json({ error: 'Invalid referral code' }, { status: 404 })
+    }
 
-    // Check if referral cookie already exists
+    const signingSecret = process.env.REFERRAL_SIGNING_SECRET || process.env.PAYLOAD_SECRET
+    if (!signingSecret) {
+      return NextResponse.json({ error: 'Referral service is not configured' }, { status: 503 })
+    }
+
+    // First-touch attribution: do not replace a referral cookie that is already present.
     const cookieStore = await cookies()
     const existingCookie = cookieStore.get(REFERRAL_CONSTANTS.COOKIE_NAME)
 
-    if (existingCookie) {
-      // Cookie already exists, redirect to home
-      return NextResponse.redirect(new URL('/', request.url))
+    const existingAttribution = existingCookie
+      ? parseReferralToken(existingCookie.value, signingSecret)
+      : null
+
+    if (existingAttribution && isReferralValid(existingAttribution.timestamp)) {
+      return NextResponse.json({
+        success: true,
+        message: 'Referral attribution is already set',
+        redirectUrl: '/',
+      })
     }
 
-    // Prepare cookie data
-    const cookieData = {
-      referrerId: referrer.id,
-      referralCode: code,
-      timestamp: Date.now(),
-    }
-
-    // Create JSON response instead of redirect
     const response = NextResponse.json({
       success: true,
       message: 'Referral code applied successfully',
       redirectUrl: '/',
     })
 
-    // Set HTTP-only cookie with referral information
     const cookieOptions = getReferralCookieOptions()
-    response.cookies.set(REFERRAL_CONSTANTS.COOKIE_NAME, JSON.stringify(cookieData), cookieOptions)
-
-    // Log for debugging (remove in production)
-    console.log('Setting referral cookie:', {
-      cookieName: REFERRAL_CONSTANTS.COOKIE_NAME,
-      cookieData,
+    response.cookies.set(
+      REFERRAL_CONSTANTS.COOKIE_NAME,
+      createReferralToken(code, signingSecret),
       cookieOptions,
-    })
+    )
 
     return response
   } catch (error) {

@@ -5,6 +5,10 @@ export const Settings: GlobalConfig = {
   admin: {
     group: 'Platform Settings',
   },
+  access: {
+    read: () => true,
+    update: ({ req: { user } }) => Boolean(user && ['admin', 'super-admin'].includes(user.role)),
+  },
   fields: [
     {
       type: 'tabs',
@@ -97,6 +101,49 @@ export const Settings: GlobalConfig = {
                   label: 'Yearly Subscription Cost',
                   defaultValue: 3500,
                   required: true,
+                },
+              ],
+            },
+            {
+              name: 'paymentAccounting',
+              type: 'group',
+              label: 'Payment and Referral Accounting',
+              admin: {
+                description:
+                  'Percentages used to record provider fees, revenue, and referral rewards for future settled payments.',
+              },
+              fields: [
+                {
+                  name: 'providerFeePercentage',
+                  type: 'number',
+                  label: 'Fapshi Fee (%)',
+                  defaultValue: 3,
+                  min: 0,
+                  max: 100,
+                  required: true,
+                  admin: {
+                    description:
+                      'Fallback fee used when Fapshi does not return an explicit revenue amount.',
+                  },
+                },
+                {
+                  name: 'referralProgramEnabled',
+                  type: 'checkbox',
+                  label: 'Enable Referral Rewards',
+                  defaultValue: true,
+                },
+                {
+                  name: 'referralRewardPercentage',
+                  type: 'number',
+                  label: 'Referral Reward (%)',
+                  defaultValue: 30,
+                  min: 0,
+                  max: 100,
+                  required: true,
+                  admin: {
+                    description:
+                      'Percentage of the referred student’s gross settled subscription payment awarded to an eligible referrer.',
+                  },
                 },
               ],
             },

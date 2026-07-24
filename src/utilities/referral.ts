@@ -1,92 +1,100 @@
-/**
- * Utility functions for referral system
- */
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 
-/**
- * Generate a referral link for a given referral code
- * @param referralCode - The user's referral code
- * @param baseUrl - Optional base URL, defaults to NEXT_PUBLIC_SERVER_URL or localhost
- * @returns Complete referral link
- */
-export function generateReferralLink(referralCode: string, baseUrl?: string): string {
-  const url = baseUrl || process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
-  return `${url}/referral/${referralCode}`
-}
-
-/**
- * Parse referral cookie data
- * @param cookieValue - The cookie value to parse
- * @returns Parsed referral data or null if invalid
- */
-export function parseReferralCookie(cookieValue: string): {
-  referrerId: string
+export type ReferralTokenData = {
   referralCode: string
   timestamp: number
-} | null {
+  tokenId: string
+}
+
+export function generateReferralLink(referralCode: string, baseUrl?: string): string {
+  const url = (baseUrl || process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000').replace(
+    /\/$/,
+    '',
+  )
+  return `${url}/referral/${encodeURIComponent(referralCode)}`
+}
+
+const signatureFor = (payload: string, secret: string): string =>
+  createHmac('sha256', secret).update(payload).digest('base64url')
+
+export function createReferralToken(
+  referralCode: string,
+  secret: string,
+  timestamp = Date.now(),
+  tokenId = randomBytes(12).toString('hex'),
+): string {
+  if (!secret) throw new Error('A referral signing secret is required')
+
+  const payload = Buffer.from(
+    JSON.stringify({ referralCode, timestamp, tokenId } satisfies ReferralTokenData),
+  ).toString('base64url')
+  return `${payload}.${signatureFor(payload, secret)}`
+}
+
+export function parseReferralToken(token: string, secret: string): ReferralTokenData | null {
+  if (!token || !secret) return null
+
   try {
-    const data = JSON.parse(decodeURIComponent(cookieValue))
-    if (data.referrerId && data.referralCode && data.timestamp) {
-      return data
+    const [payload, suppliedSignature, extra] = token.split('.')
+    if (!payload || !suppliedSignature || extra) return null
+
+    const expectedSignature = signatureFor(payload, secret)
+    const supplied = Buffer.from(suppliedSignature)
+    const expected = Buffer.from(expectedSignature)
+    if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return null
+
+    const parsed = JSON.parse(
+      Buffer.from(payload, 'base64url').toString('utf8'),
+    ) as Partial<ReferralTokenData>
+    if (
+      typeof parsed.referralCode !== 'string' ||
+      !/^\d{7}$/.test(parsed.referralCode) ||
+      typeof parsed.timestamp !== 'number' ||
+      !Number.isFinite(parsed.timestamp) ||
+      typeof parsed.tokenId !== 'string' ||
+      parsed.tokenId.length < 16
+    ) {
+      return null
     }
-    return null
+
+    return parsed as ReferralTokenData
   } catch {
     return null
   }
 }
 
-/**
- * Check if a referral cookie is still valid (within 30 days)
- * @param timestamp - The timestamp from the referral cookie
- * @returns True if the referral is still valid
- */
-export function isReferralValid(timestamp: number): boolean {
-  const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
-  return timestamp > thirtyDaysAgo
+export function isReferralValid(timestamp: number, now = Date.now()): boolean {
+  const oldestValidTimestamp = now - REFERRAL_CONSTANTS.COOKIE_MAX_AGE * 1000
+  return timestamp <= now && timestamp > oldestValidTimestamp
 }
 
-/**
- * Extract referral cookie from request headers
- * @param cookieHeader - The cookie header string
- * @returns Parsed referral data or null
- */
-export function extractReferralFromCookies(cookieHeader: string): {
-  referrerId: string
-  referralCode: string
-  timestamp: number
-} | null {
-  const cookieMatch = cookieHeader.match(/smartvision_referral=([^;]+)/)
+export function extractReferralFromCookies(
+  cookieHeader: string,
+  secret: string,
+  now = Date.now(),
+): ReferralTokenData | null {
+  const cookieMatch = cookieHeader.match(/(?:^|;\s*)smartvision_referral=([^;]+)/)
   if (!cookieMatch) return null
-  
-  const referralData = parseReferralCookie(cookieMatch[1])
-  if (!referralData || !isReferralValid(referralData.timestamp)) {
-    return null
-  }
-  
+
+  const referralData = parseReferralToken(decodeURIComponent(cookieMatch[1]), secret)
+  if (!referralData || !isReferralValid(referralData.timestamp, now)) return null
   return referralData
 }
 
-/**
- * Constants for referral system
- */
 export const REFERRAL_CONSTANTS = {
   COOKIE_NAME: 'smartvision_referral',
-  COOKIE_MAX_AGE: 30 * 24 * 60 * 60, // 30 days in seconds
+  COOKIE_MAX_AGE: 30 * 24 * 60 * 60,
   REFERRAL_VALIDITY_DAYS: 30,
 } as const
 
-/**
- * Create referral cookie options
- * @param isProduction - Whether the app is in production mode
- * @returns Cookie options object
- */
-export function getReferralCookieOptions(isProduction: boolean = process.env.NODE_ENV === 'production') {
+export function getReferralCookieOptions(
+  isProduction: boolean = process.env.NODE_ENV === 'production',
+) {
   return {
     httpOnly: true,
-    secure: isProduction, // Only secure in production (HTTPS)
-    sameSite: 'lax' as const,
     maxAge: REFERRAL_CONSTANTS.COOKIE_MAX_AGE,
     path: '/',
-    // Ensure cookie works in development
-    domain: isProduction ? undefined : undefined // Let browser handle domain
+    sameSite: 'lax' as const,
+    secure: isProduction,
   }
 }

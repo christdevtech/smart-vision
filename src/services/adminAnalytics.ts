@@ -1,6 +1,7 @@
 import type {
   ActivityLog,
   AcademicLevel,
+  ReferralReward,
   Subject,
   TestResult,
   Transaction,
@@ -38,9 +39,13 @@ export type AdminAnalyticsSnapshot = {
     assessmentAttempts: number
     assessmentSampleSize: number
     averageAssessmentScore: number | null
+    grossPayments: number
     newStudents: number
     onboardedStudents: number
     onboardingRate: number
+    platformRevenueAfterReferralRewards: number
+    providerFees: number
+    referralRewardExpense: number
     revenue: number
     revenueSampleSize: number
     students: number
@@ -68,6 +73,8 @@ export type AdminAnalyticsSnapshot = {
     date: string
     id: string
     plan: string
+    providerFeeAmount: number
+    revenue: number
     status: string
     transactionId: string
     userLabel: string
@@ -134,7 +141,9 @@ export function buildAdminAnalyticsTrend({
   return [...buckets.entries()].map(([date, bucket]) => ({
     assessments: bucket.assessments,
     averageScore:
-      bucket.assessments > 0 ? Math.round((bucket.scoreTotal / bucket.assessments) * 10) / 10 : null,
+      bucket.assessments > 0
+        ? Math.round((bucket.scoreTotal / bucket.assessments) * 10) / 10
+        : null,
     date,
     label: new Intl.DateTimeFormat('en', {
       day: 'numeric',
@@ -172,6 +181,7 @@ export async function getAdminAnalytics(
     studentTrendResult,
     assessmentResult,
     revenueResult,
+    referralRewardResult,
     recentStudentResult,
     recentTransactionResult,
     recentActivityResult,
@@ -197,10 +207,7 @@ export async function getAdminAnalytics(
       ...access,
       collection: 'subscriptions',
       where: {
-        and: [
-          { paymentStatus: { equals: 'paid' } },
-          { endDate: { greater_than: nowISO } },
-        ],
+        and: [{ paymentStatus: { equals: 'paid' } }, { endDate: { greater_than: nowISO } }],
       },
     }),
     payload.count({
@@ -276,6 +283,7 @@ export async function getAdminAnalytics(
         dateInitiated: true,
         paymentMedium: true,
         plan: true,
+        providerFeeAmount: true,
         revenue: true,
         status: true,
         transactionId: true,
@@ -285,6 +293,24 @@ export async function getAdminAnalytics(
         and: [
           { status: { equals: 'successful' } },
           { dateConfirmed: { greater_than_equal: periodStart } },
+        ],
+      },
+    }),
+    payload.find({
+      ...access,
+      collection: 'referral-rewards',
+      depth: 0,
+      limit: 5000,
+      pagination: false,
+      select: {
+        rewardAmount: true,
+        settledAt: true,
+        status: true,
+      },
+      where: {
+        and: [
+          { status: { in: ['available', 'paid'] } },
+          { settledAt: { greater_than_equal: periodStart } },
         ],
       },
     }),
@@ -316,6 +342,8 @@ export async function getAdminAnalytics(
         dateConfirmed: true,
         dateInitiated: true,
         plan: true,
+        providerFeeAmount: true,
+        revenue: true,
         status: true,
         transactionId: true,
         user: true,
@@ -339,9 +367,25 @@ export async function getAdminAnalytics(
 
   const assessmentDocs = assessmentResult.docs as TestResult[]
   const transactionDocs = revenueResult.docs as Transaction[]
+  const referralRewardDocs = referralRewardResult.docs as ReferralReward[]
   const scoreTotal = assessmentDocs.reduce((total, result) => total + result.scorePercentage, 0)
+  const grossPayments = transactionDocs.reduce(
+    (total, transaction) => total + transaction.amount,
+    0,
+  )
+  const providerFees = transactionDocs.reduce(
+    (total, transaction) =>
+      total +
+      (transaction.providerFeeAmount ??
+        Math.max(transaction.amount - (transaction.revenue ?? transaction.amount), 0)),
+    0,
+  )
   const revenue = transactionDocs.reduce(
     (total, transaction) => total + (transaction.revenue ?? transaction.amount),
+    0,
+  )
+  const referralRewardExpense = referralRewardDocs.reduce(
+    (total, reward) => total + reward.rewardAmount,
     0,
   )
   const incompleteOnboarding = Math.max(students.totalDocs - onboardedStudents.totalDocs, 0)
@@ -369,12 +413,16 @@ export async function getAdminAnalytics(
         assessmentDocs.length > 0
           ? Math.round((scoreTotal / assessmentDocs.length) * 10) / 10
           : null,
+      grossPayments,
       newStudents: newStudents.totalDocs,
       onboardedStudents: onboardedStudents.totalDocs,
       onboardingRate:
         students.totalDocs > 0
           ? Math.round((onboardedStudents.totalDocs / students.totalDocs) * 1000) / 10
           : 0,
+      platformRevenueAfterReferralRewards: revenue - referralRewardExpense,
+      providerFees,
+      referralRewardExpense,
       revenue,
       revenueSampleSize: transactionDocs.length,
       students: students.totalDocs,
@@ -402,6 +450,10 @@ export async function getAdminAnalytics(
       date: transaction.dateConfirmed || transaction.dateInitiated,
       id: transaction.id,
       plan: transaction.plan || 'Not set',
+      providerFeeAmount:
+        transaction.providerFeeAmount ??
+        Math.max(transaction.amount - (transaction.revenue ?? transaction.amount), 0),
+      revenue: transaction.revenue ?? transaction.amount,
       status: transaction.status || 'created',
       transactionId: transaction.transactionId,
       userLabel: relationName(transaction.user),

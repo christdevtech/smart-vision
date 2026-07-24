@@ -1,4 +1,5 @@
 import type { CollectionBeforeChangeHook, PayloadRequest } from 'payload'
+import { randomInt } from 'node:crypto'
 import { extractReferralFromCookies } from '@/utilities/referral'
 
 // Function to generate a unique 7-digit code
@@ -8,7 +9,7 @@ const generateUniqueCode = async (req: PayloadRequest): Promise<string> => {
 
   while (!isUnique) {
     // Generate a random 7-digit number
-    code = Math.floor(1000000 + Math.random() * 9000000).toString()
+    code = randomInt(1_000_000, 10_000_000).toString()
 
     // Check if this code already exists
     const existing = await req.payload.find({
@@ -45,38 +46,44 @@ export const beforeChangeUser: CollectionBeforeChangeHook = async ({
   if (operation === 'create' && !data.referredBy) {
     try {
       // Check for referral cookie in the request
-      const cookies = req.headers.get('cookie')
-      if (cookies) {
-        const referralData = extractReferralFromCookies(cookies)
+      const cookieHeader = req.headers.get('cookie')
+      const signingSecret = process.env.REFERRAL_SIGNING_SECRET || process.env.PAYLOAD_SECRET
+      if (cookieHeader && signingSecret) {
+        const referralData = extractReferralFromCookies(cookieHeader, signingSecret)
 
         if (referralData) {
-          const { referrerId } = referralData
-
-          // Verify the referrer still exists
-          const referrer = await req.payload.findByID({
+          const referrerResult = await req.payload.find({
             collection: 'users',
-            id: referrerId,
+            where: {
+              referralCode: {
+                equals: referralData.referralCode,
+              },
+            },
+            limit: 1,
+            depth: 0,
             req,
           })
+          const referrer = referrerResult.docs[0]
 
-          if (referrer) {
-            data.referredBy = referrerId
-
-            // Increment the referrer's total referrals count
-            await req.payload.update({
-              collection: 'users',
-              id: referrerId,
-              data: {
-                totalReferrals: (referrer.totalReferrals || 0) + 1,
-              },
-              req,
-            })
+          if (
+            referrer &&
+            referrer.isActive !== false &&
+            String(referrer.email).toLowerCase() !== String(data.email || '').toLowerCase()
+          ) {
+            data.referredBy = referrer.id
+            req.context.referralAttribution = {
+              referralCode: referralData.referralCode,
+              tokenId: referralData.tokenId,
+            }
           }
         }
       }
     } catch (error) {
       // Log error but don't fail user creation
-      console.error('Error processing referral during user creation:', error)
+      req.payload.logger.error({
+        err: error instanceof Error ? error : new Error(String(error)),
+        msg: 'Referral attribution could not be evaluated during user creation',
+      })
     }
   }
 

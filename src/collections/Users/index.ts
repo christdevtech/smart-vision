@@ -130,6 +130,8 @@ export const Users: CollectionConfig = {
       defaultValue: 0,
       admin: {
         readOnly: true,
+        description:
+          'Legacy cached count. Authoritative referral totals are derived from referral attributions.',
       },
       access: {
         create: serverOnlyFieldAccess,
