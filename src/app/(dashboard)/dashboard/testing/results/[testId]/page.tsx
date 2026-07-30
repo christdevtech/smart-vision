@@ -104,14 +104,21 @@ export default async function TestResultPage({ params }: { params: Promise<{ tes
                       .trim()
                   })()
                   return (
-                    <div key={qid} className="p-3 rounded-lg border bg-input border-border">
-                      <p className="mb-2 text-sm font-medium">{questionText || 'Question'}</p>
+                    <div
+                      key={qid}
+                      className="min-w-0 max-w-full p-3 rounded-lg border bg-input border-border"
+                    >
+                      <p className="mb-2 whitespace-normal text-sm font-medium [overflow-wrap:anywhere]">
+                        {questionText || 'Question'}
+                      </p>
                       <p
-                        className={`text-sm ${correct ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}
+                        className={`text-sm [overflow-wrap:anywhere] ${correct ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}
                       >
                         Your answer: {qi.selectedAnswer}
                       </p>
-                      <p className="text-sm">Correct answer: {qi.correctAnswer}</p>
+                      <p className="text-sm [overflow-wrap:anywhere]">
+                        Correct answer: {qi.correctAnswer}
+                      </p>
                     </div>
                   )
                 })}

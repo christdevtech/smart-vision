@@ -33,7 +33,7 @@ Validation performed:
 
 - `tsc --noEmit --incremental false`: **passes**.
 - Lint: **passes** through the supported ESLint CLI. The obsolete `next lint` script and existing blocking violations were repaired.
-- Integration tests: **117 pass across 19 files**. Test email delivery uses an in-memory adapter and cannot contact Resend. The database still comes from the configured environment, so per-run isolated database provisioning remains required before CI.
+- Integration tests: **118 pass across 20 files**. Test email delivery uses an in-memory adapter and cannot contact Resend. The database still comes from the configured environment, so per-run isolated database provisioning remains required before CI.
 - No CI workflow exists under `.github/workflows`.
 
 ## Remediation status
@@ -60,7 +60,7 @@ Validation performed:
 
 - **G-13 — in progress:** authenticated user responses populate profile Media metadata, image rendering falls back to student initials when a relationship or R2 object cannot be loaded, and a protected dry-run-first reconciliation endpoint audits profile references against R2. The reconciler can safely backfill owner-only metadata only for existing, unclassified, unowned, non-shared legacy objects; it reports missing objects without deleting recoverable references or exposing filenames. Restoring/replacing missing legacy objects, full catalogue migration, deployed CORS verification, lifecycle/backup rules, multipart ingest, and CDN delivery remain open.
 
-- **G-15 — in progress:** the lint command now uses the supported ESLint CLI and passes, test email delivery is isolated from Resend, stale relationship assertions are depth-safe, and the current integration suite passes 117 tests across 19 files. A CI workflow, per-run isolated database, current end-to-end smoke tests, type-generation drift gate, and security/dependency/container scanning are still required before this gap can be closed.
+- **G-15 — in progress:** the lint command now uses the supported ESLint CLI and passes, test email delivery is isolated from Resend, stale relationship assertions are depth-safe, and the current integration suite passes 118 tests across 20 files. A CI workflow, per-run isolated database, current end-to-end smoke tests, type-generation drift gate, and security/dependency/container scanning are still required before this gap can be closed.
 
 ## What is already implemented
 

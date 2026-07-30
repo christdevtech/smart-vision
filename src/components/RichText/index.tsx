@@ -41,10 +41,10 @@ export default function RichText(props: Props) {
     <ConvertRichText
       converters={jsxConverters}
       className={cn(
-        'payload-richtext',
+        'payload-richtext min-w-0 max-w-full whitespace-normal [overflow-wrap:anywhere] [&_a]:[overflow-wrap:anywhere] [&_img]:max-w-full [&_li]:[overflow-wrap:anywhere] [&_p]:whitespace-normal [&_p]:[overflow-wrap:anywhere] [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto',
         {
           container: enableGutter,
-          'max-w-none': !enableGutter,
+          'max-w-none': enableProse && !enableGutter,
           'mx-auto prose md:prose-md dark:prose-invert': enableProse,
         },
         className,

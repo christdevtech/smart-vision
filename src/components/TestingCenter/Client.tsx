@@ -195,7 +195,7 @@ export default function TestingCenterClient({
   const progress = questions.length ? Math.round(((currentIndex + 1) / questions.length) * 100) : 0
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 max-w-full space-y-6">
       {!subscriptionActive && (
         <div className="flex justify-between items-center p-3 rounded-xl border bg-card border-border">
           <p className="text-sm text-muted-foreground">
@@ -325,7 +325,7 @@ export default function TestingCenterClient({
       </div>
 
       {!!questions.length && (
-        <div className="p-4 rounded-2xl border bg-card border-border/50">
+        <div className="min-w-0 max-w-full p-4 rounded-2xl border bg-card border-border/50">
           <div className="flex justify-between items-center mb-3">
             <p className="text-sm text-muted-foreground">
               Question {currentIndex + 1} of {questions.length}
@@ -338,7 +338,7 @@ export default function TestingCenterClient({
             </div>
           </div>
           <div className="space-y-3">
-            <div className="p-3 rounded-lg border bg-input border-border">
+            <div className="min-w-0 max-w-full p-3 rounded-lg border bg-input border-border">
               <RichText
                 data={current.question}
                 className="text-sm text-foreground"
@@ -355,7 +355,7 @@ export default function TestingCenterClient({
                     key={opt.id || opt.text}
                     onClick={() => selectAnswer(current.id, opt.id)}
                     disabled={submitted}
-                    className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-secondary text-foreground border-border'}`}
+                    className={`min-w-0 max-w-full w-full whitespace-normal [overflow-wrap:anywhere] text-left px-3 py-2 rounded-lg border transition-colors ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-secondary text-foreground border-border'}`}
                   >
                     {opt.text}
                   </button>
@@ -445,7 +445,10 @@ export default function TestingCenterClient({
               const gradedQuestion = result.questions.find((item) => item.questionId === q.id)
               if (!gradedQuestion) return null
               return (
-                <div key={q.id} className="p-3 rounded-lg border bg-input border-border">
+                <div
+                  key={q.id}
+                  className="min-w-0 max-w-full p-3 rounded-lg border bg-input border-border"
+                >
                   <RichText
                     data={q.question}
                     className="mb-2 text-sm font-medium"
@@ -453,11 +456,13 @@ export default function TestingCenterClient({
                     enableGutter={false}
                   />
                   <p
-                    className={`text-sm ${gradedQuestion.isCorrect ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}
+                    className={`text-sm [overflow-wrap:anywhere] ${gradedQuestion.isCorrect ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}
                   >
                     Your answer: {gradedQuestion.selectedAnswer}
                   </p>
-                  <p className="text-sm">Correct answer: {gradedQuestion.correctAnswer}</p>
+                  <p className="text-sm [overflow-wrap:anywhere]">
+                    Correct answer: {gradedQuestion.correctAnswer}
+                  </p>
                 </div>
               )
             })}
