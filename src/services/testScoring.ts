@@ -68,12 +68,10 @@ export const sanitizeQuestion = (question: Mcq): PublicTestQuestion => ({
   id: question.id,
   question: question.question,
   ...(question.difficulty ? { difficulty: question.difficulty } : {}),
-  options: shuffle(
-    question.options.map((option, index) => ({
-      id: optionID(question.id, option, index),
-      text: option.text,
-    })),
-  ),
+  options: question.options.map((option, index) => ({
+    id: optionID(question.id, option, index),
+    text: option.text,
+  })),
 })
 
 export const gradeForScore = (score: number): TestResult['grade'] => {

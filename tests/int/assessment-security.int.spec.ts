@@ -38,6 +38,11 @@ describe('assessment trust boundary', () => {
     const sanitized = sanitizeQuestion(question)
 
     expect(sanitized.options).toHaveLength(3)
+    expect(sanitized.options).toEqual([
+      { id: 'option-a', text: 'Correct' },
+      { id: 'option-b', text: 'Incorrect' },
+      { id: 'option-c', text: 'Another' },
+    ])
     expect(sanitized.options.every((option) => !('isCorrect' in option))).toBe(true)
     expect(JSON.stringify(sanitized)).not.toContain('isCorrect')
   })
