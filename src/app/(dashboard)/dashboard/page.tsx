@@ -6,7 +6,8 @@ import { redirect } from 'next/navigation'
 import config from '@/payload.config'
 import DashboardLayout from '@/components/Dashboard/DashboardLayout'
 import { getSubscriptionCosts } from '@/utilities/subscription'
-import type { Video, Book } from '@/payload-types'
+import type { User } from '@/payload-types'
+import { getSubjectContentRecommendations } from '@/services/contentRecommendations'
 
 // Dashboard sections
 import SmartWelcomeBanner from '@/components/Dashboard/SmartWelcomeBanner'
@@ -38,6 +39,7 @@ export default async function DashboardPage() {
     userProgress,
     studyPlanDocs,
     unreadNotifications,
+    recommendations,
   ] = await Promise.all([
     // Subscription costs from global settings
     getSubscriptionCosts(payload),
@@ -101,6 +103,9 @@ export default async function DashboardPage() {
       user,
       overrideAccess: false,
     }),
+
+    // Keep recommendations inside the student's selected subjects and academic level.
+    getSubjectContentRecommendations(payload, user as User),
   ])
 
   // ---------- DERIVED DATA ----------
@@ -124,19 +129,6 @@ export default async function DashboardPage() {
 
   // Has the user watched at least one video?
   const hasWatchedVideo = userProgress.docs.some((p) => p.contentType === 'video')
-
-  // Latest content for new users (only fetch if no progress entries)
-  let latestVideos: Video[] = []
-  let latestBooks: Book[] = []
-
-  if (userProgress.totalDocs === 0) {
-    const [videosRes, booksRes] = await Promise.all([
-      payload.find({ collection: 'videos', sort: '-createdAt', limit: 3, depth: 1 }),
-      payload.find({ collection: 'books', sort: '-createdAt', limit: 3, depth: 1 }),
-    ])
-    latestVideos = videosRes.docs
-    latestBooks = booksRes.docs
-  }
 
   // ---------- RENDER ----------
 
@@ -171,24 +163,29 @@ export default async function DashboardPage() {
             unreadCount={unreadNotifications.totalDocs}
           />
 
-          {/* 4. Continue Where You Left Off / Discover Content */}
-          {userProgress.totalDocs > 0 ? (
+          {/* 4. Continue Where You Left Off */}
+          {userProgress.totalDocs > 0 && (
             <ContinueLearning recentProgress={userProgress.docs.slice(0, 3)} />
-          ) : (
-            <DiscoverContent latestVideos={latestVideos} latestBooks={latestBooks} />
           )}
 
-          {/* 5. Subscription Card */}
+          {/* 5. Recommendations constrained to the student's subject preferences */}
+          <DiscoverContent
+            preferredSubjectCount={recommendations.preferredSubjectIds.length}
+            recommendedBooks={recommendations.books}
+            recommendedVideos={recommendations.videos}
+          />
+
+          {/* 6. Subscription Card */}
           <SubscriptionCard
             subscriptionActive={subscriptionActive}
             subscription={subscription}
             subscriptionCosts={subscriptionData}
           />
 
-          {/* 6. Performance Snapshot (only if has test results) */}
+          {/* 7. Performance Snapshot (only if has test results) */}
           {testsCompleted > 0 && <PerformanceSnapshot testResults={testsResults.docs} />}
 
-          {/* 7. Notifications Preview */}
+          {/* 8. Notifications Preview */}
           {unreadNotifications.totalDocs > 0 && (
             <NotificationsPreview notifications={unreadNotifications.docs} />
           )}

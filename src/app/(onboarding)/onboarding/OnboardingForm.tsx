@@ -106,9 +106,9 @@ export default function OnboardingForm({ user, academicLevels, subjects }: Onboa
   const prevStep = () => setStep((p) => p - 1)
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+    <div className="overflow-visible rounded-xl border border-border bg-card shadow-lg">
       {/* Progress Bar */}
-      <div className="h-2 bg-muted w-full">
+      <div className="h-2 w-full overflow-hidden rounded-t-xl bg-muted">
         <div
           className="h-full bg-primary transition-all duration-300 ease-in-out"
           style={{ width: `${(step / 3) * 100}%` }}

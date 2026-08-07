@@ -57,7 +57,7 @@ const formatDateToReadable = (date: Date) => {
 }
 
 function CustomDropdown(props: DropdownProps) {
-  const { className = '', options = [], ...rest } = props
+  const { className = '', classNames: _classNames, options = [], ...rest } = props
   return (
     <select
       {...rest}
@@ -133,13 +133,19 @@ export function DatePicker({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="dialog"
         className="flex justify-between items-center px-4 py-3 w-full rounded-lg border bg-input border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
       >
         <span className={display ? '' : 'text-muted-foreground'}>{display || placeholder}</span>
         <CalendarIcon className="w-4 h-4 text-muted-foreground" />
       </button>
       {open && (
-        <div className="absolute z-50 mt-2 p-2 rounded-xl border bg-popover border-border shadow-md w-[20rem] max-w-[90vw]">
+        <div
+          aria-label="Choose date"
+          role="dialog"
+          className="absolute left-1/2 z-[100] mt-2 w-[20rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-border bg-popover p-2 shadow-md sm:left-0 sm:translate-x-0"
+        >
           <DayPicker
             mode="single"
             selected={selected}
@@ -222,13 +228,19 @@ export function DateRangePicker({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="dialog"
         className="flex justify-between items-center px-4 py-3 w-full rounded-lg border bg-input border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
       >
         <span className={display ? '' : 'text-muted-foreground'}>{display || placeholder}</span>
         <CalendarIcon className="w-4 h-4 text-muted-foreground" />
       </button>
       {open && (
-        <div className="absolute z-50 mt-2 p-2 rounded-xl border bg-popover border-border shadow-md w-[20rem] max-w-[90vw]">
+        <div
+          aria-label="Choose date range"
+          role="dialog"
+          className="absolute left-1/2 z-[100] mt-2 w-[20rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-border bg-popover p-2 shadow-md sm:left-0 sm:translate-x-0"
+        >
           <DayPicker
             mode="range"
             selected={range?.from ? range : undefined}

@@ -3,17 +3,28 @@
 import React from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Video, BookOpen, ArrowRight, Compass } from 'lucide-react'
-import type { Video as VideoType, Book, Subject, AcademicLevel } from '@/payload-types'
+import { ArrowRight, BookOpen, Compass, Video } from 'lucide-react'
+
+import type { AcademicLevel, Subject } from '@/payload-types'
+import type {
+  RecommendedBook,
+  RecommendedVideo,
+} from '@/services/contentRecommendations'
 
 interface DiscoverContentProps {
-  latestVideos: VideoType[]
-  latestBooks: Book[]
+  preferredSubjectCount: number
+  recommendedBooks: RecommendedBook[]
+  recommendedVideos: RecommendedVideo[]
 }
 
 function getSubjectName(subject: string | Subject | null | undefined): string {
   if (!subject || typeof subject === 'string') return ''
   return subject.name ?? ''
+}
+
+function getSubjectSlug(subject: string | Subject | null | undefined): string {
+  if (!subject || typeof subject === 'string') return ''
+  return subject.slug ?? ''
 }
 
 function getLevelName(level: string | AcademicLevel | null | undefined): string {
@@ -22,11 +33,21 @@ function getLevelName(level: string | AcademicLevel | null | undefined): string 
 }
 
 export default function DiscoverContent({
-  latestVideos,
-  latestBooks,
+  preferredSubjectCount,
+  recommendedBooks,
+  recommendedVideos,
 }: DiscoverContentProps) {
-  const hasContent = latestVideos.length > 0 || latestBooks.length > 0
-  if (!hasContent) return null
+  if (preferredSubjectCount === 0) return null
+
+  const recommendations = [
+    ...recommendedVideos.map((content) => ({ content, type: 'video' as const })),
+    ...recommendedBooks.map((content) => ({ content, type: 'book' as const })),
+  ]
+    .sort(
+      (left, right) =>
+        new Date(right.content.createdAt).getTime() - new Date(left.content.createdAt).getTime(),
+    )
+    .slice(0, 3)
 
   return (
     <motion.div
@@ -34,78 +55,71 @@ export default function DiscoverContent({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.15, ease: 'easeOut' }}
     >
-      <div className="flex items-center gap-2 mb-4">
-        <Compass className="w-5 h-5 text-primary" />
-        <h2 className="text-lg font-semibold text-foreground">Discover Content</h2>
+      <div className="mb-4 flex items-center gap-2">
+        <Compass className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-semibold text-foreground">Recommended for your subjects</h2>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {latestVideos.slice(0, 3).map((video, i) => (
-          <motion.div
-            key={video.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 * i, duration: 0.3 }}
-          >
-            <Link
-              href="/dashboard/videos"
-              className="block p-4 rounded-xl border bg-card border-border hover:border-primary/30 hover:shadow-md transition-all duration-300 group"
-            >
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-lg bg-red-500/10 flex-shrink-0">
-                  <Video className="w-5 h-5 text-red-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground truncate">
-                    {video.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {[getSubjectName(video.subject), getLevelName(video.academicLevel)]
-                      .filter(Boolean)
-                      .join(' · ') || 'Video Lesson'}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-1 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                Start Watching <ArrowRight className="w-3 h-3" />
-              </div>
-            </Link>
-          </motion.div>
-        ))}
+      {recommendations.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {recommendations.map(({ content, type }, index) => {
+            const subjectSlug = getSubjectSlug(content.subject)
+            const isVideo = type === 'video'
+            const href = subjectSlug
+              ? `/dashboard/${isVideo ? 'videos' : 'library'}/${subjectSlug}`
+              : `/dashboard/${isVideo ? 'videos' : 'library'}`
 
-        {latestBooks.slice(0, 3 - latestVideos.length).map((book, i) => (
-          <motion.div
-            key={book.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 * (latestVideos.length + i), duration: 0.3 }}
-          >
-            <Link
-              href="/dashboard/library"
-              className="block p-4 rounded-xl border bg-card border-border hover:border-primary/30 hover:shadow-md transition-all duration-300 group"
-            >
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-lg bg-green-500/10 flex-shrink-0">
-                  <BookOpen className="w-5 h-5 text-green-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground truncate">
-                    {book.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {[getSubjectName(book.subject), book.author]
-                      .filter(Boolean)
-                      .join(' · ') || 'Book'}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-1 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                Start Reading <ArrowRight className="w-3 h-3" />
-              </div>
-            </Link>
-          </motion.div>
-        ))}
-      </div>
+            return (
+              <motion.div
+                key={`${type}-${content.id}`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 * index, duration: 0.3 }}
+              >
+                <Link
+                  href={href}
+                  className="group block rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:shadow-md"
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`flex-shrink-0 rounded-lg p-2.5 ${isVideo ? 'bg-red-500/10' : 'bg-green-500/10'}`}
+                    >
+                      {isVideo ? (
+                        <Video className="h-5 w-5 text-red-500" />
+                      ) : (
+                        <BookOpen className="h-5 w-5 text-green-500" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {content.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {[
+                          getSubjectName(content.subject),
+                          isVideo
+                            ? getLevelName(content.academicLevel)
+                            : (content as RecommendedBook).author,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ') || (isVideo ? 'Video Lesson' : 'Book')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-1 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                    {isVideo ? 'Start Watching' : 'Start Reading'}
+                    <ArrowRight className="h-3 w-3" />
+                  </div>
+                </Link>
+              </motion.div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
+          No new videos or books are available for your selected subjects yet.
+        </div>
+      )}
     </motion.div>
   )
 }
